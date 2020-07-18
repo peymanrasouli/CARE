@@ -1,3 +1,5 @@
-from prepare_datasets import PrepareBreastCancer
+from prepare_datasets import PrepareBreastCancer , PrepareCreditCardDefault, PrepareAdult
 
-PrepareBreastCancer('datasets/', 'breast-cancer.csv')
+breast_cancer = PrepareBreastCancer('datasets/', 'breast-cancer.csv')
+credit_card_default = PrepareCreditCardDefault('datasets/', 'default-of-credit-card-clients.csv')
+adult = PrepareAdult('datasets/', 'adult.csv')
