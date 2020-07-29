@@ -244,7 +244,7 @@ def PrepareBostonHousePrices(dataset_path, file_name):
         df_X_fe[col] = fe.fit_transform(df_X_fe[col])
         feature_encoder[col] = fe
 
-    ## Extracting raw data and labels
+    ## Extracting raw data and target
     X = df_X_fe.values
     y = df_y.to_numpy()
 
