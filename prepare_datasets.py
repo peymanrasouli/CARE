@@ -219,3 +219,62 @@ def PrepareAdult(dataset_path, file_name):
     }
 
     return dataset
+
+## Preparing Boston House Prices dataset
+def PrepareBostonHousePrices(dataset_path, file_name):
+
+    ## Reading data from a csv file
+    df = pd.read_csv(dataset_path + file_name, delimiter=',', na_values=' ?')
+
+    ## Recognizing inputs
+    target_name = 'MEDV'
+    df_X = df.loc[:, df.columns != target_name]
+    df_y = df.loc[:, target_name]
+
+    discrete_features = ['CHAS']
+    discrete_indices = [df_X.columns.get_loc(f) for f in discrete_features]
+    continuous_features = ['CRIM', 'ZN', 'INDUS', 'NOX', 'RM', 'AGE', 'DIS', 'RAD', 'TAX', 'PTRATIO', 'BLACK', 'LSTAT']
+    continuous_indices = [df_X.columns.get_loc(f) for f in continuous_features]
+
+    ## Encoding features
+    df_X_fe = df_X.copy(deep=True)
+    feature_encoder = dict()
+    for col in discrete_features:
+        fe = LabelEncoder()
+        df_X_fe[col] = fe.fit_transform(df_X_fe[col])
+        feature_encoder[col] = fe
+
+    ## Extracting raw data and labels
+    X = df_X_fe.values
+    y = df_y.to_numpy()
+
+    ## Extracting target range
+    target_range = [min(y),max(y)]
+
+    ## Indexing features
+    feature_names = list(df_X.columns)
+    feature_indices = {i: feature for i, feature in enumerate(feature_names)}
+    feature_ranges = {i: [min(X[:,i]),max(X[:,i])] for i in range(X.shape[1])}
+
+    ## Returning dataset information
+    dataset = {
+        'name': file_name.replace('.csv', ''),
+        'df': df,
+        'df_X': df_X,
+        'df_y': df_y,
+        'df_X_fe': df_X_fe,
+        'target_name': target_name,
+        'target_range': target_range,
+        'feature_encoder': feature_encoder,
+        'feature_names': feature_names,
+        'feature_indices': feature_indices,
+        'feature_ranges': feature_ranges,
+        'discrete_features': discrete_features,
+        'discrete_indices': discrete_indices,
+        'continuous_features': continuous_features,
+        'continuous_indices': continuous_indices,
+        'X': X,
+        'y': y
+    }
+
+    return dataset
