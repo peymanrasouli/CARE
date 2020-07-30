@@ -2,10 +2,10 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
 ## Preparing Breast Cancer dataset
-def PrepareBreastCancer(dataset_path, file_name):
+def PrepareBreastCancer(dataset_path, dataset_name):
 
     ## Reading data from a csv file
-    df = pd.read_csv(dataset_path+file_name, delimiter=',', na_values = '?')
+    df = pd.read_csv(dataset_path+dataset_name, delimiter=',', na_values = '?')
 
     ## Handling missing values
     df = df.dropna().reset_index(drop=True)
@@ -51,7 +51,7 @@ def PrepareBreastCancer(dataset_path, file_name):
 
     ## Returning dataset information
     dataset = {
-        'name': file_name.replace('.csv', ''),
+        'name': dataset_name.replace('.csv', ''),
         'df': df,
         'df_X': df_X,
         'df_y': df_y,
@@ -76,10 +76,10 @@ def PrepareBreastCancer(dataset_path, file_name):
     return dataset
 
 ## Preparing Default of Credit Card Clients dataset
-def PrepareCreditCardDefault(dataset_path, file_name):
+def PrepareCreditCardDefault(dataset_path, dataset_name):
 
     ## Reading data from a csv file
-    df = pd.read_csv(dataset_path+file_name, delimiter=',')
+    df = pd.read_csv(dataset_path+dataset_name, delimiter=',')
 
     ## Recognizing inputs
     class_name = 'default payment next month'
@@ -122,7 +122,7 @@ def PrepareCreditCardDefault(dataset_path, file_name):
 
     ## Returning dataset information
     dataset = {
-        'name': file_name.replace('.csv', ''),
+        'name': dataset_name.replace('.csv', ''),
         'df': df,
         'df_X': df_X,
         'df_y': df_y,
@@ -147,10 +147,10 @@ def PrepareCreditCardDefault(dataset_path, file_name):
     return dataset
 
 ## Preparing Adult dataset
-def PrepareAdult(dataset_path, file_name):
+def PrepareAdult(dataset_path, dataset_name):
 
     ## Reading data from a csv file
-    df = pd.read_csv(dataset_path + file_name, delimiter=',', na_values=' ?')
+    df = pd.read_csv(dataset_path + dataset_name, delimiter=',', na_values=' ?')
 
     ## Handling missing values
     df = df.dropna().reset_index(drop=True)
@@ -196,7 +196,7 @@ def PrepareAdult(dataset_path, file_name):
 
     ## Returning dataset information
     dataset = {
-        'name': file_name.replace('.csv', ''),
+        'name': dataset_name.replace('.csv', ''),
         'df': df,
         'df_X': df_X,
         'df_y': df_y,
@@ -221,10 +221,10 @@ def PrepareAdult(dataset_path, file_name):
     return dataset
 
 ## Preparing Boston House Prices dataset
-def PrepareBostonHousePrices(dataset_path, file_name):
+def PrepareBostonHousePrices(dataset_path, dataset_name):
 
     ## Reading data from a csv file
-    df = pd.read_csv(dataset_path + file_name, delimiter=',', na_values=' ?')
+    df = pd.read_csv(dataset_path + dataset_name, delimiter=',', na_values=' ?')
 
     ## Recognizing inputs
     target_name = 'MEDV'
@@ -258,7 +258,7 @@ def PrepareBostonHousePrices(dataset_path, file_name):
 
     ## Returning dataset information
     dataset = {
-        'name': file_name.replace('.csv', ''),
+        'name': dataset_name.replace('.csv', ''),
         'df': df,
         'df_X': df_X,
         'df_y': df_y,
