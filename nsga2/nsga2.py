@@ -2,10 +2,10 @@ import numpy as np
 from nsga2.cost_function import CostFunction
 from nsga2.cross_over import Crossover
 from nsga2.mutate import Mutate
-from matplotlib import pyplot as plt
 from nsga2.non_dominated_sorting import NonDominatedSorting
 from nsga2.calc_crowding_distance import CalcCrowdingDistance
 from nsga2.sort_population import SortPopulation
+from matplotlib import pyplot as plt
 
 def nsga2(X, blackbox, x, MaxIt=100, nPop=100):
 
@@ -17,7 +17,6 @@ def nsga2(X, blackbox, x, MaxIt=100, nPop=100):
     # % Number of Objective Functions
     nObj = 2
 
-    # MAD =  np.mean(np.absolute(X - np.mean(X, axis=0)), axis=0)
     MAD =  np.median(np.absolute(X - np.median(X, axis=0)), axis=0)
     
     ## GA parameters
@@ -46,7 +45,7 @@ def nsga2(X, blackbox, x, MaxIt=100, nPop=100):
         # Initialize positions
         pop[i]['position'] = np.random.uniform(VarMin, VarMax, VarSize)
         # Evaluation
-        pop[i]['cost'], pop[i]['sol'] = CostFunction(pop[i]['position'], blackbox, MAD, x)
+        pop[i]['cost'], pop[i]['sol'] = CostFunction(pop[i]['position'])
 
     # Non-Dominated Sorting
     pop , F = NonDominatedSorting(pop)
@@ -77,8 +76,8 @@ def nsga2(X, blackbox, x, MaxIt=100, nPop=100):
             popc_1[k]['position'], popc_2[k]['position'] = Crossover(p1['position'], p2['position'],gamma,VarMin,VarMax)
 
             # Evaluate offsprings
-            popc_1[k]['cost'], popc_1[k]['sol'] = CostFunction(popc_1[k]['position'],  blackbox, MAD, x)
-            popc_2[k]['cost'], popc_2[k]['sol'] = CostFunction(popc_2[k]['position'],  blackbox, MAD, x)
+            popc_1[k]['cost'], popc_1[k]['sol'] = CostFunction(popc_1[k]['position'])
+            popc_2[k]['cost'], popc_2[k]['sol'] = CostFunction(popc_2[k]['position'])
 
         popc = popc_1 + popc_2
 
@@ -94,7 +93,7 @@ def nsga2(X, blackbox, x, MaxIt=100, nPop=100):
             popm[k]['position']= Mutate(p['position'], mu, VarMin, VarMax)
 
             # Evaluate mutant
-            popm[k]['cost'], popm[k]['sol'] = CostFunction(popm[k]['position'],  blackbox, MAD, x)
+            popm[k]['cost'], popm[k]['sol'] = CostFunction(popm[k]['position'])
 
         # Create merged population
         pop = pop+popc+popm
