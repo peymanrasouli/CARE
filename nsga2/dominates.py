@@ -1,4 +1,5 @@
 import numpy as np
+
 def Dominates(p,q):
     p = np.asarray([i for i in p['cost']])
     q = np.asarray([i for i in q['cost']])

@@ -3,9 +3,9 @@ from nsga2.cost_function import CostFunction
 from nsga2.cross_over import Crossover
 from nsga2.mutate import Mutate
 from matplotlib import pyplot as plt
-from non_dominated_sorting import NonDominatedSorting
-from calc_crowding_distance import CalcCrowdingDistance
-from sort_population import SortPopulation
+from nsga2.non_dominated_sorting import NonDominatedSorting
+from nsga2.calc_crowding_distance import CalcCrowdingDistance
+from nsga2.sort_population import SortPopulation
 
 def nsga2(X, blackbox, x, MaxIt=100, nPop=100):
 

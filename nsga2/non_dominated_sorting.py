@@ -1,4 +1,4 @@
-from dominates import Dominates
+from nsga2.dominates import Dominates
 
 def NonDominatedSorting(pop):
     nPop = len(pop)
