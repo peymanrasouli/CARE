@@ -7,24 +7,21 @@ from nsga2.calc_crowding_distance import CalcCrowdingDistance
 from nsga2.sort_population import SortPopulation
 from matplotlib import pyplot as plt
 
-def nsga2(X, blackbox, x, MaxIt=100, nPop=100):
+def NSGA2(x, l_cf, blackbox, dataset, X_train, Y_train, probability_range, MaxIt=100, nPop=100):
 
     ## Problem definition
-    VarSize = X.shape[1]   # Decision Variables Matrix Size
-    VarMin = np.min(X, axis=0)  # Lower bound of variables
-    VarMax = np.max(X, axis=0)  # Upper bound of variables
+    var_size = len(x)   # Decision Variables Matrix Size
+    var_min = np.min(dataset['X'], axis=0)  # Lower bound of variables
+    var_max = np.max(dataset['X'], axis=0)  # Upper bound of variables
 
-    # % Number of Objective Functions
-    nObj = 2
+    disc_ind = dataset['discrete_indices']
+    cont_ind = dataset['continuous_indices']
 
-    MAD =  np.median(np.absolute(X - np.median(X, axis=0)), axis=0)
-    
     ## GA parameters
-    pc = 0.8    # Crossover Percentage
+    pc = 0.6    # Crossover Percentage
     pm = 0.3    # Mutation Percentage
-    gamma = 0.05
-    mu = 0.02   # Mutation Rate
-    beta = 8    # Selection Pressure
+    co = 0.3    # Crossover Rate
+    mu = 0.1   # Mutation Rate
     nc = 2 * round(pc * nPop / 2) # Number of Offsprings
     nm = round(pm * nPop) # Number of Mutants
 
@@ -43,9 +40,16 @@ def nsga2(X, blackbox, x, MaxIt=100, nPop=100):
 
     for i in range(nPop):
         # Initialize positions
-        pop[i]['position'] = np.random.uniform(VarMin, VarMax, VarSize)
+        position = np.zeros(var_size)
+        if disc_ind is not None:
+            position[disc_ind] = np.random.randint(var_min[disc_ind], var_max[disc_ind], len(disc_ind))
+        if cont_ind is not None:
+            position[cont_ind] = np.random.uniform(var_min[cont_ind], var_max[cont_ind], len(cont_ind))
+        pop[i]['position'] = position
+
         # Evaluation
-        pop[i]['cost'], pop[i]['sol'] = CostFunction(pop[i]['position'])
+        pop[i]['cost'], pop[i]['sol'] = CostFunction(x,pop[i]['position'], l_cf, var_min, var_max,
+                                                     disc_ind, cont_ind , blackbox, probability_range)
 
     # Non-Dominated Sorting
     pop , F = NonDominatedSorting(pop)
@@ -73,11 +77,13 @@ def nsga2(X, blackbox, x, MaxIt=100, nPop=100):
             p2 = pop[i2]
 
             # Apply crossover
-            popc_1[k]['position'], popc_2[k]['position'] = Crossover(p1['position'], p2['position'],gamma,VarMin,VarMax)
+            popc_1[k]['position'], popc_2[k]['position'] = Crossover(p1['position'], p2['position'], co)
 
             # Evaluate offsprings
-            popc_1[k]['cost'], popc_1[k]['sol'] = CostFunction(popc_1[k]['position'])
-            popc_2[k]['cost'], popc_2[k]['sol'] = CostFunction(popc_2[k]['position'])
+            popc_1[k]['cost'], popc_1[k]['sol'] = CostFunction(x, popc_1[k]['position'], l_cf, var_min, var_max,
+                                                               disc_ind, cont_ind, blackbox, probability_range)
+            popc_2[k]['cost'], popc_2[k]['sol'] = CostFunction(x, popc_2[k]['position'], l_cf, var_min, var_max,
+                                                               disc_ind, cont_ind, blackbox, probability_range)
 
         popc = popc_1 + popc_2
 
@@ -90,10 +96,11 @@ def nsga2(X, blackbox, x, MaxIt=100, nPop=100):
             p = pop[i]
 
             # Apply mutation
-            popm[k]['position']= Mutate(p['position'], mu, VarMin, VarMax)
+            popm[k]['position']= Mutate(p['position'], mu, var_min, var_max, disc_ind, cont_ind)
 
             # Evaluate mutant
-            popm[k]['cost'], popm[k]['sol'] = CostFunction(popm[k]['position'])
+            popm[k]['cost'], popm[k]['sol'] = CostFunction(x, popm[k]['position'], l_cf, var_min, var_max,
+                                                           disc_ind, cont_ind, blackbox, probability_range)
 
         # Create merged population
         pop = pop+popc+popm
@@ -121,12 +128,11 @@ def nsga2(X, blackbox, x, MaxIt=100, nPop=100):
 
         # Store F1
         if F == []:
-            cf_samples = np.asarray([np.round(f1['position']) for f1 in F1])
-            return cf_samples
+            return F1
         else:
             F1 = [pop[i] for i in F[0]]
 
-        # print('Iteration=',it,'--','Number of F1 members=',len(F1))
+        print('Iteration=',it,'--','Number of F1 members=',len(F1))
 
         costs = np.asarray([f['cost'] for f in F1])
 
@@ -136,7 +142,6 @@ def nsga2(X, blackbox, x, MaxIt=100, nPop=100):
         plt.draw()
         plt.pause(0.01)
         plt.clf()
-
 
 
 

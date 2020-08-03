@@ -1,4 +1,13 @@
-from nsga2 import nsga2
+from nsga2.nsga2 import NSGA2
 
-def MOCF(x, blackbox, dataset, X_train, Y_train):
-    pass
+def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range):
+
+    l_x = blackbox.predict(x.reshape(1,-1))
+    l_cf = int(1 - l_x)
+
+    MaxIt = 100
+    nPop = 200
+
+    F1 = NSGA2(x, l_cf, blackbox, dataset, X_train, Y_train, probability_range, MaxIt=MaxIt, nPop=nPop)
+
+    print('')
