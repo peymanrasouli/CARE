@@ -59,7 +59,7 @@ def main():
             ## Generating counterfactuals using MOCF
             ind = 0
             x = X_test[ind]
-            res = MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=[0.7,1])
+            res = MOCF(x, blackbox, dataset, probability_range=[0.7,1])
 
 if __name__ == '__main__':
     main()
