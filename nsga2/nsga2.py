@@ -7,7 +7,7 @@ from nsga2.calc_crowding_distance import CalcCrowdingDistance
 from nsga2.sort_population import SortPopulation
 from matplotlib import pyplot as plt
 
-def NSGA2(x, l_cf, blackbox, dataset, X_train, Y_train, probability_range, MaxIt=100, nPop=100):
+def NSGA2(x, l_cf, blackbox, dataset, probability_range, MaxIt=100, nPop=100):
 
     ## Problem definition
     var_size = len(x)   # Decision Variables Matrix Size
