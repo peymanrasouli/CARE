@@ -1,13 +1,10 @@
-import random, array
+import array
 import numpy as np
 from deap import algorithms, base, creator, tools
 from cost_function import CostFunction
 
-def Uniform(low, up, size=None):
-    try:
-        return [random.uniform(a, b) for a, b in zip(low, up)]
-    except TypeError:
-        return [random.uniform(a, b) for a, b in zip([low] * size, [up] * size)]
+def Uniform(bound_low, bound_up, size):
+    return list(np.random.uniform(bound_low, bound_up, size))
 
 def RecoverCounterfactuals(fronts,mapping_scale, mapping_offset, discrete_indices):
     P = np.asarray(fronts[0])
@@ -16,7 +13,6 @@ def RecoverCounterfactuals(fronts,mapping_scale, mapping_offset, discrete_indice
     return cf_set
 
 def MOCF(x, blackbox, dataset, probability_range):
-
     l_x = blackbox.predict(x.reshape(1,-1))
     l_cf = int(1 - l_x)     # Desired label
 
@@ -65,5 +61,5 @@ def MOCF(x, blackbox, dataset, probability_range):
     cf_set = RecoverCounterfactuals(fronts, mapping_scale, mapping_offset, discrete_indices)
     cf_set_y = blackbox.predict_proba(cf_set)
 
-    print('end')
+    print('done')
 

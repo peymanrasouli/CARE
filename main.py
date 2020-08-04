@@ -17,14 +17,14 @@ def main():
     ## Defining the list of data sets
     datsets_list = {
         'breast_cancer': ('breast-cancer.csv', PrepareBreastCancer),
-        'credit_card_default': ('credit-card-default.csv', PrepareCreditCardDefault),
-        'adult': ('adult.csv', PrepareAdult),
+        # 'credit_card_default': ('credit-card-default.csv', PrepareCreditCardDefault),
+        # 'adult': ('adult.csv', PrepareAdult),
         # 'boston_house_prices': ('boston-house-prices.csv', PrepareBostonHousePrices)
     }
 
     ## Defining the list of black-boxes
     blackbox_list = {
-        'lg': LogisticRegression,
+        # 'lg': LogisticRegression,
         'gt': GradientBoostingClassifier,
         'nn': MLPClassifier,
         # 'lr': LinearRegression
