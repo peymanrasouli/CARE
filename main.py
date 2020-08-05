@@ -16,9 +16,9 @@ def main():
 
     ## Defining the list of data sets
     datsets_list = {
-        'breast_cancer': ('breast-cancer.csv', PrepareBreastCancer),
+        # 'breast_cancer': ('breast-cancer.csv', PrepareBreastCancer),
         # 'credit_card_default': ('credit-card-default.csv', PrepareCreditCardDefault),
-        # 'adult': ('adult.csv', PrepareAdult),
+        'adult': ('adult.csv', PrepareAdult),
         # 'boston_house_prices': ('boston-house-prices.csv', PrepareBostonHousePrices)
     }
 
@@ -26,7 +26,7 @@ def main():
     blackbox_list = {
         # 'lg': LogisticRegression,
         'gt': GradientBoostingClassifier,
-        'nn': MLPClassifier,
+        # 'nn': MLPClassifier,
         # 'lr': LinearRegression
     }
 
@@ -59,7 +59,7 @@ def main():
             ## Generating counterfactuals using MOCF
             ind = 0
             x = X_test[ind]
-            output = MOCF(x, blackbox, dataset, probability_range=[0.7,1])
+            output = MOCF(x, blackbox, dataset, probability_range=[0.8,1])
 
 if __name__ == '__main__':
     main()

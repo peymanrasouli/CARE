@@ -1,16 +1,35 @@
 import array
 import numpy as np
 from deap import algorithms, base, creator, tools
+from deap.benchmarks.tools import hypervolume
+import matplotlib.pyplot as plt
 from cost_function import CostFunction
+
+def CalculateReferencePoint(toolbox, fronts):
+    fronts = np.concatenate(fronts)
+    obj_vals = [toolbox.evaluate(ind) for ind in fronts]
+    reference_point = np.max(obj_vals, axis=0)
+    return reference_point
 
 def Uniform(bound_low, bound_up, size):
     return list(np.random.uniform(bound_low, bound_up, size))
 
 def RecoverCounterfactuals(fronts,mapping_scale, mapping_offset, discrete_indices):
-    P = np.asarray(fronts[0])
-    cf_set = P * mapping_scale + mapping_offset
-    cf_set[:,discrete_indices] = np.rint(cf_set[:,discrete_indices])
-    return cf_set
+    P = np.concatenate(fronts)
+    CFs = P * mapping_scale + mapping_offset
+    CFs[:,discrete_indices] = np.rint(CFs[:,discrete_indices])
+    return CFs
+
+def PlotParetoFronts(toolbox, fronts, objective_list):
+    n_fronts = len(fronts)
+    fig, ax = plt.subplots(n_fronts, figsize=(8,8))
+    fig.text(0.5, 0.04, 'f' + str(objective_list[0] + 1) + '(x)', ha='center')
+    fig.text(0.02, 0.5, 'f' + str(objective_list[1] + 1) + '(x)', rotation='vertical')
+    for i, f in enumerate(fronts):
+        costs = np.asarray([toolbox.evaluate(ind) for ind in f])[:,objective_list]
+        ax.scatter(costs[:,0], costs[:,1], color='r') if n_fronts == 1 \
+            else ax[i].scatter(costs[:,0], costs[:,1], color='r')
+        ax.title.set_text('Front 1') if n_fronts == 1 else ax[i].title.set_text('Front '+str(i+1))
 
 def MOCF(x, blackbox, dataset, probability_range):
     l_x = blackbox.predict(x.reshape(1,-1))
@@ -41,9 +60,9 @@ def MOCF(x, blackbox, dataset, probability_range):
     toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
     toolbox.register("select", tools.selNSGA2)
 
-    toolbox.pop_size = 100
+    toolbox.pop_size = 200
     toolbox.max_gen = 200
-    toolbox.mut_prob = 0.2
+    toolbox.mut_prob = 0.4
 
     def run_ea(toolbox, stats=None, verbose=False):
         pop = toolbox.population(n=toolbox.pop_size)
@@ -56,10 +75,18 @@ def MOCF(x, blackbox, dataset, probability_range):
                                          ngen=toolbox.max_gen,
                                          verbose=verbose)
 
-    res, _ = run_ea(toolbox)
-    fronts = tools.emo.sortLogNondominated(res, len(res))
-    cf_set = RecoverCounterfactuals(fronts, mapping_scale, mapping_offset, discrete_indices)
-    cf_set_y = blackbox.predict_proba(cf_set)
+
+
+    results, logbook = run_ea(toolbox)
+    fronts = tools.emo.sortLogNondominated(results, len(results))
+    PlotParetoFronts(toolbox, fronts, objective_list=[0, 1])
+
+    CFs = RecoverCounterfactuals(fronts, mapping_scale, mapping_offset, discrete_indices)
+    CFs_y = blackbox.predict_proba(CFs)
+
+    reference_point = CalculateReferencePoint(toolbox, fronts)
+
+    hyper_volume = hypervolume(results,reference_point)
 
     print('done')
 
