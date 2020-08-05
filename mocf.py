@@ -14,7 +14,13 @@ def CalculateReferencePoint(toolbox, fronts):
 def Uniform(bound_low, bound_up, size):
     return list(np.random.uniform(bound_low, bound_up, size))
 
-def RecoverCounterfactuals(fronts,mapping_scale, mapping_offset, discrete_indices):
+def ModifiedUniform(bound_low, bound_up, size, theta_x, simlarity=0.4):
+    ind = np.random.uniform(bound_low, bound_up, size)
+    idx = np.random.choice(range(size),int(simlarity*size), replace=False)
+    ind[idx] = theta_x[idx]
+    return list(ind)
+
+def ConstructCounterfactuals(fronts,mapping_scale, mapping_offset, discrete_indices):
     P = np.concatenate(fronts)
     CFs = P * mapping_scale + mapping_offset
     CFs[:,discrete_indices] = np.rint(CFs[:,discrete_indices])
@@ -31,9 +37,7 @@ def PlotParetoFronts(toolbox, fronts, objective_list):
             else ax[i].scatter(costs[:,0], costs[:,1], color='r')
         ax.title.set_text('Front 1') if n_fronts == 1 else ax[i].title.set_text('Front '+str(i+1))
 
-def MOCF(x, blackbox, dataset, probability_range):
-    l_x = blackbox.predict(x.reshape(1,-1))
-    l_cf = int(1 - l_x)     # Desired label
+def MOCF(x, blackbox, dataset, output_range, label_cf=None):
 
     discrete_indices = dataset['discrete_indices']
     continuous_indices = dataset['continuous_indices']
@@ -46,23 +50,27 @@ def MOCF(x, blackbox, dataset, probability_range):
     mapping_scale = (feature_max - feature_min) / (theta_max - theta_min)
     mapping_offset = -theta_min * (feature_max - feature_min) / (theta_max - theta_min) + feature_min
 
+    theta_x = (x - mapping_offset) / mapping_scale
+    similarity = 0.4
+
     NDIM = len(x)
     BOUND_LOW, BOUND_UP = theta_min, theta_max
+    OBJ_DIR = (-1.0, -1.0, -1.0)    # -1.0: cost function | 1.0: fitness function
     toolbox = base.Toolbox()
-    creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0))
+    creator.create("FitnessMin", base.Fitness, weights=OBJ_DIR)
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMin)
-    toolbox.register("evaluate", CostFunction, x, l_cf, discrete_indices, continuous_indices,
-                     mapping_scale, mapping_offset, feature_range, blackbox, probability_range)
-    toolbox.register("attr_float", Uniform, BOUND_LOW, BOUND_UP, NDIM)
+    toolbox.register("evaluate", CostFunction, x, discrete_indices, continuous_indices,
+                     mapping_scale, mapping_offset, feature_range, blackbox, output_range, label_cf)
+    toolbox.register("attr_float", ModifiedUniform, BOUND_LOW, BOUND_UP, NDIM, theta_x, similarity)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
+    toolbox.register("mate", tools.cxUniform, indpb=1.0 / NDIM)
     toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
     toolbox.register("select", tools.selNSGA2)
 
     toolbox.pop_size = 200
     toolbox.max_gen = 200
-    toolbox.mut_prob = 0.4
+    toolbox.mut_prob = 0.2
 
     def run_ea(toolbox, stats=None, verbose=False):
         pop = toolbox.population(n=toolbox.pop_size)
@@ -81,8 +89,12 @@ def MOCF(x, blackbox, dataset, probability_range):
     fronts = tools.emo.sortLogNondominated(results, len(results))
     PlotParetoFronts(toolbox, fronts, objective_list=[0, 1])
 
-    CFs = RecoverCounterfactuals(fronts, mapping_scale, mapping_offset, discrete_indices)
-    CFs_y = blackbox.predict_proba(CFs)
+    CFs = ConstructCounterfactuals(fronts, mapping_scale, mapping_offset, discrete_indices)
+    if label_cf is None:
+        CFs_y = blackbox.predict(CFs)
+    else:
+        CFs_y = blackbox.predict(CFs)
+        CFs_prob = blackbox.predict_proba(CFs)
 
     reference_point = CalculateReferencePoint(toolbox, fronts)
 
