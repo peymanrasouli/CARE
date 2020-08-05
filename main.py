@@ -17,16 +17,16 @@ def main():
 
     ## Defining the list of data sets
     datsets_list = {
-        # 'breast_cancer': ('breast-cancer.csv', PrepareBreastCancer),
-        'credit_card_default': ('credit-card-default.csv', PrepareCreditCardDefault),
+        'breast_cancer': ('breast-cancer.csv', PrepareBreastCancer),
+        # 'credit_card_default': ('credit-card-default.csv', PrepareCreditCardDefault),
         # 'adult': ('adult.csv', PrepareAdult),
         # 'boston_house_prices': ('boston-house-prices.csv', PrepareBostonHousePrices)
     }
 
     ## Defining the list of black-boxes
     blackbox_list = {
-        # 'lg': LogisticRegression,
-        'gt': GradientBoostingClassifier,
+        'lg': LogisticRegression,
+        # 'gt': GradientBoostingClassifier,
         # 'nn': MLPClassifier,
         # 'rfr': RandomForestRegressor
         # 'nnr': MLPRegressor
@@ -63,10 +63,10 @@ def main():
                 ## Generating counterfactuals using MOCF
                 ind = 0
                 x = X_test[ind]
-                label_x = blackbox.predict(x.reshape(1, -1))
-                label_cf = int(1 - label_x)  # Desired label
-                output_range = [0.7, 1]      # Desired probability range
-                output = MOCF(x, blackbox, dataset, output_range=output_range, label_cf=label_cf)
+                x_label = blackbox.predict(x.reshape(1, -1))
+                cf_label = int(1 - x_label)      # Counterfactual label
+                probability_range = [0.6, 1]     # Desired probability range
+                output = MOCF(x, blackbox, dataset, X_train, probability_range=probability_range, cf_label=cf_label)
 
             ## Regression
             elif blackbox_name in ['rfr', 'nnr']:
@@ -99,8 +99,8 @@ def main():
                 ## Generating counterfactuals using MOCF
                 ind = 0
                 x = X_test[ind]
-                output_range = SelectResponseRange(x, blackbox, dataset)    # Desired response range
-                output = MOCF(x, blackbox, dataset, output_range=output_range, label_cf=None)
+                response_range = SelectResponseRange(x, blackbox, dataset)    # Desired response range
+                output = MOCF(x, blackbox, dataset, X_train, response_range=response_range)
 
 if __name__ == '__main__':
     main()

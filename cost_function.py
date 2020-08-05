@@ -4,14 +4,14 @@ from prediction_distance import PredictionDistance
 from sparsity import Sparsity
 
 def CostFunction(x, discrete_indices, continuous_indices, mapping_scale, mapping_offset,
-                 feature_range, blackbox, output_range, label_cf, p):
+                 feature_range, blackbox, probability_range, response_range, cf_label, p):
 
     ## Constructing the counterfactual instance
     cf = p * mapping_scale + mapping_offset
     cf[discrete_indices] = np.rint(cf[discrete_indices])
 
     ## Objective 1: opposite outcome
-    f1 = PredictionDistance(cf, blackbox, output_range, label_cf)
+    f1 = PredictionDistance(cf, blackbox, probability_range, response_range, cf_label)
 
 
     ## Objective 2: proximity
@@ -26,7 +26,7 @@ def CostFunction(x, discrete_indices, continuous_indices, mapping_scale, mapping
 
 
     ## Objective 5: sparsity
-    f5 = Sparsity(x, cf, feature_range, discrete_indices, continuous_indices, continuous_thresh=0.1)
+    f5 = Sparsity(x, cf, feature_range, discrete_indices, continuous_indices, crisp_thresh=0.1)
 
 
 
