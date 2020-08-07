@@ -4,7 +4,7 @@ from deap import algorithms, base, creator, tools
 from deap.benchmarks.tools import hypervolume
 from cost_function import CostFunction
 import matplotlib.pyplot as plt
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import pairwise_distances
 
 def CalculateReferencePoint(toolbox, fronts):
@@ -67,7 +67,11 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
     ## Initialization
     distances, indices = nbrs_gt.kneighbors(theta_x.reshape(1,-1))
     theta_N = theta_gt[indices[0]].copy()
-    similarity_vec = [0.1,0.1,0.8]
+    similarity_vec = [0.1,0.0,0.9]
+
+    ## Creating local outlier factor model
+    lof_model = LocalOutlierFactor(n_neighbors=20, novelty=True)
+    lof_model.fit(theta_gt)
 
     ## Calculating epsilon
     dist = pairwise_distances(theta_gt, metric='minkowski')
@@ -77,13 +81,13 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
     ## EA definition
     NDIM = len(x)
     BOUND_LOW, BOUND_UP = theta_min, theta_max
-    OBJ_DIR = (-1.0, -1.0, -1.0, -1.0, 1.0)    # -1.0: cost function | 1.0: fitness function
+    OBJ_DIR = (-1.0, -1.0, 1.0, -1.0)    # -1.0: cost function | 1.0: fitness function
     toolbox = base.Toolbox()
     creator.create("FitnessMin", base.Fitness, weights=OBJ_DIR)
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMin)
     toolbox.register("evaluate", CostFunction, x, theta_x, discrete_indices, continuous_indices,
                      mapping_scale, mapping_offset, feature_range, blackbox, probability_range,
-                     response_range, cf_label, nbrs_gt, theta_gt, epsilon)
+                     response_range, cf_label, lof_model, nbrs_gt, theta_gt, epsilon)
     toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, theta_x, theta_N, similarity_vec)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)

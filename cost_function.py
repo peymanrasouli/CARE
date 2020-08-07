@@ -1,14 +1,13 @@
 import numpy as np
-from gower_distance import GowerDistance
 from prediction_distance import PredictionDistance
+from gower_distance import GowerDistance
 from proximity import Proximity
-from connectedness import Connectedness
-# from proximity_connectedness import ProximityConnectedness
 from sparsity import Sparsity
+from connectedness import Connectedness
 
 def CostFunction(x, theta_x, discrete_indices, continuous_indices,
                  mapping_scale, mapping_offset, feature_range, blackbox,
-                 probability_range, response_range, cf_label,
+                 probability_range, response_range, cf_label, lof_model,
                  nbrs_gt, theta_gt, epsilon, theta_cf):
 
     ## Constructing the counterfactual instance
@@ -23,16 +22,15 @@ def CostFunction(x, theta_x, discrete_indices, continuous_indices,
     f2 = GowerDistance(x, cf, feature_range, discrete_indices, continuous_indices)
 
     ## Objective 3: proximity
-    f3 = Proximity(theta_cf, nbrs_gt, theta_gt)
-    # f3 = ProximityConnectedness(theta_cf, nbrs_gt, theta_gt)
+    f3 = Proximity(theta_cf, lof_model)
 
     ## Objective 4: actionable
     # f4 = 0
 
     ## Objective 5: sparsity
-    f5 = Sparsity(x, cf, feature_range, discrete_indices, continuous_indices, crisp_thresh=0.05)
+    f5 = Sparsity(theta_x, theta_cf)
 
     ## Objective 6: connectedness
-    f6 = Connectedness(theta_cf, nbrs_gt, theta_gt)
+    # f6 = Connectedness(theta_cf, nbrs_gt, theta_gt)
 
-    return f1, f2, f3, f5, f6
+    return f1, f2, f3, f5
