@@ -305,3 +305,6 @@ def Connectedness(theta_cf, nbrs_gt, theta_gt, epsilon):
     ## Measuring the epsilon-chain
     chain = 0 if clustering.labels_[-1] == -1 else 1
     return chain
+
+def Sparsity(theta_x, theta_cf):
+    return sum(theta_x != theta_cf)

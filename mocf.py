@@ -87,8 +87,8 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
     toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, theta_x, theta_N, similarity_vec)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    toolbox.register("mate", tools.cxUniform, indpb=1.0 / NDIM)
-    toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=0.3)
+    toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
+    toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
     toolbox.register("select", tools.selNSGA2)
 
     toolbox.pop_size = 200

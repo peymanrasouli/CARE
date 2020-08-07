@@ -30,7 +30,7 @@ def CostFunction(x, theta_x, discrete_indices, continuous_indices,
     # f4 = 0
 
     ## Objective 5: sparsity
-    f5 = Sparsity(theta_x, theta_cf)
+    f5 = Sparsity(x, cf, feature_range, discrete_indices, continuous_indices, crisp_thresh=0.05)
 
     ## Objective 6: connectedness
     f6 = Connectedness(theta_cf, nbrs_gt, theta_gt)
