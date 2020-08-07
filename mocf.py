@@ -2,9 +2,10 @@ import array
 import numpy as np
 from deap import algorithms, base, creator, tools
 from deap.benchmarks.tools import hypervolume
+from cost_function import CostFunction
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
-from cost_function import CostFunction
+from sklearn.metrics import pairwise_distances
 
 def CalculateReferencePoint(toolbox, fronts):
     fronts = np.concatenate(fronts)
@@ -41,34 +42,37 @@ def PlotParetoFronts(toolbox, fronts, objective_list):
 
 def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, response_range=None, cf_label=None):
 
+    ## Reading dataset information
     discrete_indices = dataset['discrete_indices']
     continuous_indices = dataset['continuous_indices']
     feature_min = np.min(dataset['X'], axis=0)
     feature_max = np.max(dataset['X'], axis=0)
     feature_range = feature_max - feature_min
-    theta_min = -1
-    theta_max = 1
 
     ## Linear mapping
+    theta_min = -1
+    theta_max = 1
     mapping_scale = (feature_max - feature_min) / (theta_max - theta_min)
     mapping_offset = -theta_min * (feature_max - feature_min) / (theta_max - theta_min) + feature_min
     theta_x = (x - mapping_offset) / mapping_scale
 
-    ## Initialization
+    ## KNN model of correctly classified samples same class as counterfactual
     pred_train = blackbox.predict(X_train)
-    N = X_train[np.where(pred_train==cf_label)]
-    theta_N = (N - mapping_offset) / mapping_scale
-    nbrs = NearestNeighbors(n_neighbors=min(len(N),100), algorithm='kd_tree').fit(theta_N)
-    distances, indices = nbrs.kneighbors(theta_x.reshape(1,-1))
-    theta_N = theta_N[indices[0]]
-    similarity_vec = [0.1,0.3,0.6]
-
-    ## KNN model of correctly classified samples for counterfactual
     gt = X_train[np.where(pred_train == Y_train)]
     pred_gt = blackbox.predict(gt)
     gt = gt[np.where(pred_gt == cf_label)]
     theta_gt = (gt - mapping_offset) / mapping_scale
-    nbrs_gt = NearestNeighbors(n_neighbors=min(len(gt),300), algorithm='kd_tree').fit(theta_gt)
+    nbrs_gt = NearestNeighbors(n_neighbors=min(len(gt),200), algorithm='kd_tree').fit(theta_gt)
+
+    ## Initialization
+    distances, indices = nbrs_gt.kneighbors(theta_x.reshape(1,-1))
+    theta_N = theta_gt[indices[0]].copy()
+    similarity_vec = [0.1,0.1,0.8]
+
+    ## Calculating epsilon
+    dist = pairwise_distances(theta_gt, metric='minkowski')
+    dist[np.where(dist==0)] = np.inf
+    epsilon = np.max(np.min(dist,axis=0))
 
     ## EA definition
     NDIM = len(x)
@@ -79,17 +83,17 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMin)
     toolbox.register("evaluate", CostFunction, x, theta_x, discrete_indices, continuous_indices,
                      mapping_scale, mapping_offset, feature_range, blackbox, probability_range,
-                     response_range, cf_label, nbrs_gt, theta_gt)
+                     response_range, cf_label, nbrs_gt, theta_gt, epsilon)
     toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, theta_x, theta_N, similarity_vec)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("mate", tools.cxUniform, indpb=1.0 / NDIM)
-    toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
+    toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=0.3)
     toolbox.register("select", tools.selNSGA2)
 
-    toolbox.pop_size = 100
+    toolbox.pop_size = 200
     toolbox.max_gen = 100
-    toolbox.mut_prob = 0.2
+    toolbox.mut_prob = 0.4
 
     def run_ea(toolbox, stats=None, verbose=False):
         pop = toolbox.population(n=toolbox.pop_size)
@@ -119,4 +123,3 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
     hyper_volume = hypervolume(results,reference_point)
 
     print('done')
-
