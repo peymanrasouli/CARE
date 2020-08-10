@@ -325,3 +325,39 @@ def Proximity(theta_cf, nbrs_gt, theta_gt):
     ## Calculating the proximity value
     distance = (dist_cf_a0 / dist_a0_xi)
     return distance
+
+    # toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
+
+    # toolbox.pop_size = 200
+    # toolbox.max_gen = 100
+    # toolbox.mut_prob = 0.4
+    #
+    # def run_ea(toolbox, stats=None, verbose=False):
+    #     pop = toolbox.population(n=toolbox.pop_size)
+    #     pop = toolbox.select(pop, len(pop))
+    #     return algorithms.eaMuPlusLambda(pop, toolbox, mu=toolbox.pop_size,
+    #                                      lambda_=toolbox.pop_size,
+    #                                      cxpb=1 - toolbox.mut_prob,
+    #                                      mutpb=toolbox.mut_prob,
+    #                                      stats=stats,
+    #                                      ngen=toolbox.max_gen,
+    #                                      verbose=verbose)
+    #
+    #
+    #
+    # results, logbook = run_ea(toolbox)
+    # fronts = tools.emo.sortLogNondominated(results, len(results))
+    # PlotParetoFronts(toolbox, fronts, objective_list=[0, 1])
+    #
+    # CFs = ConstructCounterfactuals(fronts, mapping_scale, mapping_offset, discrete_indices)
+    # if cf_label is None:
+    #     CFs_y = blackbox.predict(CFs)
+    # else:
+    #     CFs_y = blackbox.predict(CFs)
+    #     CFs_prob = blackbox.predict_proba(CFs)
+    #
+    # reference_point = CalculateReferencePoint(toolbox, fronts)
+    # hyper_volume = hypervolume(results,reference_point)
+
+
+

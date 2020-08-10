@@ -1,8 +1,9 @@
 import array
 import numpy as np
+from math import *
 from deap import algorithms, base, creator, tools
 from deap.benchmarks.tools import hypervolume
-from cost_function import CostFunction
+from cost_function import CostFunction, GowerDistance
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import pairwise_distances
@@ -23,11 +24,19 @@ def Initialization(bound_low, bound_up, size, theta_x, theta_N, similarity_vec):
     elif method == 'random':
         return list(np.random.uniform(bound_low, bound_up, size))
 
-def ConstructCounterfactuals(fronts,mapping_scale, mapping_offset, discrete_indices):
+def ConstructCounterfactuals(fronts, mapping_scale, mapping_offset, discrete_indices, blackbox, cf_label):
     P = np.concatenate(fronts)
     CFs = P * mapping_scale + mapping_offset
     CFs[:,discrete_indices] = np.rint(CFs[:,discrete_indices])
-    return CFs
+
+    if cf_label is None:
+        CFs_prob = None
+        CFs_y = blackbox.predict(CFs)
+        return CFs, CFs_y, CFs_prob
+    else:
+        CFs_y = blackbox.predict(CFs)
+        CFs_prob = blackbox.predict_proba(CFs)
+        return CFs, CFs_y, CFs_prob
 
 def PlotParetoFronts(toolbox, fronts, objective_list):
     n_fronts = len(fronts)
@@ -39,6 +48,70 @@ def PlotParetoFronts(toolbox, fronts, objective_list):
         ax.scatter(costs[:,0], costs[:,1], color='r') if n_fronts == 1 \
             else ax[i].scatter(costs[:,0], costs[:,1], color='r')
         ax.title.set_text('Front 1') if n_fronts == 1 else ax[i].title.set_text('Front '+str(i+1))
+
+def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_DIR, x, theta_x, discrete_indices, continuous_indices,
+                 mapping_scale, mapping_offset, feature_range, blackbox, probability_range,
+                 response_range, cf_label, lof_model, nbrs_gt, theta_gt, epsilon, theta_N, similarity_vec):
+    toolbox = base.Toolbox()
+    creator.create("FitnessMulti", base.Fitness, weights=OBJ_DIR)
+    creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
+    toolbox.register("evaluate", CostFunction, x, theta_x, discrete_indices, continuous_indices,
+                     mapping_scale, mapping_offset, feature_range, blackbox, probability_range,
+                     response_range, cf_label, lof_model, nbrs_gt, theta_gt, epsilon)
+    toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, theta_x, theta_N, similarity_vec)
+    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+    toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
+    toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
+    ref_points = tools.uniform_reference_points(NOBJ, P)
+    toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
+
+    return toolbox
+
+def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
+    # Initialize statistics object
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", np.mean, axis=0)
+    stats.register("std", np.std, axis=0)
+    stats.register("min", np.min, axis=0)
+    stats.register("max", np.max, axis=0)
+
+    logbook = tools.Logbook()
+    logbook.header = "gen", "evals", "std", "min", "avg", "max"
+
+    pop = toolbox.population(n=MU)
+
+    # Evaluate the individuals with an invalid fitness
+    invalid_ind = [ind for ind in pop if not ind.fitness.valid]
+    fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+    for ind, fit in zip(invalid_ind, fitnesses):
+        ind.fitness.values = fit
+
+    # Compile statistics about the population
+    record = stats.compile(pop)
+    logbook.record(gen=0, evals=len(invalid_ind), **record)
+    print(logbook.stream)
+
+    # Begin the generational process
+    for gen in range(1, NGEN):
+        offspring = algorithms.varAnd(pop, toolbox, CXPB, MUTPB)
+
+        # Evaluate the individuals with an invalid fitness
+        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+        fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+        for ind, fit in zip(invalid_ind, fitnesses):
+            ind.fitness.values = fit
+
+        # Select the next generation population from parents and offspring
+        pop = toolbox.select(pop + offspring, MU)
+
+        # Compile statistics about the new population
+        record = stats.compile(pop)
+        logbook.record(gen=gen, evals=len(invalid_ind), **record)
+        print(logbook.stream)
+
+    fronts = tools.emo.sortLogNondominated(pop, MU)
+    return fronts, pop, record, logbook
 
 def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, response_range=None, cf_label=None):
 
@@ -67,7 +140,7 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
     ## Initialization
     distances, indices = nbrs_gt.kneighbors(theta_x.reshape(1,-1))
     theta_N = theta_gt[indices[0]].copy()
-    similarity_vec = [0.1,0.0,0.9]
+    similarity_vec = [0.1,0.2,0.7]
 
     ## Creating local outlier factor model
     lof_model = LocalOutlierFactor(n_neighbors=20, novelty=True)
@@ -78,52 +151,41 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
     dist[np.where(dist==0)] = np.inf
     epsilon = np.max(np.min(dist,axis=0))
 
-    ## EA definition
+    ## n-Closet truly predicted instance in training data
+    n = 5
+    dist = np.asarray([GowerDistance(x, cf_, feature_range, discrete_indices, continuous_indices) for cf_ in gt])
+    closest_ind = np.argsort(dist)[:n]
+    for i in range(n):
+        theta_cf = (gt[closest_ind[i]] - mapping_offset) / mapping_scale
+        print('instnace:', list(gt[closest_ind[i]]), 'bb probability:', blackbox.predict_proba(gt[closest_ind[i]].reshape(1,-1)),
+              'cost:',CostFunction(x, theta_x, discrete_indices, continuous_indices, mapping_scale, mapping_offset,
+              feature_range, blackbox, probability_range, response_range, cf_label, lof_model,  nbrs_gt, theta_gt,
+              epsilon, theta_cf))
+
+    ## Parameter setting
     NDIM = len(x)
+    # NOBJ = 5
+    NOBJ = 4
+    NGEN = 100
+    CXPB = 0.5
+    MUTPB = 0.2
+    P = 8
+    H = factorial(NOBJ + P - 1) / (factorial(P) * factorial(NOBJ - 1))
+    MU = int(H + (4 - H % 4))
     BOUND_LOW, BOUND_UP = theta_min, theta_max
+    # OBJ_DIR = (-1.0, -1.0, 1.0, -1.0, -1.0)    # -1.0: cost function | 1.0: fitness function
     OBJ_DIR = (-1.0, -1.0, 1.0, -1.0)    # -1.0: cost function | 1.0: fitness function
-    toolbox = base.Toolbox()
-    creator.create("FitnessMin", base.Fitness, weights=OBJ_DIR)
-    creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMin)
-    toolbox.register("evaluate", CostFunction, x, theta_x, discrete_indices, continuous_indices,
-                     mapping_scale, mapping_offset, feature_range, blackbox, probability_range,
-                     response_range, cf_label, lof_model, nbrs_gt, theta_gt, epsilon)
-    toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, theta_x, theta_N, similarity_vec)
-    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
-    toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
-    toolbox.register("select", tools.selNSGA2)
 
-    toolbox.pop_size = 200
-    toolbox.max_gen = 100
-    toolbox.mut_prob = 0.4
-
-    def run_ea(toolbox, stats=None, verbose=False):
-        pop = toolbox.population(n=toolbox.pop_size)
-        pop = toolbox.select(pop, len(pop))
-        return algorithms.eaMuPlusLambda(pop, toolbox, mu=toolbox.pop_size,
-                                         lambda_=toolbox.pop_size,
-                                         cxpb=1 - toolbox.mut_prob,
-                                         mutpb=toolbox.mut_prob,
-                                         stats=stats,
-                                         ngen=toolbox.max_gen,
-                                         verbose=verbose)
+    ## Creating toolbox
+    toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_DIR, x, theta_x, discrete_indices, continuous_indices,
+                           mapping_scale, mapping_offset, feature_range, blackbox, probability_range, response_range,
+                           cf_label, lof_model, nbrs_gt, theta_gt, epsilon, theta_N, similarity_vec)
 
 
+    ## Running EA
+    fronts, pop, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
 
-    results, logbook = run_ea(toolbox)
-    fronts = tools.emo.sortLogNondominated(results, len(results))
-    PlotParetoFronts(toolbox, fronts, objective_list=[0, 1])
-
-    CFs = ConstructCounterfactuals(fronts, mapping_scale, mapping_offset, discrete_indices)
-    if cf_label is None:
-        CFs_y = blackbox.predict(CFs)
-    else:
-        CFs_y = blackbox.predict(CFs)
-        CFs_prob = blackbox.predict_proba(CFs)
-
-    reference_point = CalculateReferencePoint(toolbox, fronts)
-    hyper_volume = hypervolume(results,reference_point)
+    ## Constructing counterfactuals
+    CFs, CFs_y, CFs_prob = ConstructCounterfactuals(fronts, mapping_scale, mapping_offset, discrete_indices, blackbox, cf_label)
 
     print('done')

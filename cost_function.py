@@ -33,4 +33,5 @@ def CostFunction(x, theta_x, discrete_indices, continuous_indices,
     ## Objective 6: connectedness
     # f6 = Connectedness(theta_cf, nbrs_gt, theta_gt)
 
+    # return f1, f2, f3, f5, f1*np.random.rand()
     return f1, f2, f3, f5
