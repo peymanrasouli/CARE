@@ -1,37 +1,37 @@
 import numpy as np
 from prediction_distance import PredictionDistance
-from gower_distance import GowerDistance
+from feature_distance import FeatureDistance
 from proximity import Proximity
 from sparsity import Sparsity
+from actionable_recourse import ActionableRecourse
 from connectedness import Connectedness
 
 def CostFunction(x, theta_x, discrete_indices, continuous_indices,
                  mapping_scale, mapping_offset, feature_range, blackbox,
                  probability_range, response_range, cf_label, lof_model,
-                 nbrs_gt, theta_gt, epsilon, theta_cf):
+                 hdbscan_model, theta_cf):
 
     ## Constructing the counterfactual instance
     theta_cf = np.asarray(theta_cf)
     cf = theta_cf * mapping_scale + mapping_offset
     cf[discrete_indices] = np.rint(cf[discrete_indices])
 
-    ## Objective 1: opposite outcome
+    ## Objective 1: Prediction Distance
     f1 = PredictionDistance(cf, blackbox, probability_range, response_range, cf_label)
 
-    ## Objective 2: distnace
-    f2 = GowerDistance(x, cf, feature_range, discrete_indices, continuous_indices)
+    ## Objective 2: Feature Distance
+    f2 = FeatureDistance(x, cf, feature_range, discrete_indices, continuous_indices)
 
-    ## Objective 3: proximity
+    ## Objective 3: Proximity
     f3 = Proximity(theta_cf, lof_model)
 
-    ## Objective 4: actionable
+    ## Objective 4: Actionable Recourse
     # f4 = 0
 
-    ## Objective 5: sparsity
+    ## Objective 5: Sparsity
     f5 = Sparsity(theta_x, theta_cf)
 
-    ## Objective 6: connectedness
-    # f6 = Connectedness(theta_cf, nbrs_gt, theta_gt)
+    ## Objective 6: Connectedness
+    f6 = Connectedness(theta_cf, hdbscan_model)
 
-    # return f1, f2, f3, f5, f1*np.random.rand()
-    return f1, f2, f3, f5
+    return f1, f2, f3, f5, f6

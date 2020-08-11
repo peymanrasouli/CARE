@@ -160,10 +160,10 @@ def PrepareAdult(dataset_path, dataset_name):
     df_X = df.loc[:, df.columns!=class_name]
     df_y = df.loc[:, class_name]
 
-    discrete_features = ['work-class', 'education', 'marital-status', 'occupation', 'relationship', 'race',
+    discrete_features = ['work-class', 'education','education-num', 'marital-status', 'occupation', 'relationship', 'race',
                          'sex', 'native-country']
     discrete_indices = [df_X.columns.get_loc(f) for f in discrete_features]
-    continuous_features = ['age', 'fnlwgt', 'education-num', 'capital-gain', 'capital-loss', 'hours-per-week']
+    continuous_features = ['age', 'fnlwgt', 'capital-gain', 'capital-loss', 'hours-per-week']
     continuous_indices = [df_X.columns.get_loc(f) for f in continuous_features]
 
     ## Encoding features

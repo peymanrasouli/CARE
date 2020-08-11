@@ -1,6 +1,6 @@
 import numpy as np
 
-def GowerDistance(x, cf, feature_range, discrete_indices, continuous_indices):
+def FeatureDistance(x, cf, feature_range, discrete_indices, continuous_indices):
     distance = []
     if continuous_indices is not None:
         for j in continuous_indices:

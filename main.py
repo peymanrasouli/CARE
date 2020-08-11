@@ -61,11 +61,11 @@ def main():
                 print('\n')
 
                 ## Generating counterfactuals using MOCF
-                ind = 0
+                ind = 131
                 x = X_test[ind]
                 x_label = blackbox.predict(x.reshape(1, -1))
                 cf_label = int(1 - x_label)      # Counterfactual label
-                probability_range = [0.7, 1]     # Desired probability range
+                probability_range = [0.6, 1]     # Desired probability range
                 output = MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=probability_range, cf_label=cf_label)
 
             ## Regression
