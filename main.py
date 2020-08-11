@@ -17,9 +17,9 @@ def main():
 
     ## Defining the list of data sets
     datsets_list = {
-        # 'breast_cancer': ('breast-cancer.csv', PrepareBreastCancer),
+        'breast_cancer': ('breast-cancer.csv', PrepareBreastCancer),
         # 'credit_card_default': ('credit-card-default.csv', PrepareCreditCardDefault),
-        'adult': ('adult.csv', PrepareAdult),
+        # 'adult': ('adult.csv', PrepareAdult),
         # 'boston_house_prices': ('boston-house-prices.csv', PrepareBostonHousePrices)
     }
 
@@ -61,7 +61,7 @@ def main():
                 print('\n')
 
                 ## Generating counterfactuals using MOCF
-                ind = 131
+                ind = 0
                 x = X_test[ind]
                 x_label = blackbox.predict(x.reshape(1, -1))
                 cf_label = int(1 - x_label)      # Counterfactual label
