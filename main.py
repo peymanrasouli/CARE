@@ -18,8 +18,8 @@ def main():
     ## Defining the list of data sets
     datsets_list = {
         # 'breast-cancer': ('breast-cancer.csv', PrepareBreastCancer),
-        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault),
-        'adult': ('adult.csv', PrepareAdult),
+        'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault),
+        # 'adult': ('adult.csv', PrepareAdult),
         # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices)
     }
 

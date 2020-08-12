@@ -25,10 +25,9 @@ def Initialization(bound_low, bound_up, size, theta_x, theta_N, similarity_vec):
     elif method == 'random':
         return list(np.random.uniform(bound_low, bound_up, size))
 
-def ConstructCounterfactuals(fronts, mapping_scale, mapping_offset, discrete_indices, blackbox, cf_label):
+def ConstructCounterfactuals(fronts, mapping_scale, mapping_offset, blackbox, cf_label):
     P = np.concatenate(fronts)
-    CFs = P * mapping_scale + mapping_offset
-    CFs[:,discrete_indices] = np.rint(CFs[:,discrete_indices])
+    CFs = (P * mapping_scale + mapping_offset).astype(int)
 
     if cf_label is None:
         CFs_prob = None
@@ -52,13 +51,13 @@ def PlotParetoFronts(toolbox, fronts, objective_list):
 
 def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
                  mapping_scale, mapping_offset, feature_range, blackbox, probability_range,
-                 response_range, cf_label, theta_N, similarity_vec, lof_model, hdbscan_model, actions):
+                 response_range, cf_label, theta_N, similarity_vec, lof_model, hdbscan_model,  actions_op, actions_wt):
     toolbox = base.Toolbox()
     creator.create("FitnessMulti", base.Fitness, weights=OBJ_W)
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
     toolbox.register("evaluate", CostFunction, x, theta_x, discrete_indices, continuous_indices,
                      mapping_scale, mapping_offset, feature_range, blackbox, probability_range,
-                     response_range, cf_label, lof_model, hdbscan_model, actions)
+                     response_range, cf_label, lof_model, hdbscan_model,  actions_op, actions_wt)
     toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, theta_x, theta_N, similarity_vec)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -145,55 +144,63 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
     similarity_vec = [0.1,0.2,0.7]
 
     ## Creating local outlier factor model
-    lof_model = LocalOutlierFactor(n_neighbors=20, novelty=True)
+    lof_model = LocalOutlierFactor(n_neighbors=1, novelty=True)
     lof_model.fit(theta_gt)
 
     ## Creating hdbscan clustering model
     dist = pairwise_distances(theta_gt, metric='minkowski')
     dist[np.where(dist==0)] = np.inf
     epsilon = np.max(np.min(dist,axis=0))
-    hdbscan_model = hdbscan.HDBSCAN(min_samples=20, cluster_selection_epsilon=float(epsilon),
+    hdbscan_model = hdbscan.HDBSCAN(min_samples=2, cluster_selection_epsilon=float(epsilon),
                                     metric='minkowski', p=2, prediction_data=True).fit(theta_gt)
 
     ## Actionable operation vector
     if dataset['name'] == 'breast-cancer':
         desired_actions = {
-            'age': np.greater_equal,
-            'tumor-size': np.greater_equal,
-            'inv-node': np.less_equal,
-            'breast': np.equal,
+            'age': (np.greater_equal, 5),
+            'tumor-size': (np.greater_equal,8),
+            'inv-node': (np.less_equal, 3),
+            'breast': (np.equal, 1),
         }
-        actions = [[np.greater_equal, np.less_equal]] * len(x)
+        actions_op = [0] * len(x)
+        actions_wt = [0] * len(x)
         for a in desired_actions:
             index = dataset['feature_names'].index(a)
-            actions[index] = desired_actions[a]
+            actions_op[index] = desired_actions[a][0]
+            actions_wt[index] = desired_actions[a][1]
+
 
     elif dataset['name'] == 'credit-card-default':
         desired_actions = {
-            'SEX': np.equal,
-            'EDUCATION': np.greater_equal,
-            'MARRIAGE': np.equal,
-            'AGE': np.greater_equal
+            'SEX': (np.equal, 10),
+            'EDUCATION': (np.greater_equal, 3),
+            'MARRIAGE': (np.equal, 8),
+            'AGE': (np.greater_equal, 5)
         }
-        actions = [[np.greater_equal, np.less_equal]] * len(x)
+        actions_op = [0] * len(x)
+        actions_wt = [0] * len(x)
         for a in desired_actions:
             index = dataset['feature_names'].index(a)
-            actions[index] = desired_actions[a]
+            actions_op[index] = desired_actions[a][0]
+            actions_wt[index] = desired_actions[a][1]
+
 
     elif dataset['name'] == 'adult':
         desired_actions = {
-            'education': np.greater_equal,
-            'marital-status': np.equal,
-            'race': np.equal,
-            'sex': np.equal,
-            'native-country': np.equal,
-            'age': np.greater_equal
-
+            'education': (np.greater_equal, 5),
+            'marital-status': (np.equal, 8),
+            'race': (np.equal, 10),
+            'sex': (np.equal, 10),
+            'native-country': (np.equal, 7),
+            'age': (np.greater_equal, 5),
+            'capital-gain': (np.equal, 10)
         }
-        actions = [[np.greater_equal, np.less_equal]] * len(x)
+        actions_op = [0] * len(x)
+        actions_wt = [0] * len(x)
         for a in desired_actions:
             index = dataset['feature_names'].index(a)
-            actions[index] = desired_actions[a]
+            actions_op[index] = desired_actions[a][0]
+            actions_wt[index] = desired_actions[a][1]
 
     ## n-Closest ground truth counterfactual in the training data
     n = 5
@@ -205,11 +212,11 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
               blackbox.predict_proba(gt[closest_ind[i]].reshape(1,-1)),
               'cost:',CostFunction(x, theta_x, discrete_indices, continuous_indices,
               mapping_scale, mapping_offset, feature_range, blackbox, probability_range,
-              response_range, cf_label, lof_model, hdbscan_model, actions, theta_cf))
+              response_range, cf_label, lof_model, hdbscan_model, actions_op, actions_wt, theta_cf))
 
     ## Parameter setting
     NDIM = len(x)
-    NOBJ = 5
+    NOBJ = 6
     NGEN = 100
     CXPB = 0.5
     MUTPB = 0.2
@@ -230,12 +237,13 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
     ## Creating toolbox
     toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
                            mapping_scale, mapping_offset, feature_range, blackbox, probability_range, response_range,
-                           cf_label, theta_N, similarity_vec, lof_model, hdbscan_model, actions)
+                           cf_label, theta_N, similarity_vec, lof_model, hdbscan_model, actions_op, actions_wt)
 
     ## Running EA
     fronts, pop, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
 
     ## Constructing counterfactuals
-    CFs, CFs_y, CFs_prob = ConstructCounterfactuals(fronts, mapping_scale, mapping_offset, discrete_indices, blackbox, cf_label)
+    CFs, CFs_y, CFs_prob = ConstructCounterfactuals(fronts, mapping_scale, mapping_offset, blackbox, cf_label)
 
     print('done')
+
