@@ -1,5 +1,6 @@
 import array
 import numpy as np
+import pandas as pd
 from math import *
 from deap import algorithms, base, creator, tools
 from deap.benchmarks.tools import hypervolume
@@ -25,19 +26,6 @@ def Initialization(bound_low, bound_up, size, theta_x, theta_N, similarity_vec):
     elif method == 'random':
         return list(np.random.uniform(bound_low, bound_up, size))
 
-def ConstructCounterfactuals(fronts, mapping_scale, mapping_offset, blackbox, cf_label):
-    P = np.concatenate(fronts)
-    CFs = (P * mapping_scale + mapping_offset).astype(int)
-
-    if cf_label is None:
-        CFs_prob = None
-        CFs_y = blackbox.predict(CFs)
-        return CFs, CFs_y, CFs_prob
-    else:
-        CFs_y = blackbox.predict(CFs)
-        CFs_prob = blackbox.predict_proba(CFs)
-        return CFs, CFs_y, CFs_prob
-
 def PlotParetoFronts(toolbox, fronts, objective_list):
     n_fronts = len(fronts)
     fig, ax = plt.subplots(n_fronts, figsize=(8,8))
@@ -50,14 +38,14 @@ def PlotParetoFronts(toolbox, fronts, objective_list):
         ax.title.set_text('Front 1') if n_fronts == 1 else ax[i].title.set_text('Front '+str(i+1))
 
 def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
-                 mapping_scale, mapping_offset, feature_range, blackbox, probability_range,
-                 response_range, cf_label, theta_N, similarity_vec, lof_model, hdbscan_model,  actions_op, actions_wt):
+                 mapping_scale, mapping_offset, feature_range, blackbox, probability_range, response_range,
+                 cf_label, theta_N, similarity_vec, lof_model, hdbscan_model, actions_o, actions_w):
     toolbox = base.Toolbox()
     creator.create("FitnessMulti", base.Fitness, weights=OBJ_W)
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
-    toolbox.register("evaluate", CostFunction, x, theta_x, discrete_indices, continuous_indices,
+    toolbox.register("evaluate", CostFunction, x, discrete_indices, continuous_indices,
                      mapping_scale, mapping_offset, feature_range, blackbox, probability_range,
-                     response_range, cf_label, lof_model, hdbscan_model,  actions_op, actions_wt)
+                     response_range, cf_label, lof_model, hdbscan_model,  actions_o, actions_w)
     toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, theta_x, theta_N, similarity_vec)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -114,6 +102,48 @@ def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
     fronts = tools.emo.sortLogNondominated(pop, MU)
     return fronts, pop, record, logbook
 
+def ConstructCounterfactuals(toolbox, fronts, dataset, mapping_scale, mapping_offset, blackbox, cf_label, priority):
+
+    ## Constructing counterfactuals
+    pop = []
+    evaluation = []
+    for f in fronts:
+        for ind in f:
+            pop.append(np.asarray(ind))
+            evaluation.append(np.asarray(toolbox.evaluate(ind)))
+    pop = np.asarray(pop)
+    evaluation = np.asarray(evaluation)
+    solutions = (pop * mapping_scale + mapping_offset).astype(int)
+
+    cfs = pd.DataFrame(data=solutions, columns=dataset['feature_names'])
+    cfs_eval = pd.DataFrame(data=evaluation, columns=['Prediction', 'Distance', 'Proximity',
+                                                      'Actionable', 'Sparsity', 'Connectedness'])
+
+    ## Applying compulsory conditions
+    drop_indices = cfs_eval[(cfs_eval['Prediction'] > 0.0) | (cfs_eval['Proximity'] == -1) |
+                            (cfs_eval['Connectedness'] == 0)].index
+    cfs.drop(drop_indices, inplace=True)
+    cfs_eval.drop(drop_indices, inplace=True)
+
+    ## Sorting counterfactuals based on priority
+    sort_indices = cfs_eval.sort_values(by=list(priority.keys()), ascending=list(priority.values())).index
+    cfs = cfs.reindex(sort_indices)
+    cfs_eval = cfs_eval.reindex(sort_indices)
+
+    ## Dropping duplicate counterfactuals
+    cfs = cfs.drop_duplicates()
+    cfs_eval = cfs_eval.reindex(cfs.index)
+
+    ## Predicting counterfactuals
+    if cf_label is None:
+        cfs_prob = None
+        cfs_y = blackbox.predict(cfs)
+        return cfs, cfs_y, cfs_prob, cfs_eval
+    else:
+        cfs_y = blackbox.predict(cfs)
+        cfs_prob = blackbox.predict_proba(cfs)
+        return cfs, cfs_y, cfs_prob, cfs_eval
+
 def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, response_range=None, cf_label=None):
 
     ## Reading dataset information
@@ -162,12 +192,12 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
             'inv-node': (np.less_equal, 3),
             'breast': (np.equal, 1),
         }
-        actions_op = [0] * len(x)
-        actions_wt = [0] * len(x)
+        actions_o = [0] * len(x)
+        actions_w = [0] * len(x)
         for a in desired_actions:
             index = dataset['feature_names'].index(a)
-            actions_op[index] = desired_actions[a][0]
-            actions_wt[index] = desired_actions[a][1]
+            actions_o[index] = desired_actions[a][0]
+            actions_w[index] = desired_actions[a][1]
 
 
     elif dataset['name'] == 'credit-card-default':
@@ -177,12 +207,12 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
             'MARRIAGE': (np.equal, 8),
             'AGE': (np.greater_equal, 5)
         }
-        actions_op = [0] * len(x)
-        actions_wt = [0] * len(x)
+        actions_o = [0] * len(x)
+        actions_w = [0] * len(x)
         for a in desired_actions:
             index = dataset['feature_names'].index(a)
-            actions_op[index] = desired_actions[a][0]
-            actions_wt[index] = desired_actions[a][1]
+            actions_o[index] = desired_actions[a][0]
+            actions_w[index] = desired_actions[a][1]
 
 
     elif dataset['name'] == 'adult':
@@ -195,12 +225,12 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
             'age': (np.greater_equal, 5),
             'capital-gain': (np.equal, 10)
         }
-        actions_op = [0] * len(x)
-        actions_wt = [0] * len(x)
+        actions_o = [0] * len(x)
+        actions_w = [0] * len(x)
         for a in desired_actions:
             index = dataset['feature_names'].index(a)
-            actions_op[index] = desired_actions[a][0]
-            actions_wt[index] = desired_actions[a][1]
+            actions_o[index] = desired_actions[a][0]
+            actions_w[index] = desired_actions[a][1]
 
     ## n-Closest ground truth counterfactual in the training data
     n = 5
@@ -210,9 +240,10 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
         theta_cf = (gt[closest_ind[i]] - mapping_offset) / mapping_scale
         print('instnace:', list(gt[closest_ind[i]]), 'probability:',
               blackbox.predict_proba(gt[closest_ind[i]].reshape(1,-1)),
-              'cost:',CostFunction(x, theta_x, discrete_indices, continuous_indices,
-              mapping_scale, mapping_offset, feature_range, blackbox, probability_range,
-              response_range, cf_label, lof_model, hdbscan_model, actions_op, actions_wt, theta_cf))
+              'cost:',CostFunction(x, discrete_indices, continuous_indices,
+              mapping_scale, mapping_offset, feature_range, blackbox,
+              probability_range, response_range, cf_label, lof_model,
+              hdbscan_model, actions_o, actions_w, theta_cf))
 
     ## Parameter setting
     NDIM = len(x)
@@ -237,13 +268,23 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
     ## Creating toolbox
     toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
                            mapping_scale, mapping_offset, feature_range, blackbox, probability_range, response_range,
-                           cf_label, theta_N, similarity_vec, lof_model, hdbscan_model, actions_op, actions_wt)
+                           cf_label, theta_N, similarity_vec, lof_model, hdbscan_model, actions_o, actions_w)
 
     ## Running EA
     fronts, pop, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
 
     ## Constructing counterfactuals
-    CFs, CFs_y, CFs_prob = ConstructCounterfactuals(fronts, mapping_scale, mapping_offset, blackbox, cf_label)
+    ## 1: ascending order | 0: descending order
+    priority = {
+        'Distance': 1,
+        'Sparsity': 1,
+        'Actionable': 1,
+        'Connectedness': 0,
+        'Proximity': 0,
+        'Prediction': 1,
+        }
+    cfs, cfs_y, cfs_prob, cfs_eval = ConstructCounterfactuals(toolbox, fronts, dataset, mapping_scale,
+                                                              mapping_offset, blackbox, cf_label, priority)
 
     print('done')
 

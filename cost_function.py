@@ -6,10 +6,9 @@ from sparsity import Sparsity
 from actionable_recourse import ActionableRecourse
 from connectedness import Connectedness
 
-def CostFunction(x, theta_x, discrete_indices, continuous_indices,
-                 mapping_scale, mapping_offset, feature_range, blackbox,
-                 probability_range, response_range, cf_label, lof_model,
-                 hdbscan_model, actions_op, actions_wt, theta_cf):
+def CostFunction(x, discrete_indices, continuous_indices, mapping_scale, mapping_offset,
+                 feature_range, blackbox, probability_range, response_range, cf_label,
+                 lof_model, hdbscan_model, actions_o, actions_w, theta_cf):
 
     ## Constructing the counterfactual instance
     theta_cf = np.asarray(theta_cf)
@@ -25,7 +24,7 @@ def CostFunction(x, theta_x, discrete_indices, continuous_indices,
     f3 = Proximity(theta_cf, lof_model)
 
     ## Objective 4: Actionable Recourse
-    f4 = ActionableRecourse(x, cf, actions_op, actions_wt)
+    f4 = ActionableRecourse(x, cf, actions_o, actions_w)
 
     ## Objective 5: Sparsity
     f5 = Sparsity(x, cf)
