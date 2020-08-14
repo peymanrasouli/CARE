@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 from math import *
 from deap import algorithms, base, creator, tools
-from deap.benchmarks.tools import hypervolume, igd
-from deap.tools._hypervolume import hv
+from deap.benchmarks.tools import convergence, diversity, hypervolume, igd
+from pymoo.factory import get_performance_indicator
 from cost_function import CostFunction, FeatureDistance
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
@@ -111,12 +111,14 @@ def ConstructCounterfactuals(toolbox, fronts, dataset, mapping_scale, mapping_of
     solutions = (pop * mapping_scale + mapping_offset).astype(int)
 
     cfs = pd.DataFrame(data=solutions, columns=dataset['feature_names'])
+    label = blackbox.predict(cfs)
+    evaluation = np.c_[evaluation,label]
     cfs_eval = pd.DataFrame(data=evaluation, columns=['Prediction', 'Distance', 'Proximity',
-                                                      'Actionable', 'Sparsity', 'Connectedness'])
+                                                      'Actionable', 'Sparsity', 'Connectedness', 'Label'])
 
     ## Applying compulsory conditions
-    drop_indices = cfs_eval[(cfs_eval['Prediction'] > 0.0) | (cfs_eval['Proximity'] == -1) |
-                            (cfs_eval['Connectedness'] == 0)].index
+    drop_indices = cfs_eval[(cfs_eval['Prediction'] > 0.1) | (cfs_eval['Proximity'] == -1) |
+                            (cfs_eval['Connectedness'] == 0) |  (cfs_eval['Label'] != cf_label)].index
     cfs.drop(drop_indices, inplace=True)
     cfs_eval.drop(drop_indices, inplace=True)
 
@@ -268,8 +270,12 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
     ## Running EA
     fronts, pop, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
 
-    ## Constructing counterfactuals
-    ## 1: ascending order | 0: descending order
+    print('done')
+
+
+    ################## Decision making techniques ######################
+
+    ## Decision making using user-defined priority
     priority = {
         'Distance': 1,
         'Sparsity': 1,
@@ -277,9 +283,24 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
         'Connectedness': 0,
         'Proximity': 0,
         'Prediction': 1,
+        'Label': 1
         }
-    cfs, cfs_y, cfs_prob, cfs_eval = ConstructCounterfactuals(toolbox, fronts, dataset, mapping_scale,
-                                                              mapping_offset, blackbox, cf_label, priority)
+    cfs, cfs_y, cfs_prob, cfs_eval = ConstructCounterfactuals(toolbox, fronts, dataset,
+                                                              mapping_scale, mapping_offset,
+                                                              blackbox, cf_label, priority)
+
+    ## Decision making using Pseudo-Weights
+
+
+
+    ## Decision making using High Trade-Off Solutions
+
+
+
+
+
+
+    ############### Benchmarks and Evaluations ####################
 
     ## Calculating Hypervolume
     pops = logbook.select('pop')
@@ -287,12 +308,8 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
     ref = np.max([np.max(wobjs, axis=0) for wobjs in pops_obj], axis=0) + 1
     hypervols = [hypervolume(pop, ref) for pop in pops]
     plt.plot(hypervols)
-    plt.xlabel('Iterations (t)')
+    plt.xlabel('Iterations')
     plt.ylabel('Hypervolume')
 
-    ## Calculating Inverted Generational Distance (IGD)
-    pop_fit = np.array([ind.fitness.values for ind in pop])
-    print(igd(pop_fit, fronts))
 
-    print('done')
 

@@ -25,8 +25,8 @@ def main():
 
     ## Defining the list of black-boxes
     blackbox_list = {
-        'lg': LogisticRegression,
-        # 'gt': GradientBoostingClassifier,
+        # 'lg': LogisticRegression,
+        'gt': GradientBoostingClassifier,
         # 'nn': MLPClassifier,
         # 'rfr': RandomForestRegressor
         # 'nnr': MLPRegressor
@@ -65,7 +65,7 @@ def main():
                 x = X_test[ind]
                 x_label = blackbox.predict(x.reshape(1, -1))
                 cf_label = int(1 - x_label)      # Counterfactual label
-                probability_range = [0.5, 1]     # Desired probability range
+                probability_range = [0.6, 1]     # Desired probability range
                 output = MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=probability_range, cf_label=cf_label)
 
             ## Regression
