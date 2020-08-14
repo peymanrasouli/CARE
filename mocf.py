@@ -312,4 +312,8 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
     plt.ylabel('Hypervolume')
 
 
+    ## Calculating GD, IGD
 
+
+
+    ## Calculating Convergence
