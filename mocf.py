@@ -3,18 +3,13 @@ import numpy as np
 import pandas as pd
 from math import *
 from deap import algorithms, base, creator, tools
-from deap.benchmarks.tools import hypervolume
+from deap.benchmarks.tools import hypervolume, igd
+from deap.tools._hypervolume import hv
 from cost_function import CostFunction, FeatureDistance
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import pairwise_distances
 import hdbscan
-
-def CalculateReferencePoint(toolbox, fronts):
-    fronts = np.concatenate(fronts)
-    obj_vals = [toolbox.evaluate(ind) for ind in fronts]
-    reference_point = np.max(obj_vals, axis=0)
-    return reference_point
 
 def Initialization(bound_low, bound_up, size, theta_x, theta_N, similarity_vec):
     method = np.random.choice(['x','neighbor','random'], size=1, replace=False, p=similarity_vec)
@@ -78,7 +73,7 @@ def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
 
     # Compile statistics about the population
     record = stats.compile(pop)
-    logbook.record(gen=0, evals=len(invalid_ind), **record)
+    logbook.record(pop=pop, gen=0, evals=len(invalid_ind), **record)
     print(logbook.stream)
 
     # Begin the generational process
@@ -96,7 +91,7 @@ def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
 
         # Compile statistics about the new population
         record = stats.compile(pop)
-        logbook.record(gen=gen, evals=len(invalid_ind), **record)
+        logbook.record(pop=pop, gen=gen, evals=len(invalid_ind), **record)
         print(logbook.stream)
 
     fronts = tools.emo.sortLogNondominated(pop, MU)
@@ -285,6 +280,19 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
         }
     cfs, cfs_y, cfs_prob, cfs_eval = ConstructCounterfactuals(toolbox, fronts, dataset, mapping_scale,
                                                               mapping_offset, blackbox, cf_label, priority)
+
+    ## Calculating Hypervolume
+    pops = logbook.select('pop')
+    pops_obj = [np.array([ind.fitness.wvalues for ind in pop]) * -1 for pop in pops]
+    ref = np.max([np.max(wobjs, axis=0) for wobjs in pops_obj], axis=0) + 1
+    hypervols = [hypervolume(pop, ref) for pop in pops]
+    plt.plot(hypervols)
+    plt.xlabel('Iterations (t)')
+    plt.ylabel('Hypervolume')
+
+    ## Calculating Inverted Generational Distance (IGD)
+    pop_fit = np.array([ind.fitness.values for ind in pop])
+    print(igd(pop_fit, fronts))
 
     print('done')
 
