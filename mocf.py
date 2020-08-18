@@ -97,7 +97,14 @@ def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
     fronts = tools.emo.sortLogNondominated(pop, MU)
     return fronts, pop, record, logbook
 
-def ConstructCounterfactuals(toolbox, fronts, dataset, mapping_scale, mapping_offset, blackbox, cf_label, priority):
+def FeatureDecoder(df, discrete_features, feature_encoder):
+    df_de = df.copy(deep=True)
+    for f in discrete_features:
+        fe = feature_encoder[f]
+        df_de[f] = fe.inverse_transform(df_de[f])
+    return df_de
+
+def ConstructCounterfactuals(x, toolbox, fronts, dataset, mapping_scale, mapping_offset, blackbox, cf_label, priority):
 
     ## Constructing counterfactuals
     pop = []
@@ -131,15 +138,18 @@ def ConstructCounterfactuals(toolbox, fronts, dataset, mapping_scale, mapping_of
     cfs = cfs.drop_duplicates()
     cfs_eval = cfs_eval.reindex(cfs.index)
 
+    ## Decoding features
+    cfs_decoded = FeatureDecoder(cfs, dataset['discrete_features'], dataset['feature_encoder'])
+
     ## Predicting counterfactuals
     if cf_label is None:
         cfs_prob = None
         cfs_y = blackbox.predict(cfs)
-        return cfs, cfs_y, cfs_prob, cfs_eval
+        return cfs, cfs_decoded, cfs_y, cfs_prob, cfs_eval
     else:
         cfs_y = blackbox.predict(cfs)
         cfs_prob = blackbox.predict_proba(cfs)
-        return cfs, cfs_y, cfs_prob, cfs_eval
+        return cfs, cfs_decoded, cfs_y, cfs_prob, cfs_eval
 
 def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, response_range=None, cf_label=None):
 
@@ -245,7 +255,7 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
     ## Parameter setting
     NDIM = len(x)
     NOBJ = 6
-    NGEN = 100
+    NGEN = 5
     CXPB = 0.5
     MUTPB = 0.2
     P = 8
@@ -270,7 +280,7 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
     ## Running EA
     fronts, pop, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
 
-    print('done')
+
 
 
     ################## Decision making techniques ######################
@@ -285,10 +295,12 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
         'Prediction': 1,
         'Label': 1
         }
-    cfs, cfs_y, cfs_prob, cfs_eval = ConstructCounterfactuals(toolbox, fronts, dataset,
-                                                              mapping_scale, mapping_offset,
-                                                              blackbox, cf_label, priority)
-
+    cfs, cfs_decoded, cfs_y, cfs_prob, cfs_eval = ConstructCounterfactuals(x, toolbox, fronts, dataset, mapping_scale,
+                                                                           mapping_offset, blackbox, cf_label, priority)
+    x_df = pd.DataFrame(data=x.reshape(1,-1), columns=dataset['feature_names'])
+    x_decoded = FeatureDecoder(x_df, dataset['discrete_features'], dataset['feature_encoder'])
+    
+    print('done')
     ## Decision making using Pseudo-Weights
 
 
