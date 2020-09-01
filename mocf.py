@@ -33,13 +33,13 @@ def PlotParetoFronts(toolbox, fronts, objective_list):
         ax.title.set_text('Front 1') if n_fronts == 1 else ax[i].title.set_text('Front '+str(i+1))
 
 def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
-                 mapping_scale, mapping_offset, feature_range, blackbox, probability_range, response_range,
+                 mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh, response_range,
                  cf_label, theta_N, similarity_vec, lof_model, hdbscan_model, actions_o, actions_w):
     toolbox = base.Toolbox()
     creator.create("FitnessMulti", base.Fitness, weights=OBJ_W)
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
     toolbox.register("evaluate", CostFunction, x, discrete_indices, continuous_indices,
-                     mapping_scale, mapping_offset, feature_range, blackbox, probability_range,
+                     mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh,
                      response_range, cf_label, lof_model, hdbscan_model,  actions_o, actions_w)
     toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, theta_x, theta_N, similarity_vec)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
@@ -119,12 +119,13 @@ def ConstructCounterfactuals(x, toolbox, fronts, dataset, mapping_scale, mapping
 
     cfs = pd.DataFrame(data=solutions, columns=dataset['feature_names'])
     label = blackbox.predict(cfs)
-    evaluation = np.c_[evaluation,label]
-    cfs_eval = pd.DataFrame(data=evaluation, columns=['Prediction', 'Distance', 'Proximity',
-                                                      'Actionable', 'Sparsity', 'Connectedness', 'Label'])
+    prob = blackbox.predict_proba(cfs)[:,cf_label]
+    evaluation = np.c_[evaluation,label,prob]
+    cfs_eval = pd.DataFrame(data=evaluation, columns=['Prediction', 'Distance', 'Proximity', 'Actionable',
+                                                      'Sparsity', 'Connectedness', 'Label', 'Probability'])
 
     ## Applying compulsory conditions
-    drop_indices = cfs_eval[(cfs_eval['Prediction'] > 0.1) | (cfs_eval['Proximity'] == -1) |
+    drop_indices = cfs_eval[(cfs_eval['Prediction'] > 0) | (cfs_eval['Proximity'] == -1) |
                             (cfs_eval['Connectedness'] == 0) |  (cfs_eval['Label'] != cf_label)].index
     cfs.drop(drop_indices, inplace=True)
     cfs_eval.drop(drop_indices, inplace=True)
@@ -151,7 +152,7 @@ def ConstructCounterfactuals(x, toolbox, fronts, dataset, mapping_scale, mapping
         cfs_prob = blackbox.predict_proba(cfs)
         return cfs, cfs_decoded, cfs_y, cfs_prob, cfs_eval
 
-def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, response_range=None, cf_label=None):
+def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, response_range=None, cf_label=None):
 
     ## Reading dataset information
     discrete_indices = dataset['discrete_indices']
@@ -249,13 +250,13 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
               blackbox.predict_proba(gt[closest_ind[i]].reshape(1,-1)),
               'cost:',CostFunction(x, discrete_indices, continuous_indices,
               mapping_scale, mapping_offset, feature_range, blackbox,
-              probability_range, response_range, cf_label, lof_model,
+              probability_thresh, response_range, cf_label, lof_model,
               hdbscan_model, actions_o, actions_w, theta_cf))
 
     ## Parameter setting
     NDIM = len(x)
     NOBJ = 6
-    NGEN = 5
+    NGEN = 100
     CXPB = 0.5
     MUTPB = 0.2
     P = 8
@@ -274,7 +275,7 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
 
     ## Creating toolbox
     toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
-                           mapping_scale, mapping_offset, feature_range, blackbox, probability_range, response_range,
+                           mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh, response_range,
                            cf_label, theta_N, similarity_vec, lof_model, hdbscan_model, actions_o, actions_w)
 
     ## Running EA
@@ -291,9 +292,7 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=None, respons
         'Sparsity': 1,
         'Actionable': 1,
         'Connectedness': 0,
-        'Proximity': 0,
-        'Prediction': 1,
-        'Label': 1
+        'Probability': 0
         }
     cfs, cfs_decoded, cfs_y, cfs_prob, cfs_eval = ConstructCounterfactuals(x, toolbox, fronts, dataset, mapping_scale,
                                                                            mapping_offset, blackbox, cf_label, priority)

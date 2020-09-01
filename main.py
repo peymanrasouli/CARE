@@ -65,8 +65,8 @@ def main():
                 x = X_test[ind]
                 x_label = blackbox.predict(x.reshape(1, -1))
                 cf_label = int(1 - x_label)      # Counterfactual label
-                probability_range = [0.6, 1]     # Desired probability range
-                output = MOCF(x, blackbox, dataset, X_train, Y_train, probability_range=probability_range, cf_label=cf_label)
+                probability_thresh = 0.5         # Desired probability threshold
+                output = MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=probability_thresh, cf_label=cf_label)
 
             ## Regression
             elif blackbox_name in ['rfr', 'nnr']:
