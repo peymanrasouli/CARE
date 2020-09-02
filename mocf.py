@@ -101,7 +101,8 @@ def FeatureDecoder(df, discrete_features, feature_encoder):
     df_de = df.copy(deep=True)
     for f in discrete_features:
         fe = feature_encoder[f]
-        df_de[f] = fe.inverse_transform(df_de[f])
+        decoded_data = fe.inverse_transform(df_de[f].to_numpy().reshape(-1, 1))
+        df_de[f] = decoded_data
     return df_de
 
 def ConstructCounterfactuals(x, toolbox, fronts, dataset, mapping_scale, mapping_offset, blackbox, cf_label, priority):

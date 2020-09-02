@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OrdinalEncoder, LabelEncoder
 
 ## Preparing Breast Cancer dataset
 def PrepareBreastCancer(dataset_path, dataset_name):
@@ -25,8 +25,9 @@ def PrepareBreastCancer(dataset_path, dataset_name):
     df_X_fe = df_X.copy(deep=True)
     feature_encoder = dict()
     for col in discrete_features:
-        fe = LabelEncoder()
-        df_X_fe[col] = fe.fit_transform(df_X_fe[col])
+        fe = OrdinalEncoder()
+        encoded_data = fe.fit_transform(df_X_fe[col].to_numpy().reshape(-1, 1))
+        df_X_fe[col] = pd.DataFrame(encoded_data)
         feature_encoder[col] = fe
 
     ## Encoding labels
@@ -96,8 +97,9 @@ def PrepareCreditCardDefault(dataset_path, dataset_name):
     df_X_fe = df_X.copy(deep=True)
     feature_encoder = dict()
     for col in discrete_features:
-        fe = LabelEncoder()
-        df_X_fe[col] = fe.fit_transform(df_X_fe[col])
+        fe = OrdinalEncoder()
+        encoded_data = fe.fit_transform(df_X_fe[col].to_numpy().reshape(-1, 1))
+        df_X_fe[col] = pd.DataFrame(encoded_data)
         feature_encoder[col] = fe
 
     ## Encoding labels
@@ -170,8 +172,9 @@ def PrepareAdult(dataset_path, dataset_name):
     df_X_fe = df_X.copy(deep=True)
     feature_encoder = dict()
     for col in discrete_features:
-        fe = LabelEncoder()
-        df_X_fe[col] = fe.fit_transform(df_X_fe[col])
+        fe = OrdinalEncoder()
+        encoded_data = fe.fit_transform(df_X_fe[col].to_numpy().reshape(-1, 1))
+        df_X_fe[col] = pd.DataFrame(encoded_data)
         feature_encoder[col] = fe
 
     ## Encoding labels
@@ -240,8 +243,9 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
     df_X_fe = df_X.copy(deep=True)
     feature_encoder = dict()
     for col in discrete_features:
-        fe = LabelEncoder()
-        df_X_fe[col] = fe.fit_transform(df_X_fe[col])
+        fe = OrdinalEncoder()
+        encoded_data = fe.fit_transform(df_X_fe[col].to_numpy().reshape(-1, 1))
+        df_X_fe[col] = pd.DataFrame(encoded_data)
         feature_encoder[col] = fe
 
     ## Extracting raw data and target
