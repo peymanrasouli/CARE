@@ -1,6 +1,15 @@
-import numpy as np
-
-def ActionableRecourse(x, cf, actions_o, actions_w):
-    status = [int(not(a(cf[f], x[f]))) if type(a) == np.ufunc else a for f, a in enumerate(actions_o)]
-    cost = sum(np.asarray(status) * np.asarray(actions_w))
-    return cost
+def ActionableRecourse(x, cf, actions):
+    cost = []
+    idx =  [i for i, e in enumerate(actions) if e != 'any']
+    for i in idx:
+        if actions[i] == 'fix':
+            cost.append(int(cf[i] != x[i]))
+        if actions[i] == 'increase':
+            cost.append(int(cf[i] < x[i]))
+        if actions[i] == 'decrease':
+            cost.append(int(cf[i] > x[i]))
+        elif type(actions[i]) == set:
+            cost.append(int(not(cf[i] in actions[i])))
+        elif type(actions[i]) == list:
+            cost.append(int(not(actions[i][0] <= cf[i] <= actions[i][1])))
+    return sum(cost)

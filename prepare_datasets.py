@@ -48,7 +48,7 @@ def PrepareBreastCancer(dataset_path, dataset_name):
     ## Indexing features
     feature_names = list(df_X.columns)
     feature_indices = {i: feature for i, feature in enumerate(feature_names)}
-    feature_ranges = {i: [min(X[:,i]),max(X[:,i])] for i in range(X.shape[1])}
+    feature_ranges = {feature_names[i]: [min(X[:,i]),max(X[:,i])] for i in range(X.shape[1])}
 
     ## Returning dataset information
     dataset = {
@@ -120,7 +120,7 @@ def PrepareCreditCardDefault(dataset_path, dataset_name):
     ## Indexing features
     feature_names = list(df_X.columns)
     feature_indices = {i: feature for i, feature in enumerate(feature_names)}
-    feature_ranges = {i: [min(X[:,i]),max(X[:,i])] for i in range(X.shape[1])}
+    feature_ranges = {feature_names[i]: [min(X[:,i]),max(X[:,i])] for i in range(X.shape[1])}
 
     ## Returning dataset information
     dataset = {
@@ -195,7 +195,7 @@ def PrepareAdult(dataset_path, dataset_name):
     ## Indexing features
     feature_names = list(df_X.columns)
     feature_indices = {i: feature for i, feature in enumerate(feature_names)}
-    feature_ranges = {i: [min(X[:,i]),max(X[:,i])] for i in range(X.shape[1])}
+    feature_ranges = {feature_names[i]: [min(X[:,i]),max(X[:,i])] for i in range(X.shape[1])}
 
     ## Returning dataset information
     dataset = {
@@ -258,7 +258,7 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
     ## Indexing features
     feature_names = list(df_X.columns)
     feature_indices = {i: feature for i, feature in enumerate(feature_names)}
-    feature_ranges = {i: [min(X[:,i]),max(X[:,i])] for i in range(X.shape[1])}
+    feature_ranges = {feature_names[i]: [min(X[:,i]),max(X[:,i])] for i in range(X.shape[1])}
 
     ## Returning dataset information
     dataset = {

@@ -34,13 +34,13 @@ def PlotParetoFronts(toolbox, fronts, objective_list):
 
 def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
                  mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh, response_range,
-                 cf_label, theta_N, similarity_vec, lof_model, hdbscan_model, actions_o, actions_w):
+                 cf_label, theta_N, similarity_vec, lof_model, hdbscan_model, actions):
     toolbox = base.Toolbox()
     creator.create("FitnessMulti", base.Fitness, weights=OBJ_W)
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
     toolbox.register("evaluate", CostFunction, x, discrete_indices, continuous_indices,
                      mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh,
-                     response_range, cf_label, lof_model, hdbscan_model,  actions_o, actions_w)
+                     response_range, cf_label, lof_model, hdbscan_model,  actions)
     toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, theta_x, theta_N, similarity_vec)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -194,52 +194,153 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, respon
                                     metric='minkowski', p=2, prediction_data=True).fit(theta_gt)
 
     ## Actionable operation vector
+    ## Discrete options = {'fix','any',{a set of possible changes]}
+    ## Continuous options = {'fix','any','increase','decrease',[a range of possible changes]}
+
+    # discrete_features = {'age': [0.0, 5.0],
+    #                      'menopause': [0.0, 2.0],
+    #                      'tumor-size': [0.0, 10.0],
+    #                      'inv-node': [0.0, 6.0],
+    #                      'node-caps': [0.0, 1.0],
+    #                      'deg-malig': [0.0, 2.0],
+    #                      'breast': [0.0, 1.0],
+    #                      'breast-quad': [0.0, 4.0],
+    #                      'irradiat': [0.0, 1.0]}
+    # continuous_features = None
+
     if dataset['name'] == 'breast-cancer':
         desired_actions = {
-            'age': (np.greater_equal, 5),
-            'tumor-size': (np.greater_equal,8),
-            'inv-node': (np.less_equal, 3),
-            'breast': (np.equal, 1),
+            'age':('fix'),
+            'menopause':({0,2}),
+            'tumor-size':({5,6,7}),
+            'inv-node':('any'),
+            'node-caps':('any'),
+            'deg-malig':('any'),
+            'breast':('any'),
+            'breast-quad':({3}),
+            'irradiat':('any')
         }
-        actions_o = [0] * len(x)
-        actions_w = [0] * len(x)
+        actions = [0] * len(x)
         for a in desired_actions:
             index = dataset['feature_names'].index(a)
-            actions_o[index] = desired_actions[a][0]
-            actions_w[index] = desired_actions[a][1]
+            actions[index] = desired_actions[a]
 
+        # discrete_features = {'SEX': [0.0, 1.0],
+        #                      'EDUCATION': [0.0, 6.0],
+        #                      'MARRIAGE': [0.0, 3.0],
+        #                      'PAY_0': [0.0, 10.0],
+        #                      'PAY_2': [0.0, 10.0],
+        #                      'PAY_3': [0.0, 10.0],
+        #                      'PAY_4': [0.0, 10.0],
+        #                      'PAY_5': [0.0, 9.0],
+        #                      'PAY_6': [0.0, 9.0]}
+        #
+        # continuous_features = {'LIMIT_BAL': [10000.0, 1000000.0],
+        #                         'AGE': [21.0, 79.0],
+        #                         'BILL_AMT1': [-165580.0, 964511.0],
+        #                         'BILL_AMT2': [-69777.0, 983931.0],
+        #                         'BILL_AMT3': [-157264.0, 1664089.0],
+        #                         'BILL_AMT4': [-170000.0, 891586.0],
+        #                         'BILL_AMT5': [-81334.0, 927171.0],
+        #                         'BILL_AMT6': [-339603.0, 961664.0],
+        #                         'PAY_AMT1': [0.0, 873552.0],
+        #                         'PAY_AMT2': [0.0, 1684259.0],
+        #                         'PAY_AMT3': [0.0, 896040.0],
+        #                         'PAY_AMT4': [0.0, 621000.0],
+        #                         'PAY_AMT5': [0.0, 426529.0],
+        #                         'PAY_AMT6': [0.0, 528666.0]}
 
     elif dataset['name'] == 'credit-card-default':
-        desired_actions = {
-            'SEX': (np.equal, 10),
-            'EDUCATION': (np.greater_equal, 3),
-            'MARRIAGE': (np.equal, 8),
-            'AGE': (np.greater_equal, 5)
-        }
-        actions_o = [0] * len(x)
-        actions_w = [0] * len(x)
+        desired_actions = {'LIMIT_BAL':('any'),
+                            'SEX':('fix'),
+                            'EDUCATION':('any'),
+                            'MARRIAGE':('fix'),
+                            'AGE':('increase'),
+                            'PAY_0':({0,2,3,4}),
+                            'PAY_2':('any'),
+                            'PAY_3':('any'),
+                            'PAY_4':('any'),
+                            'PAY_5':('any'),
+                            'PAY_6':('any'),
+                            'BILL_AMT1':('decrease'),
+                            'BILL_AMT2':('any'),
+                            'BILL_AMT3':('any'),
+                            'BILL_AMT4':([-10000,50000]),
+                            'BILL_AMT5':('any'),
+                            'BILL_AMT6':('any'),
+                            'PAY_AMT1':([0,400000]),
+                            'PAY_AMT2':('any'),
+                            'PAY_AMT3':('any'),
+                            'PAY_AMT4':('any'),
+                            'PAY_AMT5':('any'),
+                            'PAY_AMT6':('increase')
+                           }
+        actions = [0] * len(x)
         for a in desired_actions:
             index = dataset['feature_names'].index(a)
-            actions_o[index] = desired_actions[a][0]
-            actions_w[index] = desired_actions[a][1]
+            actions[index] = desired_actions[a]
 
+    # discrete_features = {'work-class': [0.0, 6.0],
+    #                     'education': [0.0, 15.0],
+    #                     'education-num': [0.0, 15.0],
+    #                     'marital-status': [0.0, 6.0],
+    #                     'occupation': [0.0, 13.0],
+    #                     'relationship': [0.0, 5.0],
+    #                     'race': [0.0, 4.0],
+    #                     'sex': [0.0, 1.0],
+    #                     'native-country': [0.0, 40.0]
+    #                    }
+    #
+    # continuous_features = {'age': [17.0, 90.0],
+    #                         'fnlwgt': [13769.0, 1484705.0],
+    #                         'capital-gain': [0.0, 99999.0],
+    #                         'capital-loss': [0.0, 4356.0],
+    #                         'hours-per-week': [1.0, 99.0],
+    #                        }
 
     elif dataset['name'] == 'adult':
-        desired_actions = {
-            'education': (np.greater_equal, 5),
-            'marital-status': (np.equal, 8),
-            'race': (np.equal, 10),
-            'sex': (np.equal, 10),
-            'native-country': (np.equal, 7),
-            'age': (np.greater_equal, 5),
-            'capital-gain': (np.equal, 10)
-        }
-        actions_o = [0] * len(x)
-        actions_w = [0] * len(x)
+        desired_actions = {'age': ('fix'),
+                            'work-class': ('any'),
+                            'fnlwgt': ('any'),
+                            'education': ('fix'),
+                            'education-num': ('fix'),
+                            'marital-status': ('fix'),
+                            'occupation': ('any'),
+                            'relationship': ('fix'),
+                            'race': ('fix'),
+                            'sex': ('fix'),
+                            'capital-gain': ('decrease'),
+                            'capital-loss': ('increase'),
+                            'hours-per-week': [40,50],
+                            'native-country': ('fix')
+                           }
+        actions = [0] * len(x)
         for a in desired_actions:
             index = dataset['feature_names'].index(a)
-            actions_o[index] = desired_actions[a][0]
-            actions_w[index] = desired_actions[a][1]
+            actions[index] = desired_actions[a]
+
+
+    # elif dataset['name'] == 'boston-house-prices':
+    #     desired_actions = {'age': ('fix'),
+    #                         'work-class': ('fix'),
+    #                         'fnlwgt': ('any'),
+    #                         'education': ('fix'),
+    #                         'education-num': ('fix'),
+    #                         'marital-status': ('fix'),
+    #                         'occupation': ('any'),
+    #                         'relationship': ({3,4}),
+    #                         'race': ('fix'),
+    #                         'sex': ('fix'),
+    #                         'capital-gain': ('increase'),
+    #                         'capital-loss': ('decrease'),
+    #                         'hours-per-week': [45,60],
+    #                         'native-country': ('fix')
+    #                        }
+    #     actions = [0] * len(x)
+    #     for a in desired_actions:
+    #         index = dataset['feature_names'].index(a)
+    #         actions[index] = desired_actions[a]
+
 
     ## n-Closest ground truth counterfactual in the training data
     n = 5
@@ -252,7 +353,7 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, respon
               'cost:',CostFunction(x, discrete_indices, continuous_indices,
               mapping_scale, mapping_offset, feature_range, blackbox,
               probability_thresh, response_range, cf_label, lof_model,
-              hdbscan_model, actions_o, actions_w, theta_cf))
+              hdbscan_model, actions, theta_cf))
 
     ## Parameter setting
     NDIM = len(x)
@@ -277,7 +378,7 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, respon
     ## Creating toolbox
     toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
                            mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh, response_range,
-                           cf_label, theta_N, similarity_vec, lof_model, hdbscan_model, actions_o, actions_w)
+                           cf_label, theta_N, similarity_vec, lof_model, hdbscan_model, actions)
 
     ## Running EA
     fronts, pop, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
