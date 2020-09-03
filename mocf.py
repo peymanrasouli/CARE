@@ -11,8 +11,8 @@ from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import pairwise_distances, mean_absolute_error
 import hdbscan
 
-def Initialization(bound_low, bound_up, size, theta_x, theta_N, similarity_vec):
-    method = np.random.choice(['x','neighbor','random'], size=1, replace=False, p=similarity_vec)
+def Initialization(bound_low, bound_up, size, theta_x, theta_N, probability_vec):
+    method = np.random.choice(['x','neighbor','random'], size=1, replace=False, p=probability_vec)
     if method == 'x':
         return list(theta_x)
     elif method == 'neighbor':
@@ -34,14 +34,14 @@ def PlotParetoFronts(toolbox, fronts, objective_list):
 
 def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
                  mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh, cf_label,
-                 cf_range, theta_N, similarity_vec, lof_model, hdbscan_model, actions):
+                 cf_range, theta_N, probability_vec, lof_model, hdbscan_model, actions):
     toolbox = base.Toolbox()
     creator.create("FitnessMulti", base.Fitness, weights=OBJ_W)
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
     toolbox.register("evaluate", CostFunction, x, discrete_indices, continuous_indices,
                      mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh,
                      cf_label, cf_range, lof_model, hdbscan_model,  actions)
-    toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, theta_x, theta_N, similarity_vec)
+    toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, theta_x, theta_N, probability_vec)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
@@ -105,7 +105,7 @@ def FeatureDecoder(df, discrete_features, feature_encoder):
         df_de[f] = decoded_data
     return df_de
 
-def ConstructCounterfactuals(x, toolbox, fronts, dataset, mapping_scale, mapping_offset, blackbox, cf_label, priority, discrete_indices):
+def ConstructCounterfactuals(x, toolbox, fronts, dataset, mapping_scale, mapping_offset, blackbox, cf_label, priority):
 
     ## Constructing counterfactuals
     pop = []
@@ -116,10 +116,9 @@ def ConstructCounterfactuals(x, toolbox, fronts, dataset, mapping_scale, mapping
             evaluation.append(np.asarray(toolbox.evaluate(ind)))
     pop = np.asarray(pop)
     evaluation = np.asarray(evaluation)
-    solutions = (pop * mapping_scale + mapping_offset)
-    solutions[:, discrete_indices] = solutions[:, discrete_indices].astype(int)
+    solutions = np.rint(pop * mapping_scale + mapping_offset)
 
-    cfs = pd.DataFrame(data=solutions, columns=dataset['feature_names'])
+    cfs = pd.DataFrame(data=solutions, columns=dataset['feature_names']).astype(int)
     if cf_label is None:
         response = blackbox.predict(cfs)
         evaluation = np.c_[evaluation, response]
@@ -197,7 +196,7 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
     ## Initialization
     distances, indices = nbrs_gt.kneighbors(theta_x.reshape(1,-1))
     theta_N = theta_gt[indices[0]].copy()
-    similarity_vec = [0.1,0.2,0.7]
+    probability_vec = [0.1,0.2,0.7]
 
     ## Creating local outlier factor model
     lof_model = LocalOutlierFactor(n_neighbors=1, novelty=True)
@@ -229,14 +228,14 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
 
     if dataset['name'] == 'breast-cancer':
         desired_actions = {
-            'age':('fix'),
-            'menopause':({0,2}),
-            'tumor-size':({5,6,7}),
+            'age':('any'),
+            'menopause':('any'),
+            'tumor-size':('any'),
             'inv-node':('any'),
             'node-caps':('any'),
             'deg-malig':('any'),
             'breast':('any'),
-            'breast-quad':({3}),
+            'breast-quad':('any'),
             'irradiat':('any')
         }
         actions = [0] * len(x)
@@ -395,7 +394,7 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
     ## Parameter setting
     NDIM = len(x)
     NOBJ = 6
-    NGEN = 100
+    NGEN = 50
     CXPB = 0.5
     MUTPB = 0.2
     P = 8
@@ -415,7 +414,7 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
     ## Creating toolbox
     toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
                            mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh, cf_label,
-                           cf_range, theta_N, similarity_vec, lof_model, hdbscan_model, actions)
+                           cf_range, theta_N, probability_vec, lof_model, hdbscan_model, actions)
 
     ## Running EA
     fronts, pop, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
@@ -433,13 +432,12 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
         'Connectedness': 0,
         }
     cfs, cfs_decoded, cfs_y, cfs_prob, cfs_eval = ConstructCounterfactuals(x, toolbox, fronts, dataset, mapping_scale,
-                                                                           mapping_offset, blackbox, cf_label, priority, discrete_indices)
-    x_df = pd.DataFrame(data=x.reshape(1,-1), columns=dataset['feature_names'])
+                                                                           mapping_offset, blackbox, cf_label, priority)
+    x_df = pd.DataFrame(data=x.reshape(1,-1), columns=dataset['feature_names']).astype(int)
     x_decoded = FeatureDecoder(x_df, dataset['discrete_features'], dataset['feature_encoder'])
 
     print('done')
     ## Decision making using Pseudo-Weights
-
 
 
     ## Decision making using High Trade-Off Solutions

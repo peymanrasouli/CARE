@@ -2,7 +2,7 @@ import numpy as np
 from mocf import MOCF
 from prepare_datasets import *
 from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestRegressor
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestRegressor, RandomForestClassifier
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import train_test_split
@@ -18,9 +18,9 @@ def main():
 
     ## Defining the list of data sets
     datsets_list = {
-        # 'breast-cancer': ('breast-cancer.csv', PrepareBreastCancer),
+        'breast-cancer': ('breast-cancer.csv', PrepareBreastCancer),
         # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault),
-        'adult': ('adult.csv', PrepareAdult),
+        # 'adult': ('adult.csv', PrepareAdult),
         # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices)
     }
 
@@ -28,10 +28,10 @@ def main():
     blackbox_list = {
         # 'lg': LogisticRegression,
         'gt': GradientBoostingClassifier,
-        # 'nn': MLPClassifier,
-        # 'dt': DecisionTreeRegressor
+        # 'rf': RandomForestClassifier,
+        # 'nn': MLPClassifier
+        # 'dtr': DecisionTreeRegressor,
         # 'rfr': RandomForestRegressor
-        # 'nnr': MLPRegressor
     }
 
     for dataset_kw in datsets_list:
@@ -50,7 +50,7 @@ def main():
             print('blackbox=', blackbox_name)
 
             ## Classification
-            if blackbox_name in ['lg', 'gt', 'nn']:
+            if blackbox_name in ['lg', 'gt', 'rf', 'nn']:
                 ## Creating and training black-box
                 BlackBoxConstructor = blackbox_list[blackbox_name]
                 blackbox = BlackBoxConstructor(random_state=42)
@@ -71,7 +71,7 @@ def main():
                 output = MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=probability_thresh, cf_label=cf_label)
 
             ## Regression
-            elif blackbox_name in ['dt', 'rfr', 'nnr']:
+            elif blackbox_name in ['dtr', 'rfr']:
 
                 ## Creating and training black-box
                 BlackBoxConstructor = blackbox_list[blackbox_name]
@@ -88,6 +88,7 @@ def main():
                     q = np.quantile(dataset['y'], q=np.linspace(0,1,11))
                     ranges = [[q[i], q[i+1]] for i in range(len(q)-1)]
                     response_x = blackbox.predict(x.reshape(1, -1))
+                    x_range = -1
                     for i in range(len(ranges)):
                         if ranges[i][0] <= response_x <= ranges[i][1]:
                             x_range = i

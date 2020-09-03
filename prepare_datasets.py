@@ -18,8 +18,8 @@ def PrepareBreastCancer(dataset_path, dataset_name):
     discrete_features = ['age', 'menopause', 'tumor-size', 'inv-node', 'node-caps', 'deg-malig', 'breast',
                          'breast-quad', 'irradiat']
     discrete_indices = [df_X.columns.get_loc(f) for f in discrete_features]
-    continuous_features = None    # none continuous features
-    continuous_indices = None     # none continuous features
+    continuous_features = []    # none continuous features
+    continuous_indices = []     # none continuous features
 
     ## Encoding features
     df_X_fe = df_X.copy(deep=True)
@@ -232,6 +232,7 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
     ## Recognizing inputs
     target_name = 'MEDV'
     df_X = df.loc[:, df.columns != target_name]
+    df_X = (df_X.round(5)*100000).astype(int)
     df_y = df.loc[:, target_name]
 
     discrete_features = ['CHAS']

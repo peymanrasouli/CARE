@@ -12,8 +12,7 @@ def CostFunction(x, discrete_indices, continuous_indices, mapping_scale, mapping
 
     ## Constructing the counterfactual instance
     theta_cf = np.asarray(theta_cf)
-    cf = (theta_cf * mapping_scale + mapping_offset)
-    cf[discrete_indices] = cf[discrete_indices].astype(int)
+    cf = np.rint(theta_cf * mapping_scale + mapping_offset)
 
     ## Objective 1: Prediction Distance
     f1 = PredictionDistance(cf, blackbox, probability_thresh, cf_label, cf_range)
