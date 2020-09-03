@@ -8,7 +8,7 @@ from pymoo.factory import get_performance_indicator
 from cost_function import CostFunction, FeatureDistance
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
-from sklearn.metrics import pairwise_distances
+from sklearn.metrics import pairwise_distances, mean_absolute_error
 import hdbscan
 
 def Initialization(bound_low, bound_up, size, theta_x, theta_N, similarity_vec):
@@ -33,14 +33,14 @@ def PlotParetoFronts(toolbox, fronts, objective_list):
         ax.title.set_text('Front 1') if n_fronts == 1 else ax[i].title.set_text('Front '+str(i+1))
 
 def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
-                 mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh, response_range,
-                 cf_label, theta_N, similarity_vec, lof_model, hdbscan_model, actions):
+                 mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh, cf_label,
+                 cf_range, theta_N, similarity_vec, lof_model, hdbscan_model, actions):
     toolbox = base.Toolbox()
     creator.create("FitnessMulti", base.Fitness, weights=OBJ_W)
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
     toolbox.register("evaluate", CostFunction, x, discrete_indices, continuous_indices,
                      mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh,
-                     response_range, cf_label, lof_model, hdbscan_model,  actions)
+                     cf_label, cf_range, lof_model, hdbscan_model,  actions)
     toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, theta_x, theta_N, similarity_vec)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -105,7 +105,7 @@ def FeatureDecoder(df, discrete_features, feature_encoder):
         df_de[f] = decoded_data
     return df_de
 
-def ConstructCounterfactuals(x, toolbox, fronts, dataset, mapping_scale, mapping_offset, blackbox, cf_label, priority):
+def ConstructCounterfactuals(x, toolbox, fronts, dataset, mapping_scale, mapping_offset, blackbox, cf_label, priority, discrete_indices):
 
     ## Constructing counterfactuals
     pop = []
@@ -116,18 +116,25 @@ def ConstructCounterfactuals(x, toolbox, fronts, dataset, mapping_scale, mapping
             evaluation.append(np.asarray(toolbox.evaluate(ind)))
     pop = np.asarray(pop)
     evaluation = np.asarray(evaluation)
-    solutions = (pop * mapping_scale + mapping_offset).astype(int)
+    solutions = (pop * mapping_scale + mapping_offset)
+    solutions[:, discrete_indices] = solutions[:, discrete_indices].astype(int)
 
     cfs = pd.DataFrame(data=solutions, columns=dataset['feature_names'])
-    label = blackbox.predict(cfs)
-    prob = blackbox.predict_proba(cfs)[:,cf_label]
-    evaluation = np.c_[evaluation,label,prob]
-    cfs_eval = pd.DataFrame(data=evaluation, columns=['Prediction', 'Distance', 'Proximity', 'Actionable',
-                                                      'Sparsity', 'Connectedness', 'Label', 'Probability'])
+    if cf_label is None:
+        response = blackbox.predict(cfs)
+        evaluation = np.c_[evaluation, response]
+        cfs_eval = pd.DataFrame(data=evaluation, columns=['Prediction', 'Distance', 'Proximity', 'Actionable',
+                                                          'Sparsity', 'Connectedness', 'Response'])
+    else:
+        label = blackbox.predict(cfs)
+        prob = blackbox.predict_proba(cfs)[:,cf_label]
+        evaluation = np.c_[evaluation, label, prob]
+        cfs_eval = pd.DataFrame(data=evaluation, columns=['Prediction', 'Distance', 'Proximity', 'Actionable',
+                                                          'Sparsity', 'Connectedness', 'Label', 'Probability'])
 
     ## Applying compulsory conditions
     drop_indices = cfs_eval[(cfs_eval['Prediction'] > 0) | (cfs_eval['Proximity'] == -1) |
-                            (cfs_eval['Connectedness'] == 0) |  (cfs_eval['Label'] != cf_label)].index
+                            (cfs_eval['Connectedness'] == 0)].index
     cfs.drop(drop_indices, inplace=True)
     cfs_eval.drop(drop_indices, inplace=True)
 
@@ -153,7 +160,7 @@ def ConstructCounterfactuals(x, toolbox, fronts, dataset, mapping_scale, mapping
         cfs_prob = blackbox.predict_proba(cfs)
         return cfs, cfs_decoded, cfs_y, cfs_prob, cfs_eval
 
-def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, response_range=None, cf_label=None):
+def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_label=None, x_range=None, cf_range=None):
 
     ## Reading dataset information
     discrete_indices = dataset['discrete_indices']
@@ -171,9 +178,19 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, respon
 
     ## KNN model of correctly classified samples same class as counterfactual
     pred_train = blackbox.predict(X_train)
-    gt = X_train[np.where(pred_train == Y_train)]
-    pred_gt = blackbox.predict(gt)
-    gt = gt[np.where(pred_gt == cf_label)]
+
+    if cf_label is None:
+        mae = mean_absolute_error(Y_train, pred_train)
+        Y_train_low = Y_train - 2*mae
+        Y_train_up = Y_train + 2*mae
+        gt = X_train[np.where(np.logical_and(pred_train>=Y_train_low, pred_train<=Y_train_up))]
+        pred_gt = blackbox.predict(gt)
+        gt = gt[np.where(np.logical_and(pred_gt>=cf_range[0], pred_gt<=cf_range[1]))]
+    else:
+        gt = X_train[np.where(pred_train == Y_train)]
+        pred_gt = blackbox.predict(gt)
+        gt = gt[np.where(pred_gt == cf_label)]
+
     theta_gt = (gt - mapping_offset) / mapping_scale
     nbrs_gt = NearestNeighbors(n_neighbors=min(len(gt),200), algorithm='kd_tree').fit(theta_gt)
 
@@ -197,6 +214,8 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, respon
     ## Discrete options = {'fix','any',{a set of possible changes]}
     ## Continuous options = {'fix','any','increase','decrease',[a range of possible changes]}
 
+
+    ############## Breast cancer data set ##################
     # discrete_features = {'age': [0.0, 5.0],
     #                      'menopause': [0.0, 2.0],
     #                      'tumor-size': [0.0, 10.0],
@@ -225,6 +244,8 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, respon
             index = dataset['feature_names'].index(a)
             actions[index] = desired_actions[a]
 
+
+        ################# Credit card default data set #################
         # discrete_features = {'SEX': [0.0, 1.0],
         #                      'EDUCATION': [0.0, 6.0],
         #                      'MARRIAGE': [0.0, 3.0],
@@ -280,6 +301,8 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, respon
             index = dataset['feature_names'].index(a)
             actions[index] = desired_actions[a]
 
+
+    ###################### Adult data set ######################
     # discrete_features = {'work-class': [0.0, 6.0],
     #                     'education': [0.0, 15.0],
     #                     'education-num': [0.0, 15.0],
@@ -311,8 +334,8 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, respon
                             'sex': ('fix'),
                             'capital-gain': ('decrease'),
                             'capital-loss': ('increase'),
-                            'hours-per-week': [40,50],
-                            'native-country': ('fix')
+                            'hours-per-week': ([40,50]),
+                            'native-country': ({39,40})
                            }
         actions = [0] * len(x)
         for a in desired_actions:
@@ -320,26 +343,40 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, respon
             actions[index] = desired_actions[a]
 
 
-    # elif dataset['name'] == 'boston-house-prices':
-    #     desired_actions = {'age': ('fix'),
-    #                         'work-class': ('fix'),
-    #                         'fnlwgt': ('any'),
-    #                         'education': ('fix'),
-    #                         'education-num': ('fix'),
-    #                         'marital-status': ('fix'),
-    #                         'occupation': ('any'),
-    #                         'relationship': ({3,4}),
-    #                         'race': ('fix'),
-    #                         'sex': ('fix'),
-    #                         'capital-gain': ('increase'),
-    #                         'capital-loss': ('decrease'),
-    #                         'hours-per-week': [45,60],
-    #                         'native-country': ('fix')
-    #                        }
-    #     actions = [0] * len(x)
-    #     for a in desired_actions:
-    #         index = dataset['feature_names'].index(a)
-    #         actions[index] = desired_actions[a]
+    ################## Boston house price data set ####################
+    # discrete_features = {'CHAS': [0.0, 1.0]}
+    # continuous_features = {'CRIM': [0.00632, 88.9762],
+    #                         'ZN': [0.0, 100.0],
+    #                         'INDUS': [0.46, 27.74],
+    #                         'NOX': [0.385, 0.871],
+    #                         'RM': [3.5610000000000004, 8.78],
+    #                         'AGE': [2.9, 100.0],
+    #                         'DIS': [1.1296, 12.1265],
+    #                         'RAD': [1.0, 24.0],
+    #                         'TAX': [187.0, 711.0],
+    #                         'PTRATIO': [12.6, 22.0],
+    #                         'BLACK': [0.32, 396.9],
+    #                         'LSTAT': [1.73, 37.97]}
+
+    elif dataset['name'] == 'boston-house-prices':
+        desired_actions = {'CRIM': ('any'),
+                            'ZN': ('any'),
+                            'INDUS': ('any'),
+                            'CHAS': ('any'),
+                            'NOX': ('any'),
+                            'RM': ('any'),
+                            'AGE': ('any'),
+                            'DIS': ('any'),
+                            'RAD': ('any'),
+                            'TAX': ('any'),
+                            'PTRATIO': ('any'),
+                            'BLACK': ('any'),
+                            'LSTAT': ('any')
+                           }
+        actions = [0] * len(x)
+        for a in desired_actions:
+            index = dataset['feature_names'].index(a)
+            actions[index] = desired_actions[a]
 
 
     ## n-Closest ground truth counterfactual in the training data
@@ -349,10 +386,10 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, respon
     for i in range(n):
         theta_cf = (gt[closest_ind[i]] - mapping_offset) / mapping_scale
         print('instnace:', list(gt[closest_ind[i]]), 'probability:',
-              blackbox.predict_proba(gt[closest_ind[i]].reshape(1,-1)),
+              blackbox.predict(gt[closest_ind[i]].reshape(1,-1)),
               'cost:',CostFunction(x, discrete_indices, continuous_indices,
               mapping_scale, mapping_offset, feature_range, blackbox,
-              probability_thresh, response_range, cf_label, lof_model,
+              probability_thresh, cf_label, cf_range, lof_model,
               hdbscan_model, actions, theta_cf))
 
     ## Parameter setting
@@ -377,8 +414,8 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, respon
 
     ## Creating toolbox
     toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
-                           mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh, response_range,
-                           cf_label, theta_N, similarity_vec, lof_model, hdbscan_model, actions)
+                           mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh, cf_label,
+                           cf_range, theta_N, similarity_vec, lof_model, hdbscan_model, actions)
 
     ## Running EA
     fronts, pop, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
@@ -394,13 +431,12 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, respon
         'Sparsity': 1,
         'Actionable': 1,
         'Connectedness': 0,
-        'Probability': 0
         }
     cfs, cfs_decoded, cfs_y, cfs_prob, cfs_eval = ConstructCounterfactuals(x, toolbox, fronts, dataset, mapping_scale,
-                                                                           mapping_offset, blackbox, cf_label, priority)
+                                                                           mapping_offset, blackbox, cf_label, priority, discrete_indices)
     x_df = pd.DataFrame(data=x.reshape(1,-1), columns=dataset['feature_names'])
     x_decoded = FeatureDecoder(x_df, dataset['discrete_features'], dataset['feature_encoder'])
-    
+
     print('done')
     ## Decision making using Pseudo-Weights
 

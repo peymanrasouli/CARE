@@ -4,6 +4,7 @@ from prepare_datasets import *
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score, accuracy_score, mean_absolute_error, mean_squared_error
 import warnings
@@ -19,16 +20,17 @@ def main():
     datsets_list = {
         # 'breast-cancer': ('breast-cancer.csv', PrepareBreastCancer),
         # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault),
-        # 'adult': ('adult.csv', PrepareAdult),
-        'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices)
+        'adult': ('adult.csv', PrepareAdult),
+        # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices)
     }
 
     ## Defining the list of black-boxes
     blackbox_list = {
         # 'lg': LogisticRegression,
-        # 'gt': GradientBoostingClassifier,
+        'gt': GradientBoostingClassifier,
         # 'nn': MLPClassifier,
-        'rfr': RandomForestRegressor
+        # 'dt': DecisionTreeRegressor
+        # 'rfr': RandomForestRegressor
         # 'nnr': MLPRegressor
     }
 
@@ -69,7 +71,7 @@ def main():
                 output = MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=probability_thresh, cf_label=cf_label)
 
             ## Regression
-            elif blackbox_name in ['rfr', 'nnr']:
+            elif blackbox_name in ['dt', 'rfr', 'nnr']:
 
                 ## Creating and training black-box
                 BlackBoxConstructor = blackbox_list[blackbox_name]
@@ -83,24 +85,23 @@ def main():
                 print('\n')
 
                 def SelectResponseRange(x, blackbox, dataset):
-                    q = np.quantile(dataset['y'], q=[0.0, 0.25, 0.75, 1])
-                    ranges = [[q[0], q[1]], [q[1], q[2]], [q[2], q[3]]]
+                    q = np.quantile(dataset['y'], q=np.linspace(0,1,11))
+                    ranges = [[q[i], q[i+1]] for i in range(len(q)-1)]
                     response_x = blackbox.predict(x.reshape(1, -1))
-                    curr_range = -1
                     for i in range(len(ranges)):
                         if ranges[i][0] <= response_x <= ranges[i][1]:
-                            curr_range = i
+                            x_range = i
                             break
-                    exist_range = list(range(len(ranges)))
-                    exist_range.remove(curr_range)
-                    cf_range = np.random.choice(exist_range,size=1)
-                    return ranges[int(cf_range)]
+                    cf_range = 1 if x_range == 0 else x_range + np.random.choice([-1,1],1)
+                    x_range = ranges[int(x_range)]
+                    cf_range = ranges[int(cf_range)]
+                    return x_range, cf_range
 
                 ## Generating counterfactuals using MOCF
                 ind = 0
                 x = X_test[ind]
-                response_range = SelectResponseRange(x, blackbox, dataset)    # Desired response range
-                output = MOCF(x, blackbox, dataset, X_train, Y_train, response_range=response_range)
+                x_range, cf_range = SelectResponseRange(x, blackbox, dataset)    # Desired response range
+                output = MOCF(x, blackbox, dataset, X_train, Y_train, x_range = x_range, cf_range=cf_range)
 
 if __name__ == '__main__':
     main()

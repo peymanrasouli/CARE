@@ -7,15 +7,16 @@ from actionable_recourse import ActionableRecourse
 from connectedness import Connectedness
 
 def CostFunction(x, discrete_indices, continuous_indices, mapping_scale, mapping_offset,
-                 feature_range, blackbox, probability_thresh, response_range, cf_label,
+                 feature_range, blackbox, probability_thresh, cf_label, cf_range,
                  lof_model, hdbscan_model, actions, theta_cf):
 
     ## Constructing the counterfactual instance
     theta_cf = np.asarray(theta_cf)
-    cf = (theta_cf * mapping_scale + mapping_offset).astype(int)
+    cf = (theta_cf * mapping_scale + mapping_offset)
+    cf[discrete_indices] = cf[discrete_indices].astype(int)
 
     ## Objective 1: Prediction Distance
-    f1 = PredictionDistance(cf, blackbox, probability_thresh, response_range, cf_label)
+    f1 = PredictionDistance(cf, blackbox, probability_thresh, cf_label, cf_range)
 
     ## Objective 2: Feature Distance
     f2 = FeatureDistance(x, cf, feature_range, discrete_indices, continuous_indices)
