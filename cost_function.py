@@ -5,10 +5,11 @@ from proximity import Proximity
 from sparsity import Sparsity
 from actionable_recourse import ActionableRecourse
 from connectedness import Connectedness
+from correlation import Correlation
 
-def CostFunction(x, discrete_indices, continuous_indices, mapping_scale, mapping_offset,
+def CostFunction(x, theta_x, discrete_indices, continuous_indices, mapping_scale, mapping_offset,
                  feature_range, blackbox, probability_thresh, cf_label, cf_range,
-                 lof_model, hdbscan_model, actions, theta_cf):
+                 lof_model, hdbscan_model, actions, corr, theta_cf):
 
     ## Constructing the counterfactual instance
     theta_cf = np.asarray(theta_cf)
@@ -32,4 +33,7 @@ def CostFunction(x, discrete_indices, continuous_indices, mapping_scale, mapping
     ## Objective 6: Connectedness
     f6 = Connectedness(theta_cf, hdbscan_model)
 
-    return f1, f2, f3, f4, f5, f6
+    ## Objective 6: Connectedness
+    f7 = Correlation(x, cf, feature_range, discrete_indices, continuous_indices, corr)
+
+    return f1, f2, f3, f4, f5, f6, f7

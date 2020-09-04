@@ -9,6 +9,7 @@ from cost_function import CostFunction, FeatureDistance
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import pairwise_distances, mean_absolute_error
+from dython import nominal
 import hdbscan
 
 def Initialization(bound_low, bound_up, size, theta_x, theta_N, probability_vec):
@@ -34,13 +35,13 @@ def PlotParetoFronts(toolbox, fronts, objective_list):
 
 def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
                  mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh, cf_label,
-                 cf_range, theta_N, probability_vec, lof_model, hdbscan_model, actions):
+                 cf_range, theta_N, probability_vec, lof_model, hdbscan_model, actions, corr):
     toolbox = base.Toolbox()
     creator.create("FitnessMulti", base.Fitness, weights=OBJ_W)
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
-    toolbox.register("evaluate", CostFunction, x, discrete_indices, continuous_indices,
+    toolbox.register("evaluate", CostFunction, x, theta_x, discrete_indices, continuous_indices,
                      mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh,
-                     cf_label, cf_range, lof_model, hdbscan_model,  actions)
+                     cf_label, cf_range, lof_model, hdbscan_model,  actions, corr)
     toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, theta_x, theta_N, probability_vec)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -179,10 +180,9 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
     pred_train = blackbox.predict(X_train)
 
     if cf_label is None:
-        mae = mean_absolute_error(Y_train, pred_train)
-        Y_train_low = Y_train - 2*mae
-        Y_train_up = Y_train + 2*mae
-        gt = X_train[np.where(np.logical_and(pred_train>=Y_train_low, pred_train<=Y_train_up))]
+        abs_error = np.abs(Y_train-pred_train)
+        mae = np.mean(abs_error)
+        gt = X_train[np.where(abs_error<=mae)]
         pred_gt = blackbox.predict(gt)
         gt = gt[np.where(np.logical_and(pred_gt>=cf_range[0], pred_gt<=cf_range[1]))]
     else:
@@ -378,6 +378,14 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
             actions[index] = desired_actions[a]
 
 
+    ############### Correlation among features ###############
+    # Calculate the correlation/strength-of-association of features in data-set
+    # with both categorical and continuous features using:
+    # Pearson's R for continuous-continuous cases
+    # Correlation Ratio for categorical-continuous cases
+    # Cramer's V for categorical-categorical cases
+    corr = nominal.associations(X_train, nominal_columns=discrete_indices,theil_u=False, plot=False)['corr']
+
     ## n-Closest ground truth counterfactual in the training data
     n = 5
     dist = np.asarray([FeatureDistance(x, cf_, feature_range, discrete_indices, continuous_indices) for cf_ in gt])
@@ -386,14 +394,15 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
         theta_cf = (gt[closest_ind[i]] - mapping_offset) / mapping_scale
         print('instnace:', list(gt[closest_ind[i]]), 'probability:',
               blackbox.predict(gt[closest_ind[i]].reshape(1,-1)),
-              'cost:',CostFunction(x, discrete_indices, continuous_indices,
+              'cost:',CostFunction(x, theta_x, discrete_indices, continuous_indices,
               mapping_scale, mapping_offset, feature_range, blackbox,
               probability_thresh, cf_label, cf_range, lof_model,
-              hdbscan_model, actions, theta_cf))
+              hdbscan_model, actions, corr, theta_cf))
+
 
     ## Parameter setting
     NDIM = len(x)
-    NOBJ = 6
+    NOBJ = 7
     NGEN = 50
     CXPB = 0.5
     MUTPB = 0.2
@@ -409,12 +418,13 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
     f4 = -1.0   # Actionable Recourse
     f5 = -1.0   # Sparsity
     f6 =  1.0   # Connectedness
-    OBJ_W = (f1, f2, f3, f4, f5, f6)
+    f7 =  1.0   # Correlation
+    OBJ_W = (f1, f2, f3, f4, f5, f6, f7)
 
     ## Creating toolbox
     toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
                            mapping_scale, mapping_offset, feature_range, blackbox, probability_thresh, cf_label,
-                           cf_range, theta_N, probability_vec, lof_model, hdbscan_model, actions)
+                           cf_range, theta_N, probability_vec, lof_model, hdbscan_model, actions, corr)
 
     ## Running EA
     fronts, pop, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
