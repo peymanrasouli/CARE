@@ -1,6 +1,6 @@
 def ActionableRecourse(x, cf, action_operation, action_priority):
     cost = []
-    idx =  [i for i, e in enumerate(action_operation) if e != 'any']
+    idx =  [i for i, op in enumerate(action_operation) if op is not None]
     for i in idx:
         if action_operation[i] == 'fix':
             cost.append(int(cf[i] != x[i]) * action_priority[i])

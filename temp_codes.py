@@ -391,8 +391,7 @@ def Proximity(theta_cf, nbrs_gt, theta_gt):
     #     for c in continuous_indices:
     #         cost.append(corr[f, c] if c in unchanged_ind else (1-diff_degree[f])*corr[f, c])
 
-
-
+    # from sklearn.feature_selection import GenericUnivariateSelect, f_classif, f_regression
     # corr = np.ones([len(x),len(x)])
     # corr[np.diag_indices(corr.shape[0])] = 0
     # corr_ = np.zeros(corr.shape)

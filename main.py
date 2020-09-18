@@ -2,7 +2,7 @@ import numpy as np
 from mocf import MOCF
 from prepare_datasets import *
 from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestRegressor, RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import train_test_split
@@ -19,8 +19,8 @@ def main():
     ## Defining the list of data sets
     datsets_list = {
         # 'breast-cancer': ('breast-cancer.csv', PrepareBreastCancer),
-        'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault),
-        # 'adult': ('adult.csv', PrepareAdult),
+        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault),
+        'adult': ('adult.csv', PrepareAdult),
         'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices)
     }
 
@@ -31,7 +31,6 @@ def main():
         # 'rf': RandomForestClassifier,
         # 'nn': MLPClassifier
         'dtr': DecisionTreeRegressor,
-        # 'rfr': RandomForestRegressor
     }
 
     for dataset_kw in datsets_list:

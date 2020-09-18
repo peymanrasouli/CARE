@@ -8,13 +8,10 @@ from pymoo.factory import get_performance_indicator
 from cost_function import CostFunction, FeatureDistance
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
-from sklearn.metrics import pairwise_distances, mean_absolute_error, mean_squared_error, f1_score, r2_score, precision_score
+from sklearn.metrics import pairwise_distances, f1_score, r2_score
 from dython import nominal
 import hdbscan
-from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
-from sklearn.feature_selection import GenericUnivariateSelect, f_classif, f_regression
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
 def Initialization(bound_low, bound_up, size, theta_x, theta_N, probability_vec):
     method = np.random.choice(['x','neighbor','random'], size=1, replace=False, p=probability_vec)
@@ -233,20 +230,22 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
     #                      'irradiat': [0.0, 1.0]}
     # continuous_features = None
 
-    if dataset['name'] == 'breast-cancer':
-        preferences = {'age':('any',1),
-                        'menopause':('any',1),
-                        'tumor-size':('any',1),
-                        'inv-node':('any',1),
-                        'node-caps':('any',1),
-                        'deg-malig':('any',1),
-                        'breast':('any',1),
-                        'breast-quad':('any',1),
-                        'irradiat':('any',1)
-                        }
+    # preferences = {'age': (operation, priority),
+    #                'menopause': (operation, priority),
+    #                'tumor-size': (operation, priority),
+    #                'inv-node': (operation, priority),
+    #                'node-caps': (operation, priority),
+    #                'deg-malig': (operation, priority),
+    #                'breast': (operation, priority),
+    #                'breast-quad': (operation, priority),
+    #                'irradiat': (operation, priority),
+    #                }
 
-        action_operation = [0] * len(x)
-        action_priority = [0] * len(x)
+    if dataset['name'] == 'breast-cancer':
+        preferences = {}
+
+        action_operation = [None] * len(x)
+        action_priority = [None] * len(x)
         for p in preferences:
             index = dataset['feature_names'].index(p)
             action_operation[index] = preferences[p][0]
@@ -279,34 +278,36 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
         #                         'PAY_AMT5': [0.0, 426529.0],
         #                         'PAY_AMT6': [0.0, 528666.0]}
 
-    elif dataset['name'] == 'credit-card-default':
-        preferences = {'LIMIT_BAL':('any',1),
-                        'SEX':('any',1),
-                        'EDUCATION':('any',1),
-                        'MARRIAGE':('any',1),
-                        'AGE':('any',1),
-                        'PAY_0':('any',1),
-                        'PAY_2':('any',1),
-                        'PAY_3':('any',1),
-                        'PAY_4':('any',1),
-                        'PAY_5':('any',1),
-                        'PAY_6':('any',1),
-                        'BILL_AMT1':('any',1),
-                        'BILL_AMT2':('any',1),
-                        'BILL_AMT3':('any',1),
-                        'BILL_AMT4':('any',1),
-                        'BILL_AMT5':('any',1),
-                        'BILL_AMT6':('any',1),
-                        'PAY_AMT1':('any',1),
-                        'PAY_AMT2':('any',1),
-                        'PAY_AMT3':('any',1),
-                        'PAY_AMT4':('any',1),
-                        'PAY_AMT5':('any',1),
-                        'PAY_AMT6':('any',1)
-                       }
+        # preferences = {'LIMIT_BAL':(operation, priority),
+        #                 'SEX':(operation, priority),
+        #                 'EDUCATION':(operation, priority),
+        #                 'MARRIAGE':(operation, priority),
+        #                 'AGE':(operation, priority),
+        #                 'PAY_0':(operation, priority),
+        #                 'PAY_2':(operation, priority),
+        #                 'PAY_3':(operation, priority),
+        #                 'PAY_4':(operation, priority),
+        #                 'PAY_5':(operation, priority),
+        #                 'PAY_6':(operation, priority),
+        #                 'BILL_AMT1':(operation, priority),
+        #                 'BILL_AMT2':(operation, priority),
+        #                 'BILL_AMT3':(operation, priority),
+        #                 'BILL_AMT4':(operation, priority),
+        #                 'BILL_AMT5':(operation, priority),
+        #                 'BILL_AMT6':(operation, priority),
+        #                 'PAY_AMT1':(operation, priority),
+        #                 'PAY_AMT2':(operation, priority),
+        #                 'PAY_AMT3':(operation, priority),
+        #                 'PAY_AMT4':(operation, priority),
+        #                 'PAY_AMT5':(operation, priority),
+        #                 'PAY_AMT6':(operation, priority),
+        #                }
 
-        action_operation = [0] * len(x)
-        action_priority = [0] * len(x)
+    elif dataset['name'] == 'credit-card-default':
+        preferences = {}
+
+        action_operation = [None] * len(x)
+        action_priority = [None] * len(x)
         for p in preferences:
             index = dataset['feature_names'].index(p)
             action_operation[index] = preferences[p][0]
@@ -331,25 +332,40 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
     #                         'hours-per-week': [1.0, 99.0],
     #                        }
 
-    elif dataset['name'] == 'adult':
-        preferences = {'age': ('increase',12),
-                        'work-class': ('any',4),
-                        'fnlwgt': ('any',6),
-                        'education': ('any',7),
-                        'education-num': ('any',8),
-                        'marital-status': ('any',10),
-                        'occupation': ('any',5),
-                        'relationship': ('any',11),
-                        'race': ('fix',14),
-                        'sex': ('fix',13),
-                        'capital-gain': ([0,2000],1),
-                        'capital-loss': ('any',2),
-                        'hours-per-week': ('increase',3),
-                        'native-country': ('fix',9)
-                       }
+    # preferences = {'age': (operation, priority),
+    #                 'work-class': (operation, priority),
+    #                 'fnlwgt': (operation, priority),
+    #                 'education': (operation, priority),
+    #                 'education-num': (operation, priority),
+    #                 'marital-status': (operation, priority),
+    #                 'occupation':(operation, priority),
+    #                 'relationship': (operation, priority),
+    #                 'race': (operation, priority),
+    #                 'sex':(operation, priority),
+    #                 'capital-gain': (operation, priority),
+    #                 'capital-loss': (operation, priority),
+    #                 'hours-per-week': (operation, priority),
+    #                 'native-country': (operation, priority),
+    #                }
 
-        action_operation = [0] * len(x)
-        action_priority = [0] * len(x)
+
+    elif dataset['name'] == 'adult':
+        # preferences = {'age': ('increase', 5),
+        #                 'marital-status': ('fix', 6),
+        #                 'occupation':({0,1,2,3,4,5}, 4),
+        #                 'relationship': ('fix', 7),
+        #                 'race': ('fix', 10),
+        #                 'sex':('fix', 9),
+        #                 'capital-gain': ([0,10000], 1),
+        #                 'capital-loss': ([0,2000], 2),
+        #                 'hours-per-week': ('increase', 3),
+        #                 'native-country': ('fix', 8),
+        #                }
+
+        preferences = {}
+
+        action_operation = [None] * len(x)
+        action_priority = [None] * len(x)
         for p in preferences:
             index = dataset['feature_names'].index(p)
             action_operation[index] = preferences[p][0]
@@ -370,24 +386,26 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
     #                         'BLACK': [0.32, 396.9],
     #                         'LSTAT': [1.73, 37.97]}
 
-    elif dataset['name'] == 'boston-house-prices':
-        preferences = {'CRIM': ('any',1),
-                        'ZN': ('any',1),
-                        'INDUS': ('any',1),
-                        'CHAS': ('any',1),
-                        'NOX': ('any',1),
-                        'RM': ('any',1),
-                        'AGE': ('fix',1),
-                        'DIS': ('any',1),
-                        'RAD': ('any',1),
-                        'TAX': ('any',1),
-                        'PTRATIO': ('any',1),
-                        'BLACK': ('fix',1),
-                        'LSTAT': ('any',1)
-                       }
+    # preferences = {'CRIM': (operation, priority),
+    #                 'ZN': (operation, priority),
+    #                 'INDUS': (operation, priority),
+    #                 'CHAS': (operation, priority),
+    #                 'NOX': (operation, priority),
+    #                 'RM': (operation, priority),
+    #                 'AGE': (operation, priority),
+    #                 'DIS': (operation, priority),
+    #                 'RAD': (operation, priority),
+    #                 'TAX': (operation, priority),
+    #                 'PTRATIO': (operation, priority),
+    #                 'BLACK': (operation, priority),
+    #                 'LSTAT': (operation, priority),
+    #                }
 
-        action_operation = [0] * len(x)
-        action_priority = [0] * len(x)
+    elif dataset['name'] == 'boston-house-prices':
+        preferences = {}
+
+        action_operation = [None] * len(x)
+        action_priority = [None] * len(x)
         for p in preferences:
             index = dataset['feature_names'].index(p)
             action_operation[index] = preferences[p][0]
@@ -439,16 +457,6 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
 
 
     ## Parameter setting
-    NDIM = len(x)
-    NOBJ = 7
-    NGEN = 50
-    CXPB = 0.5
-    MUTPB = 0.2
-    P = 6
-    H = factorial(NOBJ + P - 1) / (factorial(P) * factorial(NOBJ - 1))
-    MU = int(H + (4 - H % 4))
-    BOUND_LOW, BOUND_UP = theta_min, theta_max
-
     ##  Objective functions || -1.0: cost function | 1.0: fitness function
     f1 = -1.0   # Prediction Distance
     f2 = -1.0   # Feature Distance
@@ -458,6 +466,16 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
     f6 =  1.0   # Connectedness
     f7 =  -1.0   # Correlation
     OBJ_W = (f1, f2, f3, f4, f5, f6, f7)
+
+    NDIM = len(x)
+    NOBJ = len(OBJ_W)
+    NGEN = 50
+    CXPB = 0.5
+    MUTPB = 0.2
+    P = 6
+    H = factorial(NOBJ + P - 1) / (factorial(P) * factorial(NOBJ - 1))
+    MU = int(H + (4 - H % 4))
+    BOUND_LOW, BOUND_UP = theta_min, theta_max
 
     ## Creating toolbox
     toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
