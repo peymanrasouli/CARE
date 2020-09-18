@@ -425,7 +425,7 @@ def MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_lab
     corr_ = np.zeros(corr.shape)
     corr_[corr_features] = 1
 
-    ## Linear models as correlation models
+    ## Correlation models
     val_idx = int(0.7 * len(X_train))
     corr_models = []
     for f in range(len(corr_)):
