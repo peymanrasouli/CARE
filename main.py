@@ -19,9 +19,9 @@ def main():
     ## Defining the list of data sets
     datsets_list = {
         # 'breast-cancer': ('breast-cancer.csv', PrepareBreastCancer),
-        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault),
-        'adult': ('adult.csv', PrepareAdult),
-        # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices)
+        'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault),
+        # 'adult': ('adult.csv', PrepareAdult),
+        'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices)
     }
 
     ## Defining the list of black-boxes
@@ -30,7 +30,7 @@ def main():
         'gt': GradientBoostingClassifier,
         # 'rf': RandomForestClassifier,
         # 'nn': MLPClassifier
-        # 'dtr': DecisionTreeRegressor,
+        'dtr': DecisionTreeRegressor,
         # 'rfr': RandomForestRegressor
     }
 
@@ -67,7 +67,7 @@ def main():
                 x = X_test[ind]
                 x_label = blackbox.predict(x.reshape(1, -1))
                 cf_label = int(1 - x_label)      # Counterfactual label
-                probability_thresh = 0.5         # Desired probability threshold
+                probability_thresh = 0.7         # Desired probability threshold
                 output = MOCF(x, blackbox, dataset, X_train, Y_train, probability_thresh=probability_thresh, cf_label=cf_label)
 
             ## Regression

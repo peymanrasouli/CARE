@@ -361,3 +361,45 @@ def Proximity(theta_cf, nbrs_gt, theta_gt):
 
 
 
+    # unchanged_ind = np.where(diff_degree==0)[0]
+    # changed_disc = np.intersect1d(changed_ind,discrete_indices)
+    # changed_cont = np.intersect1d(changed_ind,continuous_indices)
+    # corr_ = np.zeros(corr.shape)
+    # corr_[changed_ind] = corr[changed_ind]
+
+
+    # corr_2 = corr_.copy()
+    #
+    # for f in changed_ind:
+    #     if f in discrete_indices:
+    #         corr_2[f, changed_disc] = 1 - corr_[f, changed_disc]
+    #         corr_2[f, changed_cont] = 1 - (abs(diff_degree[changed_cont]) * corr_[f, changed_cont])
+    #     if f in continuous_indices:
+    #         corr_2[f, changed_disc] = 1 - (diff_degree[f] * corr_[f, changed_disc])
+    #         corr_2[f, changed_cont] = (1 - (abs(diff_degree[f] - diff_degree[changed_cont])))  *  corr_[f, changed_cont]
+    #
+    # cost = []
+    # for f in changed_disc:
+    #     for d in discrete_indices:
+    #         cost.append(corr[f, d] if d in unchanged_ind else 1 - corr[f, d])
+    #     for c in continuous_indices:
+    #         cost.append(corr[f, c] if c in unchanged_ind else (1-diff_degree[c])*corr[f, c])
+    #
+    # for f in changed_cont:
+    #     for d in discrete_indices:
+    #         cost.append(corr[f, d] if d in unchanged_ind else 1 - corr[f, d])
+    #     for c in continuous_indices:
+    #         cost.append(corr[f, c] if c in unchanged_ind else (1-diff_degree[f])*corr[f, c])
+
+
+
+    # corr = np.ones([len(x),len(x)])
+    # corr[np.diag_indices(corr.shape[0])] = 0
+    # corr_ = np.zeros(corr.shape)
+    # for f in range(len(x)):
+    #     score_function = f_classif if f in discrete_indices else f_regression
+    #     transformer = GenericUnivariateSelect(score_func=score_function, mode='fwe')
+    #     inputs = np.where(corr[f, :] == 1)[0]
+    #     transformer.fit(theta_train[:,inputs], X_train[:,f])
+    #     selected_f = transformer.get_support(indices=True)
+    #     corr_[f,inputs[selected_f]] = 1
