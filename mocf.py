@@ -4,7 +4,6 @@ import pandas as pd
 from math import *
 from deap import algorithms, base, creator, tools
 from deap.benchmarks.tools import convergence, diversity, hypervolume, igd
-from pymoo.factory import get_performance_indicator
 from cost_function import CostFunction, FeatureDistance
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
