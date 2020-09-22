@@ -63,10 +63,7 @@ def main():
                 probability_thresh = 0.5         # Desired probability threshold
 
                 ## MOCF Explainer
-                # MOCF_output = MOCFExplainer(x, blackbox, dataset, X_train, Y_train,
-                #                             probability_thresh=probability_thresh, cf_label=cf_label)
-
-
+                # MOCF_output = MOCFExplainer(x, blackbox, dataset, X_train, Y_train, probability_thresh=probability_thresh, cf_label=cf_label)
 
                 ## CF Explainer
                 CF_output = CFExplainer(x, blackbox, dataset, probability_thresh)
@@ -95,9 +92,8 @@ def main():
                 x_range, cf_range = SelectResponseRange(x, blackbox, dataset)    # Desired response range
 
                 ## MOCF Explainer
-                MOCF_output = MOCFExplainer(x, blackbox, dataset, X_train, Y_train,
-                                            x_range = x_range, cf_range=cf_range)
-                print('')
+                MOCF_output = MOCFExplainer(x, blackbox, dataset, X_train, Y_train, x_range = x_range, cf_range=cf_range)
+
                 ## CF Explainer
 
                 ## CFProto Explainer
