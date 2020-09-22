@@ -1,5 +1,7 @@
 import numpy as np
 from alibi.explainers import CounterFactual
+import tensorflow as tf
+tf.compat.v1.disable_eager_execution()
 
 def CFExplainer(x, blackbox, dataset, probability_thresh):
 
@@ -14,6 +16,5 @@ def CFExplainer(x, blackbox, dataset, probability_thresh):
                                   feature_range=feature_range, target_proba=probability_thresh)
 
     explanations = cf_explainer.explain(x)
-
 
     print('')

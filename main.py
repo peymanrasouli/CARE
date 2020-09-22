@@ -20,19 +20,18 @@ def main():
 
     ## Defining the list of data sets
     datsets_list = {
-        # 'breast-cancer': ('breast-cancer.csv', PrepareBreastCancer, 'classification'),
-        'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        'breast-cancer': ('breast-cancer.csv', PrepareBreastCancer, 'classification'),
+        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
         # 'adult': ('adult.csv', PrepareAdult, 'classification'),
         # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
     }
 
     ## Defining the list of black-boxes
     blackbox_list = {
-        # 'dnn' : None,
         # 'lg': LogisticRegression,
         # 'gt': GradientBoostingClassifier,
         # 'rf': RandomForestClassifier,
-        # 'nn': MLPClassifier,
+        'nn': MLPClassifier,
         # 'dtr': DecisionTreeRegressor,
     }
 
@@ -52,13 +51,12 @@ def main():
             print('blackbox=', blackbox_name)
 
             ## Creating black-box model
-            blackbox = CreateModel(dataset, X_train, X_test, Y_train, Y_test, task,
-                                   blackbox_name, constructor= blackbox_constructor)
+            blackbox = CreateModel(X_train, X_test, Y_train, Y_test, task, blackbox_name, blackbox_constructor)
 
             ## Explaining the instance using counter-factuals
             # Classification
             if task is 'classification':
-                ind = 2
+                ind = 0
                 x = X_test[ind]
                 x_label = blackbox.predict(x.reshape(1, -1))
                 cf_label = int(1 - x_label)      # Counter-factual label

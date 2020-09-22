@@ -1,5 +1,7 @@
 import numpy as np
 from alibi.explainers import CounterFactualProto
+import tensorflow as tf
+tf.compat.v1.disable_eager_execution()
 
 def CFPrototypeExplainer(x, blackbox, dataset, X_train):
 
