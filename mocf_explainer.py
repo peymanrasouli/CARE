@@ -167,8 +167,8 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
         gt = gt[np.where(pred_gt == cf_label)]
         gt_theta = ea_scaler.transform(gt)
 
-    K_nbrs = 500
-    gt_nbrModel = NearestNeighbors(n_neighbors=min(len(gt_theta),K_nbrs), algorithm='kd_tree').fit(gt_theta)
+    K_nbrs = min(500, len(gt_theta))
+    gt_nbrModel = NearestNeighbors(n_neighbors=K_nbrs, algorithm='kd_tree').fit(gt_theta)
 
     ## Creating local outlier factor model for proximity function
     lof_model = LocalOutlierFactor(n_neighbors=1, novelty=True)
@@ -421,10 +421,9 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
     nbrs_theta = gt_theta[indices[0]].copy()
 
     for f in range(len(x_bb)):
-        idx = np.random.choice(range(K_nbrs), size=int(0.7*K_nbrs))
+        idx = np.random.choice(range(K_nbrs), size=int(0.9*K_nbrs))
         nbrs_theta[idx,f] = x_theta[f]
     nbrs_probability = 0.7
-
 
 
     # Objective functions || -1.0: cost function | 1.0: fitness function
