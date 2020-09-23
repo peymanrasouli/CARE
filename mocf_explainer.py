@@ -10,18 +10,15 @@ from sklearn.metrics import pairwise_distances, f1_score, r2_score
 from dython import nominal
 import hdbscan
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
+from sklearn.preprocessing import MinMaxScaler
 
+def Initialization(bound_low, bound_up, size, nbrs_theta, nbrs_probability):
 
-def Initialization(bound_low, bound_up, size, theta_x, theta_N, probability_vec):
-    method = np.random.choice(['x','neighbor','random'], size=1, replace=False, p=probability_vec)
-    if method == 'x':
-        return list(theta_x)
-    elif method == 'neighbor':
-        idx = np.random.choice(range(len(theta_N)), size=1, replace=False)
-        return list(theta_N[idx].ravel())
-    elif method == 'random':
+    if np.random.rand() <= nbrs_probability:
+        idx = np.random.choice(range(len(nbrs_theta)), size=1, replace=False)
+        return list(nbrs_theta[idx].ravel())
+    else:
         return list(np.random.uniform(bound_low, bound_up, size))
-
 
 def PlotParetoFronts(toolbox, fronts, objective_list):
     n_fronts = len(fronts)
@@ -34,18 +31,18 @@ def PlotParetoFronts(toolbox, fronts, objective_list):
             else ax[i].scatter(costs[:,0], costs[:,1], color='r')
         ax.title.set_text('Front 1') if n_fronts == 1 else ax[i].title.set_text('Front '+str(i+1))
 
+def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_bb, x_theta, discrete_indices, continuous_indices,
+                 feature_encoder, feature_scaler, ea_scaler, feature_width, blackbox, probability_thresh,
+                 cf_label, cf_range, nbrs_theta, nbrs_probability, lof_model, hdbscan_model, action_operation,
+                 action_priority, corr_models):
 
-def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
-                 mapping_scale, mapping_offset, feature_range, feature_width, blackbox, probability_thresh, cf_label,
-                 cf_range, theta_N, probability_vec, lof_model, hdbscan_model, action_operation, action_priority,
-                 corr_models, corr):
     toolbox = base.Toolbox()
     creator.create("FitnessMulti", base.Fitness, weights=OBJ_W)
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
-    toolbox.register("evaluate", CostFunction, x, theta_x, discrete_indices, continuous_indices, mapping_scale,
-                     mapping_offset, feature_range, feature_width, blackbox, probability_thresh, cf_label, cf_range,
-                     lof_model, hdbscan_model, action_operation, action_priority, corr_models, corr)
-    toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, theta_x, theta_N, probability_vec)
+    toolbox.register("evaluate", CostFunction, x_bb, x_theta, discrete_indices, continuous_indices, feature_encoder,
+                     feature_scaler, ea_scaler, feature_width, blackbox, probability_thresh, cf_label, cf_range,
+                     lof_model, hdbscan_model, action_operation, action_priority, corr_models)
+    toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, nbrs_theta, nbrs_probability)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
@@ -54,7 +51,6 @@ def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete
     ref_points = tools.uniform_reference_points(NOBJ, P)
     toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
     return toolbox
-
 
 def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
     # Initialize statistics object
@@ -101,8 +97,7 @@ def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
     fronts = tools.emo.sortLogNondominated(pop, MU)
     return fronts, pop, record, logbook
 
-
-def ConstructCounterfactuals(dataset, toolbox, fronts, mapping_scale, mapping_offset, constraints):
+def ConstructCounterfactuals(dataset, toolbox, fronts, ea_scaler, constraints):
     ## Constructing counterfactuals
     pop = []
     evaluation = []
@@ -112,10 +107,12 @@ def ConstructCounterfactuals(dataset, toolbox, fronts, mapping_scale, mapping_of
             evaluation.append(np.asarray(toolbox.evaluate(ind)))
     pop = np.asarray(pop)
     evaluation = np.asarray(evaluation)
-    solutions = np.rint(pop * mapping_scale + mapping_offset)
+    solutions = ea_scaler.inverse_transform(pop)
+    discrete_indices = dataset['discrete_indices']
+    solutions[:,discrete_indices] = np.rint(solutions[:,discrete_indices])
 
     col = dataset['feature_names']
-    cfs = pd.DataFrame(data=solutions, columns=col).astype(int)
+    cfs = pd.DataFrame(data=solutions, columns=col)
 
     col = ['f'+str(i+1) for i in range(evaluation.shape[1])]
     cfs_eval = pd.DataFrame(data=evaluation, columns=col)
@@ -140,68 +137,49 @@ def ConstructCounterfactuals(dataset, toolbox, fronts, mapping_scale, mapping_of
     cfs.reset_index(drop=True, inplace=True)
     cfs_eval.reset_index(drop=True, inplace=True)
 
-    cfs_decoded = FeatureDecoder(cfs, dataset['discrete_features'], dataset['feature_encoder'])
+    return cfs, cfs_eval
 
-    return cfs, cfs_decoded, cfs_eval
-
-def FeatureDecoder(df, discrete_features, feature_encoder):
-    df_de = df.copy(deep=True)
-    for f in discrete_features:
-        fe = feature_encoder[f]
-        decoded_data = fe.inverse_transform(df_de[f].to_numpy().reshape(-1, 1))
-        df_de[f] = decoded_data
-    return df_de
-
-def MOCFExplainer(x, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_label=None, x_range=None, cf_range=None):
-
+def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_label=None, x_range=None, cf_range=None):
     ## Reading dataset information
     discrete_indices = dataset['discrete_indices']
     continuous_indices = dataset['continuous_indices']
     feature_min = np.min(dataset['X'], axis=0)
     feature_max = np.max(dataset['X'], axis=0)
     feature_width = feature_max - feature_min
-    feature_range = [feature_min,feature_max]
 
-    ## Linear mapping
-    theta_min = -1
-    theta_max = 1
-    mapping_scale = (feature_max - feature_min) / (theta_max - theta_min)
-    mapping_offset = -theta_min * (feature_max - feature_min) / (theta_max - theta_min) + feature_min
-    theta_x = (x - mapping_offset) / mapping_scale
-    theta_train = (X_train - mapping_offset) / mapping_scale
+    # Scaling data to (0,1) for EA
+    ea_scaler = MinMaxScaler()
+    ea_scaler.fit(X_train)
+    X_train_theta = ea_scaler.transform(X_train)
 
     ## KNN model of correctly classified samples same class as counter-factual
     pred_train = blackbox.predict(X_train)
-
     if cf_label is None:
         abs_error = np.abs(Y_train-pred_train)
         mae = np.mean(abs_error)
         gt = X_train[np.where(abs_error<=mae)]
         pred_gt = blackbox.predict(gt)
         gt = gt[np.where(np.logical_and(pred_gt>=cf_range[0], pred_gt<=cf_range[1]))]
+        gt_theta = ea_scaler.transform(gt)
     else:
         gt = X_train[np.where(pred_train == Y_train)]
         pred_gt = blackbox.predict(gt)
         gt = gt[np.where(pred_gt == cf_label)]
+        gt_theta = ea_scaler.transform(gt)
 
-    theta_gt = (gt - mapping_offset) / mapping_scale
-    nbrs_gt = NearestNeighbors(n_neighbors=min(len(gt),200), algorithm='kd_tree').fit(theta_gt)
+    K_nbrs = 500
+    gt_nbrModel = NearestNeighbors(n_neighbors=min(len(gt_theta),K_nbrs), algorithm='kd_tree').fit(gt_theta)
 
-    ## Initialization
-    distances, indices = nbrs_gt.kneighbors(theta_x.reshape(1,-1))
-    theta_N = theta_gt[indices[0]].copy()
-    probability_vec = [0.1,0.2,0.7]
-
-    ## Creating local outlier factor model
+    ## Creating local outlier factor model for proximity function
     lof_model = LocalOutlierFactor(n_neighbors=1, novelty=True)
-    lof_model.fit(theta_gt)
+    lof_model.fit(gt_theta)
 
-    ## Creating hdbscan clustering model
-    dist = pairwise_distances(theta_gt, metric='minkowski')
+    ## Creating hdbscan clustering model for connectedness function
+    dist = pairwise_distances(gt_theta, metric='minkowski')
     dist[np.where(dist==0)] = np.inf
     epsilon = np.max(np.min(dist,axis=0))
     hdbscan_model = hdbscan.HDBSCAN(min_samples=2, cluster_selection_epsilon=float(epsilon),
-                                    metric='minkowski', p=2, prediction_data=True).fit(theta_gt)
+                                    metric='minkowski', p=2, prediction_data=True).fit(gt_theta)
 
     ## Actionable operation vector
     ## Discrete options = {'fix','any',{a set of possible changes]}
@@ -234,8 +212,8 @@ def MOCFExplainer(x, blackbox, dataset, X_train, Y_train, probability_thresh=Non
     if dataset['name'] == 'breast-cancer':
         preferences = {}
 
-        action_operation = [None] * len(x)
-        action_priority = [None] * len(x)
+        action_operation = [None] * len(x_bb)
+        action_priority = [None] * len(x_bb)
         for p in preferences:
             index = dataset['feature_names'].index(p)
             action_operation[index] = preferences[p][0]
@@ -296,8 +274,8 @@ def MOCFExplainer(x, blackbox, dataset, X_train, Y_train, probability_thresh=Non
     elif dataset['name'] == 'credit-card-default':
         preferences = {}
 
-        action_operation = [None] * len(x)
-        action_priority = [None] * len(x)
+        action_operation = [None] * len(x_bb)
+        action_priority = [None] * len(x_bb)
         for p in preferences:
             index = dataset['feature_names'].index(p)
             action_operation[index] = preferences[p][0]
@@ -354,8 +332,8 @@ def MOCFExplainer(x, blackbox, dataset, X_train, Y_train, probability_thresh=Non
 
         preferences = {}
 
-        action_operation = [None] * len(x)
-        action_priority = [None] * len(x)
+        action_operation = [None] * len(x_bb)
+        action_priority = [None] * len(x_bb)
         for p in preferences:
             index = dataset['feature_names'].index(p)
             action_operation[index] = preferences[p][0]
@@ -394,14 +372,14 @@ def MOCFExplainer(x, blackbox, dataset, X_train, Y_train, probability_thresh=Non
     elif dataset['name'] == 'boston-house-prices':
         preferences = {}
 
-        action_operation = [None] * len(x)
-        action_priority = [None] * len(x)
+        action_operation = [None] * len(x_bb)
+        action_priority = [None] * len(x_bb)
         for p in preferences:
             index = dataset['feature_names'].index(p)
             action_operation[index] = preferences[p][0]
             action_priority[index] = preferences[p][1]
 
-    ############### Correlation among features ###############
+    ## Feature correlation modeling
     # Calculate the correlation/strength-of-association of features in data-set
     # with both categorical and continuous features using:
     # Pearson's R for continuous-continuous cases
@@ -423,20 +401,33 @@ def MOCFExplainer(x, blackbox, dataset, X_train, Y_train, probability_thresh=Non
         if len(inputs) > 0:
             if f in discrete_indices:
                 model = DecisionTreeClassifier()
-                model.fit(theta_train[0:val_idx, inputs], X_train[0:val_idx, f])
-                score = f1_score(X_train[val_idx:, f], model.predict(theta_train[val_idx:, inputs]), average='micro')
+                model.fit(X_train_theta[0:val_idx, inputs], X_train[0:val_idx, f])
+                score = f1_score(X_train[val_idx:, f], model.predict(X_train_theta[val_idx:, inputs]), average='micro')
                 if score > 0.7:
                     corr_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
             elif f in continuous_indices:
                 model = DecisionTreeRegressor()
-                model.fit(theta_train[0:val_idx,inputs], X_train[0:val_idx,f])
-                score = r2_score(X_train[val_idx:,f], model.predict(theta_train[val_idx:,inputs]))
+                model.fit(X_train_theta[0:val_idx,inputs], X_train[0:val_idx,f])
+                score = r2_score(X_train[val_idx:,f], model.predict(X_train_theta[val_idx:,inputs]))
                 if score > 0.7:
                     corr_models.append({'feature':f, 'inputs':inputs, 'model':model, 'score':score})
 
 
-    ## Parameter setting
-    ##  Objective functions || -1.0: cost function | 1.0: fitness function
+    ## Evolutioanry algorithm setup
+
+    # Initializing the population
+    x_theta = ea_scaler.transform(x_bb.reshape(1, -1)).ravel()
+    distances, indices = gt_nbrModel.kneighbors(x_theta.reshape(1, -1))
+    nbrs_theta = gt_theta[indices[0]].copy()
+
+    for f in range(len(x_bb)):
+        idx = np.random.choice(range(K_nbrs), size=int(0.7*K_nbrs))
+        nbrs_theta[idx,f] = x_theta[f]
+    nbrs_probability = 0.7
+
+
+
+    # Objective functions || -1.0: cost function | 1.0: fitness function
     f1 = -1.0   # Prediction Distance
     f2 = -1.0   # Feature Distance
     f3 =  1.0   # Proximity
@@ -446,38 +437,42 @@ def MOCFExplainer(x, blackbox, dataset, X_train, Y_train, probability_thresh=Non
     f7 =  -1.0   # Correlation
     OBJ_W = (f1, f2, f3, f4, f5, f6, f7)
 
-    NDIM = len(x)
+    # EA parameters
+    NDIM = len(x_bb)
     NOBJ = len(OBJ_W)
     NGEN = 50
     CXPB = 0.5
     MUTPB = 0.2
-    P = 8
+    P = 6
     H = factorial(NOBJ + P - 1) / (factorial(P) * factorial(NOBJ - 1))
     MU = int(H + (4 - H % 4))
-    BOUND_LOW, BOUND_UP = theta_min, theta_max
+    BOUND_LOW, BOUND_UP = 0, 1
 
-    ## Creating toolbox
-    toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x, theta_x, discrete_indices, continuous_indices,
-                           mapping_scale, mapping_offset, feature_range, feature_width, blackbox, probability_thresh,
-                           cf_label, cf_range, theta_N, probability_vec, lof_model, hdbscan_model, action_operation,
-                           action_priority, corr_models, corr)
+    # Creating toolbox for the EA
+    feature_encoder = dataset['feature_encoder']
+    feature_scaler = dataset['feature_scaler']
+    toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_bb, x_theta, discrete_indices, continuous_indices,
+                           feature_encoder, feature_scaler, ea_scaler, feature_width, blackbox, probability_thresh,
+                           cf_label, cf_range, nbrs_theta, nbrs_probability, lof_model, hdbscan_model, action_operation,
+                           action_priority, corr_models)
 
     ## Running EA
     fronts, pop, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
 
     ## Applying constraints and constructing counter-factuals
     constraints = [('f1',np.less_equal,0), ('f3',np.equal,1), ('f6',np.greater,0)]
-    cfs, cfs_decoded, cfs_eval = ConstructCounterfactuals(dataset, toolbox, fronts, mapping_scale, mapping_offset, constraints)
+    cfs, cfs_eval = ConstructCounterfactuals(dataset, toolbox, fronts, ea_scaler, constraints)
+
+    ## Recovering original data
+
 
     ## Returning the results
     output = {'cfs': cfs,
-              'cfs_decoded': cfs_decoded,
               'cfs_eval': cfs_eval,
               'fronts': fronts,
               'pop': pop,
               'toolbox': toolbox,
-              'mapping_scale': mapping_scale,
-              'mapping_offset': mapping_offset
+              'ea_scaler': ea_scaler
     }
 
     return output

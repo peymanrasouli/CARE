@@ -1,2 +1,2 @@
-def Sparsity(x, cf):
-    return sum(x != cf)
+def Sparsity(x_theta, cf_theta):
+    return sum(x_theta != cf_theta)

@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.preprocessing import OrdinalEncoder, LabelEncoder
+from sklearn.preprocessing import OrdinalEncoder, LabelEncoder, MinMaxScaler
 
 ## Preparing Breast Cancer dataset
 def PrepareBreastCancer(dataset_path, dataset_name):
@@ -21,14 +21,16 @@ def PrepareBreastCancer(dataset_path, dataset_name):
     continuous_features = []    # none continuous features
     continuous_indices = []     # none continuous features
 
-    ## Encoding features
-    df_X_fe = df_X.copy(deep=True)
-    feature_encoder = dict()
-    for col in discrete_features:
-        fe = OrdinalEncoder()
-        encoded_data = fe.fit_transform(df_X_fe[col].to_numpy().reshape(-1, 1))
-        df_X_fe[col] = pd.DataFrame(encoded_data)
-        feature_encoder[col] = fe
+    ## Feature transformation
+    df_X_trans = df_X.copy(deep=True)
+
+    # Scaling continuous features
+    feature_scaler = None
+
+    # Encoding discrete features
+    feature_encoder = OrdinalEncoder()
+    encoded_data = feature_encoder.fit_transform(df_X.iloc[:, discrete_indices].to_numpy())
+    df_X_trans.iloc[:, discrete_indices] = encoded_data
 
     ## Encoding labels
     df_y_le = df_y.copy(deep=True)
@@ -38,7 +40,7 @@ def PrepareBreastCancer(dataset_path, dataset_name):
     label_encoder[class_name] = le
 
     ## Extracting raw data and labels
-    X = df_X_fe.values
+    X = df_X_trans.values
     y = df_y_le
 
     ## Indexing labels
@@ -46,7 +48,7 @@ def PrepareBreastCancer(dataset_path, dataset_name):
     label_indices = {i: label for i, label in enumerate(list(label_encoder[class_name].classes_))}
 
     ## Indexing features
-    feature_names = list(df_X.columns)
+    feature_names = list(df_X_trans.columns)
     feature_indices = {i: feature for i, feature in enumerate(feature_names)}
     feature_ranges = {feature_names[i]: [min(X[:,i]),max(X[:,i])] for i in range(X.shape[1])}
 
@@ -56,13 +58,14 @@ def PrepareBreastCancer(dataset_path, dataset_name):
         'df': df,
         'df_X': df_X,
         'df_y': df_y,
-        'df_X_fe': df_X_fe,
+        'df_X_trans': df_X_trans,
         'df_y_le': df_y_le,
         'class_name': class_name,
         'label_encoder': label_encoder,
         'label_names': label_names,
         'label_indices': label_indices,
         'feature_encoder': feature_encoder,
+        'feature_scaler': feature_scaler,
         'feature_names': feature_names,
         'feature_indices': feature_indices,
         'feature_ranges': feature_ranges,
@@ -93,14 +96,18 @@ def PrepareCreditCardDefault(dataset_path, dataset_name):
                            'BILL_AMT6', 'PAY_AMT1', 'PAY_AMT2', 'PAY_AMT3', 'PAY_AMT4', 'PAY_AMT5', 'PAY_AMT6']
     continuous_indices = [df_X.columns.get_loc(f) for f in continuous_features]
 
-    ## Encoding features
-    df_X_fe = df_X.copy(deep=True)
-    feature_encoder = dict()
-    for col in discrete_features:
-        fe = OrdinalEncoder()
-        encoded_data = fe.fit_transform(df_X_fe[col].to_numpy().reshape(-1, 1))
-        df_X_fe[col] = pd.DataFrame(encoded_data)
-        feature_encoder[col] = fe
+    ## Feature transformation
+    df_X_trans = df_X.copy(deep=True)
+
+    # Scaling continuous features
+    feature_scaler = MinMaxScaler()
+    scaled_data = feature_scaler.fit_transform(df_X.iloc[:, continuous_indices].to_numpy())
+    df_X_trans.iloc[:, continuous_indices] = scaled_data
+
+    # Encoding discrete features
+    feature_encoder = OrdinalEncoder()
+    encoded_data = feature_encoder.fit_transform(df_X.iloc[:, discrete_indices].to_numpy())
+    df_X_trans.iloc[:, discrete_indices] = encoded_data
 
     ## Encoding labels
     df_y_le = df_y.copy(deep=True)
@@ -110,7 +117,7 @@ def PrepareCreditCardDefault(dataset_path, dataset_name):
     label_encoder[class_name] = le
 
     ## Extracting raw data and labels
-    X = df_X_fe.values
+    X = df_X_trans.values
     y = df_y_le
 
     ## Indexing labels
@@ -118,7 +125,7 @@ def PrepareCreditCardDefault(dataset_path, dataset_name):
     label_indices = {i: label for i, label in enumerate(list(label_encoder[class_name].classes_))}
 
     ## Indexing features
-    feature_names = list(df_X.columns)
+    feature_names = list(df_X_trans.columns)
     feature_indices = {i: feature for i, feature in enumerate(feature_names)}
     feature_ranges = {feature_names[i]: [min(X[:,i]),max(X[:,i])] for i in range(X.shape[1])}
 
@@ -128,13 +135,14 @@ def PrepareCreditCardDefault(dataset_path, dataset_name):
         'df': df,
         'df_X': df_X,
         'df_y': df_y,
-        'df_X_fe': df_X_fe,
+        'df_X_trans': df_X_trans,
         'df_y_le': df_y_le,
         'class_name': class_name,
         'label_encoder': label_encoder,
         'label_names': label_names,
         'label_indices': label_indices,
         'feature_encoder': feature_encoder,
+        'feature_scaler': feature_scaler,
         'feature_names': feature_names,
         'feature_indices': feature_indices,
         'feature_ranges': feature_ranges,
@@ -168,14 +176,18 @@ def PrepareAdult(dataset_path, dataset_name):
     continuous_features = ['age', 'fnlwgt', 'capital-gain', 'capital-loss', 'hours-per-week']
     continuous_indices = [df_X.columns.get_loc(f) for f in continuous_features]
 
-    ## Encoding features
-    df_X_fe = df_X.copy(deep=True)
-    feature_encoder = dict()
-    for col in discrete_features:
-        fe = OrdinalEncoder()
-        encoded_data = fe.fit_transform(df_X_fe[col].to_numpy().reshape(-1, 1))
-        df_X_fe[col] = pd.DataFrame(encoded_data)
-        feature_encoder[col] = fe
+    ## Feature transformation
+    df_X_trans = df_X.copy(deep=True)
+
+    # Scaling continuous features
+    feature_scaler = MinMaxScaler()
+    scaled_data = feature_scaler.fit_transform(df_X.iloc[:, continuous_indices].to_numpy())
+    df_X_trans.iloc[:, continuous_indices] = scaled_data
+
+    # Encoding discrete features
+    feature_encoder = OrdinalEncoder()
+    encoded_data = feature_encoder.fit_transform(df_X.iloc[:, discrete_indices].to_numpy())
+    df_X_trans.iloc[:, discrete_indices] = encoded_data
 
     ## Encoding labels
     df_y_le = df_y.copy(deep=True)
@@ -185,7 +197,7 @@ def PrepareAdult(dataset_path, dataset_name):
     label_encoder[class_name] = le
 
     ## Extracting raw data and labels
-    X = df_X_fe.values
+    X = df_X_trans.values
     y = df_y_le
 
     ## Indexing labels
@@ -193,7 +205,7 @@ def PrepareAdult(dataset_path, dataset_name):
     label_indices = {i: label for i, label in enumerate(list(label_encoder[class_name].classes_))}
 
     ## Indexing features
-    feature_names = list(df_X.columns)
+    feature_names = list(df_X_trans.columns)
     feature_indices = {i: feature for i, feature in enumerate(feature_names)}
     feature_ranges = {feature_names[i]: [min(X[:,i]),max(X[:,i])] for i in range(X.shape[1])}
 
@@ -203,13 +215,14 @@ def PrepareAdult(dataset_path, dataset_name):
         'df': df,
         'df_X': df_X,
         'df_y': df_y,
-        'df_X_fe': df_X_fe,
+        'df_X_trans': df_X_trans,
         'df_y_le': df_y_le,
         'class_name': class_name,
         'label_encoder': label_encoder,
         'label_names': label_names,
         'label_indices': label_indices,
         'feature_encoder': feature_encoder,
+        'feature_scaler': feature_scaler,
         'feature_names': feature_names,
         'feature_indices': feature_indices,
         'feature_ranges': feature_ranges,
@@ -240,24 +253,28 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
     continuous_features = ['CRIM', 'ZN', 'INDUS', 'NOX', 'RM', 'AGE', 'DIS', 'RAD', 'TAX', 'PTRATIO', 'BLACK', 'LSTAT']
     continuous_indices = [df_X.columns.get_loc(f) for f in continuous_features]
 
-    ## Encoding features
-    df_X_fe = df_X.copy(deep=True)
-    feature_encoder = dict()
-    for col in discrete_features:
-        fe = OrdinalEncoder()
-        encoded_data = fe.fit_transform(df_X_fe[col].to_numpy().reshape(-1, 1))
-        df_X_fe[col] = pd.DataFrame(encoded_data)
-        feature_encoder[col] = fe
+    ## Feature transformation
+    df_X_trans = df_X.copy(deep=True)
+
+    # Scaling continuous features
+    feature_scaler = MinMaxScaler()
+    scaled_data = feature_scaler.fit_transform(df_X.iloc[:, continuous_indices].to_numpy())
+    df_X_trans.iloc[:, continuous_indices] = scaled_data
+
+    # Encoding discrete features
+    feature_encoder = OrdinalEncoder()
+    encoded_data = feature_encoder.fit_transform(df_X.iloc[:, discrete_indices].to_numpy())
+    df_X_trans.iloc[:, discrete_indices] = encoded_data
 
     ## Extracting raw data and target
-    X = df_X_fe.values
+    X = df_X_trans.values
     y = df_y.to_numpy()
 
     ## Extracting target range
     target_range = [min(y),max(y)]
 
     ## Indexing features
-    feature_names = list(df_X.columns)
+    feature_names = list(df_X_trans.columns)
     feature_indices = {i: feature for i, feature in enumerate(feature_names)}
     feature_ranges = {feature_names[i]: [min(X[:,i]),max(X[:,i])] for i in range(X.shape[1])}
 
@@ -267,10 +284,11 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
         'df': df,
         'df_X': df_X,
         'df_y': df_y,
-        'df_X_fe': df_X_fe,
+        'df_X_trans': df_X_trans,
         'target_name': target_name,
         'target_range': target_range,
         'feature_encoder': feature_encoder,
+        'feature_scaler': feature_scaler,
         'feature_names': feature_names,
         'feature_indices': feature_indices,
         'feature_ranges': feature_ranges,

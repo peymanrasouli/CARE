@@ -20,9 +20,9 @@ def main():
 
     ## Defining the list of data sets
     datsets_list = {
-        'breast-cancer': ('breast-cancer.csv', PrepareBreastCancer, 'classification'),
+        # 'breast-cancer': ('breast-cancer.csv', PrepareBreastCancer, 'classification'),
         # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
-        # 'adult': ('adult.csv', PrepareAdult, 'classification'),
+        'adult': ('adult.csv', PrepareAdult, 'classification'),
         # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
     }
 
@@ -63,7 +63,8 @@ def main():
                 probability_thresh = 0.5         # Desired probability threshold
 
                 ## MOCF Explainer
-                # MOCF_output = MOCFExplainer(x, blackbox, dataset, X_train, Y_train, probability_thresh=probability_thresh, cf_label=cf_label)
+                MOCF_output = MOCFExplainer(x, blackbox, dataset, X_train, Y_train,
+                                            probability_thresh=probability_thresh, cf_label=cf_label)
 
                 ## CF Explainer
                 CF_output = CFExplainer(x, blackbox, dataset, probability_thresh)
