@@ -1,4 +1,5 @@
 import numpy as np
+from mappings import BB2Theta, Theta2BB, BB2Original
 from prediction_distance import PredictionDistance
 from feature_distance import FeatureDistance
 from proximity import Proximity
@@ -7,15 +8,14 @@ from actionable_recourse import ActionableRecourse
 from connectedness import Connectedness
 from correlation import Correlation
 
-def CostFunction(x_bb, x_theta, discrete_indices, continuous_indices, feature_encoder, feature_scaler, ea_scaler,
-                 feature_width, blackbox, probability_thresh, cf_label, cf_range, lof_model, hdbscan_model,
+def CostFunction(x_bb, x_theta, x_original, discrete_indices, continuous_indices, feature_encoder, feature_scaler,
+                 ea_scaler, feature_width, blackbox, probability_thresh, cf_label, cf_range, lof_model, hdbscan_model,
                  action_operation, action_priority, corr_models, cf_theta):
 
     ## Constructing the counterfactual instance cf from the individual
     cf_theta = np.asarray(cf_theta)
-    cf_bb = cf_theta.copy()
-    cf_bb[discrete_indices] = ea_scaler.inverse_transform(cf_bb[discrete_indices].reshape(1, -1)).ravel()
-    cf_bb[discrete_indices] = np.rint(cf_bb[discrete_indices])
+    cf_bb = Theta2BB(cf_theta, ea_scaler)
+    cf_original = BB2Original(cf_bb, feature_encoder, feature_scaler, discrete_indices, continuous_indices)
 
     ## Objective 1: Prediction Distance
     f1 = PredictionDistance(cf_bb, blackbox, probability_thresh, cf_label, cf_range)
@@ -27,7 +27,7 @@ def CostFunction(x_bb, x_theta, discrete_indices, continuous_indices, feature_en
     f3 = Proximity(cf_theta, lof_model)
 
     ## Objective 4: Actionable Recourse
-    f4 = ActionableRecourse(x_bb, cf_bb, action_operation, action_priority)
+    f4 = ActionableRecourse(x_original, cf_original, action_operation, action_priority)
 
     ## Objective 5: Sparsity
     f5 = Sparsity(x_bb, cf_bb)

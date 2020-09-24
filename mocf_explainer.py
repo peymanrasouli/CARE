@@ -3,9 +3,10 @@ import numpy as np
 import pandas as pd
 from math import *
 from deap import algorithms, base, creator, tools
+from mappings import BB2Theta, Theta2BB, BB2Original
 from cost_function import CostFunction
 from evaluate_counterfactuals import EvaluateCounterfactuals
-from recover_original_data import RecoverOriginalData
+from highlight_changes import HighlightChanges
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import pairwise_distances, f1_score, r2_score
@@ -35,17 +36,17 @@ def PlotParetoFronts(toolbox, fronts, objective_list):
             else ax[i].scatter(costs[:,0], costs[:,1], color='r')
         ax.title.set_text('Front 1') if n_fronts == 1 else ax[i].title.set_text('Front '+str(i+1))
 
-def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_bb, x_theta, discrete_indices, continuous_indices,
-                 feature_encoder, feature_scaler, ea_scaler, feature_width, blackbox, probability_thresh,
-                 cf_label, cf_range, nbrs_theta, selection_probability, lof_model, hdbscan_model, action_operation,
-                 action_priority, corr_models):
+def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_bb, x_theta, x_original, discrete_indices,
+                 continuous_indices, feature_encoder, feature_scaler, ea_scaler, feature_width, blackbox,
+                 probability_thresh, cf_label, cf_range, nbrs_theta, selection_probability, lof_model,
+                 hdbscan_model, action_operation, action_priority, corr_models):
 
     toolbox = base.Toolbox()
     creator.create("FitnessMulti", base.Fitness, weights=OBJ_W)
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
-    toolbox.register("evaluate", CostFunction, x_bb, x_theta, discrete_indices, continuous_indices, feature_encoder,
-                     feature_scaler, ea_scaler, feature_width, blackbox, probability_thresh, cf_label, cf_range,
-                     lof_model, hdbscan_model, action_operation, action_priority, corr_models)
+    toolbox.register("evaluate", CostFunction, x_bb, x_theta, x_original, discrete_indices, continuous_indices,
+                     feature_encoder, feature_scaler, ea_scaler, feature_width, blackbox, probability_thresh,
+                     cf_label, cf_range, lof_model, hdbscan_model, action_operation, action_priority, corr_models)
     toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, x_theta, nbrs_theta, selection_probability)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -102,17 +103,20 @@ def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
 
 def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_label=None, x_range=None, cf_range=None):
     ## Reading dataset information
+    feature_encoder = dataset['feature_encoder']
+    feature_scaler = dataset['feature_scaler']
     discrete_indices = dataset['discrete_indices']
     continuous_indices = dataset['continuous_indices']
     feature_min = np.min(dataset['X'], axis=0)
     feature_max = np.max(dataset['X'], axis=0)
     feature_width = feature_max - feature_min
 
+    x_original = BB2Original(x_bb, feature_encoder, feature_scaler, discrete_indices, continuous_indices)
+
     # Scaling data to (0,1) for EA
     ea_scaler = MinMaxScaler()
-    ea_scaler.fit(X_train[:,discrete_indices])
-    X_train_theta = X_train.copy()
-    X_train_theta[:,discrete_indices] = ea_scaler.transform(X_train_theta[:,discrete_indices])
+    ea_scaler.fit(X_train)
+    X_train_theta = BB2Theta(X_train, ea_scaler)
 
     ## KNN model of correctly classified samples same class as counter-factual
     pred_train = blackbox.predict(X_train)
@@ -122,14 +126,12 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
         gt = X_train[np.where(abs_error<=mae)]
         pred_gt = blackbox.predict(gt)
         gt = gt[np.where(np.logical_and(pred_gt>=cf_range[0], pred_gt<=cf_range[1]))]
-        gt_theta = gt.copy()
-        gt_theta[:,discrete_indices] = ea_scaler.transform(gt[:,discrete_indices])
+        gt_theta = BB2Theta(gt, ea_scaler)
     else:
         gt = X_train[np.where(pred_train == Y_train)]
         pred_gt = blackbox.predict(gt)
         gt = gt[np.where(pred_gt == cf_label)]
-        gt_theta = gt.copy()
-        gt_theta[:, discrete_indices] = ea_scaler.transform(gt[:, discrete_indices])
+        gt_theta = BB2Theta(gt, ea_scaler)
 
     K_nbrs = min(500, len(gt_theta))
     gt_nbrModel = NearestNeighbors(n_neighbors=K_nbrs, algorithm='kd_tree').fit(gt_theta)
@@ -380,8 +382,7 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
     ## Evolutioanry algorithm setup
 
     # Initializing the population
-    x_theta = x_bb.copy()
-    x_theta[discrete_indices] = ea_scaler.transform(x_theta[discrete_indices].reshape(1, -1)).ravel()
+    x_theta = BB2Theta(x_bb, ea_scaler)
 
     distances, indices = gt_nbrModel.kneighbors(x_theta.reshape(1, -1))
     nbrs_theta = gt_theta[indices[0]].copy()
@@ -403,7 +404,7 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
     # EA parameters
     NDIM = len(x_bb)
     NOBJ = len(OBJ_W)
-    NGEN = 15
+    NGEN = 10
     CXPB = 0.5
     MUTPB = 0.2
     P = 6
@@ -412,35 +413,36 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
     BOUND_LOW, BOUND_UP = 0, 1
 
     # Creating toolbox for the EA
-    feature_encoder = dataset['feature_encoder']
-    feature_scaler = dataset['feature_scaler']
-    toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_bb, x_theta, discrete_indices, continuous_indices,
-                           feature_encoder, feature_scaler, ea_scaler, feature_width, blackbox, probability_thresh,
-                           cf_label, cf_range, nbrs_theta, selection_probability, lof_model, hdbscan_model, action_operation,
-                           action_priority, corr_models)
+    toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_bb, x_theta, x_original, discrete_indices,
+                           continuous_indices, feature_encoder, feature_scaler, ea_scaler, feature_width, blackbox,
+                           probability_thresh, cf_label, cf_range, nbrs_theta, selection_probability, lof_model,
+                           hdbscan_model, action_operation, action_priority, corr_models)
 
     ## Running EA
     fronts, pop, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
 
     ## Constructing counter-factuals
     solutions = np.asarray(pop)
-    solutions[:,discrete_indices] = ea_scaler.inverse_transform(solutions[:,discrete_indices])
-    solutions[:,discrete_indices] = np.rint(solutions[:,discrete_indices])
-
-    cfs = pd.DataFrame(data=solutions, columns=dataset['feature_names'])
-    cfs.drop_duplicates(inplace=True)
-    cfs.reset_index(drop=True, inplace=True)
+    cfs = Theta2BB(solutions, ea_scaler)
+    cfs = pd.DataFrame(data=cfs, columns=dataset['feature_names'])
 
     ## Evaluating counter-factuals
-    cfs, cfs_eval = EvaluateCounterfactuals(cfs, toolbox, OBJ_name, ea_scaler, discrete_indices)
+    cfs, cfs_eval = EvaluateCounterfactuals(cfs, solutions, toolbox, OBJ_name)
 
     ## Recovering original data
-    cfs_original = RecoverOriginalData(x_bb, cfs, dataset)
+    cfs_original = BB2Original(cfs, feature_encoder, feature_scaler, discrete_indices, continuous_indices)
+    cfs_original = pd.concat([x_original, cfs_original])
+    index = pd.Series(['x'] + ['cf_'+str(i) for i in range(len(cfs_original)-1)])
+    cfs_original = cfs_original.set_index(index)
+
+    ## Highlighting changes
+    cfs_original_highlight = HighlightChanges(cfs_original)
 
     ## Returning the results
     output = {'solutions': solutions,
               'cfs': cfs,
               'cfs_original':cfs_original,
+              'cfs_original_highlight': cfs_original_highlight,
               'cfs_eval': cfs_eval,
               'fronts': fronts,
               'pop': pop,
