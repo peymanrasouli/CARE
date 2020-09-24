@@ -4,6 +4,8 @@ import pandas as pd
 from math import *
 from deap import algorithms, base, creator, tools
 from cost_function import CostFunction
+from evaluate_counterfactuals import EvaluateCounterfactuals
+from recover_original_data import RecoverOriginalData
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import pairwise_distances, f1_score, r2_score
@@ -97,50 +99,6 @@ def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
 
     fronts = tools.emo.sortLogNondominated(pop, MU)
     return fronts, pop, record, logbook
-
-def ConstructCounterfactuals(dataset, toolbox, fronts, ea_scaler, constraints):
-    ## Constructing counterfactuals
-    pop = []
-    evaluation = []
-    for f in fronts:
-        for ind in f:
-            pop.append(np.asarray(ind))
-            evaluation.append(np.asarray(toolbox.evaluate(ind)))
-    pop = np.asarray(pop)
-    evaluation = np.asarray(evaluation)
-
-    discrete_indices = dataset['discrete_indices']
-    solutions = pop.copy()
-    solutions[:,discrete_indices] = ea_scaler.inverse_transform(solutions[:,discrete_indices])
-    solutions[:,discrete_indices] = np.rint(solutions[:,discrete_indices])
-
-    col = dataset['feature_names']
-    cfs = pd.DataFrame(data=solutions, columns=col)
-
-    col = ['f'+str(i+1) for i in range(evaluation.shape[1])]
-    cfs_eval = pd.DataFrame(data=evaluation, columns=col)
-
-    drop_ind = []
-    for c in constraints:
-        f = cfs_eval[c[0]]
-        op = c[1]
-        val = c[2]
-        ind = np.where(np.logical_not(op(f,val)))[0]
-        drop_ind.append(ind)
-
-    drop_ind = np.concatenate(drop_ind)
-    drop_ind = np.unique(drop_ind)
-
-    cfs.drop(drop_ind, inplace=True)
-    cfs_eval.drop(drop_ind, inplace=True)
-
-    cfs = cfs.drop_duplicates()
-    cfs_eval = cfs_eval.reindex(cfs.index)
-
-    cfs.reset_index(drop=True, inplace=True)
-    cfs_eval.reset_index(drop=True, inplace=True)
-
-    return cfs, cfs_eval
 
 def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_label=None, x_range=None, cf_range=None):
     ## Reading dataset information
@@ -428,7 +386,7 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
     distances, indices = gt_nbrModel.kneighbors(x_theta.reshape(1, -1))
     nbrs_theta = gt_theta[indices[0]].copy()
 
-    selection_probability = {'x': 0.1, 'neighbor':0.2, 'random':0.7}
+    selection_probability = {'x': 0.1, 'neighbor':0.4, 'random':0.5}
 
 
     # Objective functions || -1.0: cost function | 1.0: fitness function
@@ -440,11 +398,12 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
     f6 =  1.0   # Connectedness
     f7 =  -1.0   # Correlation
     OBJ_W = (f1, f2, f3, f4, f5, f6, f7)
+    OBJ_name = ['Prediction', 'Distance', 'Proximity', 'Actionable', 'Sparsity', 'Connectedness', 'Correlation']
 
     # EA parameters
     NDIM = len(x_bb)
     NOBJ = len(OBJ_W)
-    NGEN = 30
+    NGEN = 15
     CXPB = 0.5
     MUTPB = 0.2
     P = 6
@@ -463,15 +422,25 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
     ## Running EA
     fronts, pop, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
 
-    ## Applying constraints and constructing counter-factuals
-    constraints = [('f1',np.less_equal,0), ('f3',np.equal,1), ('f6',np.greater,0)]
-    cfs, cfs_eval = ConstructCounterfactuals(dataset, toolbox, fronts, ea_scaler, constraints)
+    ## Constructing counter-factuals
+    solutions = np.asarray(pop)
+    solutions[:,discrete_indices] = ea_scaler.inverse_transform(solutions[:,discrete_indices])
+    solutions[:,discrete_indices] = np.rint(solutions[:,discrete_indices])
+
+    cfs = pd.DataFrame(data=solutions, columns=dataset['feature_names'])
+    cfs.drop_duplicates(inplace=True)
+    cfs.reset_index(drop=True, inplace=True)
+
+    ## Evaluating counter-factuals
+    cfs, cfs_eval = EvaluateCounterfactuals(cfs, toolbox, OBJ_name, ea_scaler, discrete_indices)
 
     ## Recovering original data
-
+    cfs_original = RecoverOriginalData(x_bb, cfs, dataset)
 
     ## Returning the results
-    output = {'cfs': cfs,
+    output = {'solutions': solutions,
+              'cfs': cfs,
+              'cfs_original':cfs_original,
               'cfs_eval': cfs_eval,
               'fronts': fronts,
               'pop': pop,
