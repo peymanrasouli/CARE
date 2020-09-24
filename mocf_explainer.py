@@ -101,7 +101,9 @@ def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
     fronts = tools.emo.sortLogNondominated(pop, MU)
     return fronts, pop, record, logbook
 
-def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=None, cf_label=None, x_range=None, cf_range=None):
+def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
+                  probability_thresh=None, cf_label=None, x_range=None, cf_range=None):
+
     ## Reading dataset information
     feature_encoder = dataset['feature_encoder']
     feature_scaler = dataset['feature_scaler']
@@ -404,7 +406,7 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
     # EA parameters
     NDIM = len(x_bb)
     NOBJ = len(OBJ_W)
-    NGEN = 10
+    NGEN = 20
     CXPB = 0.5
     MUTPB = 0.2
     P = 6
@@ -427,7 +429,7 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
     cfs = pd.DataFrame(data=cfs, columns=dataset['feature_names'])
 
     ## Evaluating counter-factuals
-    cfs, cfs_eval = EvaluateCounterfactuals(cfs, solutions, toolbox, OBJ_name)
+    cfs, cfs_eval = EvaluateCounterfactuals(cfs, solutions, blackbox, toolbox, OBJ_name, task)
 
     ## Recovering original data
     cfs_original = BB2Original(cfs, feature_encoder, feature_scaler, discrete_indices, continuous_indices)
