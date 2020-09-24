@@ -12,12 +12,14 @@ import hdbscan
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
 from sklearn.preprocessing import MinMaxScaler
 
-def Initialization(bound_low, bound_up, size, nbrs_theta, nbrs_probability):
-
-    if np.random.rand() <= nbrs_probability:
-        idx = np.random.choice(range(len(nbrs_theta)), size=1, replace=False)
+def Initialization(bound_low, bound_up, size, x_theta, nbrs_theta, selection_probability):
+    method = np.random.choice(['x','neighbor','random'], size=1, p=list(selection_probability.values()))
+    if method == 'x':
+        return list(x_theta)
+    elif method == 'neighbor':
+        idx = np.random.choice(range(len(nbrs_theta)), size=1)
         return list(nbrs_theta[idx].ravel())
-    else:
+    elif method == 'random':
         return list(np.random.uniform(bound_low, bound_up, size))
 
 def PlotParetoFronts(toolbox, fronts, objective_list):
@@ -33,7 +35,7 @@ def PlotParetoFronts(toolbox, fronts, objective_list):
 
 def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_bb, x_theta, discrete_indices, continuous_indices,
                  feature_encoder, feature_scaler, ea_scaler, feature_width, blackbox, probability_thresh,
-                 cf_label, cf_range, nbrs_theta, nbrs_probability, lof_model, hdbscan_model, action_operation,
+                 cf_label, cf_range, nbrs_theta, selection_probability, lof_model, hdbscan_model, action_operation,
                  action_priority, corr_models):
 
     toolbox = base.Toolbox()
@@ -42,11 +44,10 @@ def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_bb, x_theta, discr
     toolbox.register("evaluate", CostFunction, x_bb, x_theta, discrete_indices, continuous_indices, feature_encoder,
                      feature_scaler, ea_scaler, feature_width, blackbox, probability_thresh, cf_label, cf_range,
                      lof_model, hdbscan_model, action_operation, action_priority, corr_models)
-    toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, nbrs_theta, nbrs_probability)
+    toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, x_theta, nbrs_theta, selection_probability)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
-    # toolbox.register("mate", tools.cxUniform, indpb=1.0 / NDIM)
     toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
     ref_points = tools.uniform_reference_points(NOBJ, P)
     toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
@@ -107,8 +108,10 @@ def ConstructCounterfactuals(dataset, toolbox, fronts, ea_scaler, constraints):
             evaluation.append(np.asarray(toolbox.evaluate(ind)))
     pop = np.asarray(pop)
     evaluation = np.asarray(evaluation)
-    solutions = ea_scaler.inverse_transform(pop)
+
     discrete_indices = dataset['discrete_indices']
+    solutions = pop.copy()
+    solutions[:,discrete_indices] = ea_scaler.inverse_transform(solutions[:,discrete_indices])
     solutions[:,discrete_indices] = np.rint(solutions[:,discrete_indices])
 
     col = dataset['feature_names']
@@ -149,8 +152,9 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
 
     # Scaling data to (0,1) for EA
     ea_scaler = MinMaxScaler()
-    ea_scaler.fit(X_train)
-    X_train_theta = ea_scaler.transform(X_train)
+    ea_scaler.fit(X_train[:,discrete_indices])
+    X_train_theta = X_train.copy()
+    X_train_theta[:,discrete_indices] = ea_scaler.transform(X_train_theta[:,discrete_indices])
 
     ## KNN model of correctly classified samples same class as counter-factual
     pred_train = blackbox.predict(X_train)
@@ -160,12 +164,14 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
         gt = X_train[np.where(abs_error<=mae)]
         pred_gt = blackbox.predict(gt)
         gt = gt[np.where(np.logical_and(pred_gt>=cf_range[0], pred_gt<=cf_range[1]))]
-        gt_theta = ea_scaler.transform(gt)
+        gt_theta = gt.copy()
+        gt_theta[:,discrete_indices] = ea_scaler.transform(gt[:,discrete_indices])
     else:
         gt = X_train[np.where(pred_train == Y_train)]
         pred_gt = blackbox.predict(gt)
         gt = gt[np.where(pred_gt == cf_label)]
-        gt_theta = ea_scaler.transform(gt)
+        gt_theta = gt.copy()
+        gt_theta[:, discrete_indices] = ea_scaler.transform(gt[:, discrete_indices])
 
     K_nbrs = min(500, len(gt_theta))
     gt_nbrModel = NearestNeighbors(n_neighbors=K_nbrs, algorithm='kd_tree').fit(gt_theta)
@@ -416,14 +422,13 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
     ## Evolutioanry algorithm setup
 
     # Initializing the population
-    x_theta = ea_scaler.transform(x_bb.reshape(1, -1)).ravel()
+    x_theta = x_bb.copy()
+    x_theta[discrete_indices] = ea_scaler.transform(x_theta[discrete_indices].reshape(1, -1)).ravel()
+
     distances, indices = gt_nbrModel.kneighbors(x_theta.reshape(1, -1))
     nbrs_theta = gt_theta[indices[0]].copy()
 
-    for f in range(len(x_bb)):
-        idx = np.random.choice(range(K_nbrs), size=int(0.9*K_nbrs))
-        nbrs_theta[idx,f] = x_theta[f]
-    nbrs_probability = 0.7
+    selection_probability = {'x': 0.1, 'neighbor':0.2, 'random':0.7}
 
 
     # Objective functions || -1.0: cost function | 1.0: fitness function
@@ -439,7 +444,7 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
     # EA parameters
     NDIM = len(x_bb)
     NOBJ = len(OBJ_W)
-    NGEN = 50
+    NGEN = 30
     CXPB = 0.5
     MUTPB = 0.2
     P = 6
@@ -452,7 +457,7 @@ def MOCFExplainer(x_bb, blackbox, dataset, X_train, Y_train, probability_thresh=
     feature_scaler = dataset['feature_scaler']
     toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_bb, x_theta, discrete_indices, continuous_indices,
                            feature_encoder, feature_scaler, ea_scaler, feature_width, blackbox, probability_thresh,
-                           cf_label, cf_range, nbrs_theta, nbrs_probability, lof_model, hdbscan_model, action_operation,
+                           cf_label, cf_range, nbrs_theta, selection_probability, lof_model, hdbscan_model, action_operation,
                            action_priority, corr_models)
 
     ## Running EA

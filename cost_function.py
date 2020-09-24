@@ -13,7 +13,8 @@ def CostFunction(x_bb, x_theta, discrete_indices, continuous_indices, feature_en
 
     ## Constructing the counterfactual instance cf from the individual
     cf_theta = np.asarray(cf_theta)
-    cf_bb = ea_scaler.inverse_transform(cf_theta.reshape(1, -1)).ravel()
+    cf_bb = cf_theta.copy()
+    cf_bb[discrete_indices] = ea_scaler.inverse_transform(cf_bb[discrete_indices].reshape(1, -1)).ravel()
     cf_bb[discrete_indices] = np.rint(cf_bb[discrete_indices])
 
     ## Objective 1: Prediction Distance
@@ -29,7 +30,7 @@ def CostFunction(x_bb, x_theta, discrete_indices, continuous_indices, feature_en
     f4 = ActionableRecourse(x_bb, cf_bb, action_operation, action_priority)
 
     ## Objective 5: Sparsity
-    f5 = Sparsity(x_theta, cf_theta)
+    f5 = Sparsity(x_bb, cf_bb)
 
     ## Objective 6: Connectedness
     f6 = Connectedness(cf_theta, hdbscan_model)
