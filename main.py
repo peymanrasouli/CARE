@@ -29,9 +29,9 @@ def main():
     ## Defining the list of black-boxes
     blackbox_list = {
         # 'lg': LogisticRegression,
-        'gt': GradientBoostingClassifier,
+        # 'gt': GradientBoostingClassifier,
         # 'rf': RandomForestClassifier,
-        # 'nn': MLPClassifier,
+        'nn': MLPClassifier,
         # 'dtr': DecisionTreeRegressor,
     }
 
@@ -60,17 +60,19 @@ def main():
                 x = X_test[ind]
                 x_label = blackbox.predict(x.reshape(1, -1))
                 cf_label = int(1 - x_label)      # Counter-factual label
-                probability_thresh = 0.5         # Desired probability threshold
+                probability_thresh = 0.6         # Desired probability threshold
 
                 ## MOCF Explainer
                 MOCF_output = MOCFExplainer(x, blackbox, dataset, task, X_train, Y_train,
                                             probability_thresh=probability_thresh, cf_label=cf_label)
 
                 ## CF Explainer
-                CF_output = CFExplainer(x, blackbox, dataset, probability_thresh)
+                CF_output = CFExplainer(x, blackbox, dataset, task, probability_thresh, MOCF_output)
 
                 ## CFProto Explainer
-                CFProto_output = CFPrototypeExplainer(x, blackbox, dataset, X_train)
+                CFProto_output = CFPrototypeExplainer(x, blackbox, X_train, dataset, task, MOCF_output)
+
+                print('Done!')
 
             # Regression
             elif task is 'regression':

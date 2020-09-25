@@ -105,6 +105,7 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
                   probability_thresh=None, cf_label=None, x_range=None, cf_range=None):
 
     ## Reading dataset information
+    feature_names = dataset['feature_names']
     feature_encoder = dataset['feature_encoder']
     feature_scaler = dataset['feature_scaler']
     discrete_indices = dataset['discrete_indices']
@@ -112,8 +113,6 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
     feature_min = np.min(dataset['X'], axis=0)
     feature_max = np.max(dataset['X'], axis=0)
     feature_width = feature_max - feature_min
-
-    x_original = BB2Original(x_bb, feature_encoder, feature_scaler, discrete_indices, continuous_indices)
 
     # Scaling data to (0,1) for EA
     ea_scaler = MinMaxScaler()
@@ -385,6 +384,7 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
 
     # Initializing the population
     x_theta = BB2Theta(x_bb, ea_scaler)
+    x_original = BB2Original(x_bb, feature_encoder, feature_scaler, discrete_indices, continuous_indices)
 
     distances, indices = gt_nbrModel.kneighbors(x_theta.reshape(1, -1))
     nbrs_theta = gt_theta[indices[0]].copy()
@@ -406,7 +406,7 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
     # EA parameters
     NDIM = len(x_bb)
     NOBJ = len(OBJ_W)
-    NGEN = 20
+    NGEN = 10
     CXPB = 0.5
     MUTPB = 0.2
     P = 6
@@ -426,7 +426,7 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
     ## Constructing counter-factuals
     solutions = np.asarray(pop)
     cfs = Theta2BB(solutions, ea_scaler)
-    cfs = pd.DataFrame(data=cfs, columns=dataset['feature_names'])
+    cfs = pd.DataFrame(data=cfs, columns=feature_names)
 
     ## Evaluating counter-factuals
     cfs, cfs_eval = EvaluateCounterfactuals(cfs, solutions, blackbox, toolbox, OBJ_name, task)
@@ -449,7 +449,8 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
               'fronts': fronts,
               'pop': pop,
               'toolbox': toolbox,
-              'ea_scaler': ea_scaler
+              'ea_scaler': ea_scaler,
+              'OBJ_name': OBJ_name
     }
 
     return output
