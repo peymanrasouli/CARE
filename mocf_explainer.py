@@ -50,10 +50,12 @@ def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_bb, x_theta, x_ori
     toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, x_theta, nbrs_theta, selection_probability)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
+    # toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
+    toolbox.register("mate", tools.cxTwoPoint)
     toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
     ref_points = tools.uniform_reference_points(NOBJ, P)
     toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
+    # toolbox.register("select", tools.selNSGA2)
     return toolbox
 
 def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
@@ -81,6 +83,7 @@ def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
     print(logbook.stream)
 
     # Begin the generational process
+    snapshot = []
     for gen in range(1, NGEN):
         offspring = algorithms.varAnd(pop, toolbox, CXPB, MUTPB)
 
@@ -98,8 +101,11 @@ def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
         logbook.record(pop=pop, gen=gen, evals=len(invalid_ind), **record)
         print(logbook.stream)
 
+        if not(gen % 3):
+            snapshot.append(tools.emo.sortLogNondominated(pop, MU)[0])
+
     fronts = tools.emo.sortLogNondominated(pop, MU)
-    return fronts, pop, record, logbook
+    return fronts, pop, snapshot, record, logbook
 
 def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
                   probability_thresh=None, cf_label=None, x_range=None, cf_range=None):
@@ -421,10 +427,12 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
                            hdbscan_model, action_operation, action_priority, corr_models)
 
     ## Running EA
-    fronts, pop, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
+    fronts, pop, snapshot, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
 
     ## Constructing counter-factuals
-    solutions = np.asarray(pop)
+    # solutions = np.asarray(fronts[0])
+    solutions = np.concatenate(np.asarray([s for s in snapshot]))
+
     cfs = Theta2BB(solutions, ea_scaler)
     cfs = pd.DataFrame(data=cfs, columns=feature_names)
 
