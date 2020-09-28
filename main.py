@@ -1,5 +1,6 @@
 from prepare_datasets import *
 from mocf_explainer import MOCFExplainer
+from dice_explainer import DiCEExplainer
 from cf_explainer import CFExplainer
 from cf_prototype_explainer import CFPrototypeExplainer
 from create_model import CreateModel
@@ -21,17 +22,18 @@ def main():
     ## Defining the list of data sets
     datsets_list = {
         # 'breast-cancer': ('breast-cancer.csv', PrepareBreastCancer, 'classification'),
-        'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
-        # 'adult': ('adult.csv', PrepareAdult, 'classification'),
+        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        'adult': ('adult.csv', PrepareAdult, 'classification'),
         # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
     }
 
     ## Defining the list of black-boxes
     blackbox_list = {
+        'dnn': None,
         # 'lg': LogisticRegression,
         # 'gt': GradientBoostingClassifier,
         # 'rf': RandomForestClassifier,
-        'nn': MLPClassifier,
+        # 'nn': MLPClassifier,
         # 'dtr': DecisionTreeRegressor,
     }
 
@@ -62,9 +64,14 @@ def main():
                 cf_label = int(1 - x_label)      # Counter-factual label
                 probability_thresh = 0.6         # Desired probability threshold
 
+                ## DiCE Explainer
+                DiCE_output = DiCEExplainer(x, blackbox, X_train, Y_train, dataset, task, None)
+
                 ## MOCF Explainer
                 MOCF_output = MOCFExplainer(x, blackbox, dataset, task, X_train, Y_train,
                                             probability_thresh=probability_thresh, cf_label=cf_label)
+
+
 
                 ## CF Explainer
                 CF_output = CFExplainer(x, blackbox, dataset, task, probability_thresh, MOCF_output)
