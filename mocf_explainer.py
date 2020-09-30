@@ -3,9 +3,10 @@ import numpy as np
 import pandas as pd
 from math import *
 from deap import algorithms, base, creator, tools
-from mappings import BB2Theta, Theta2BB, BB2Original
+from mappings import ord2ohe, ord2org, ord2theta, theta2ord
 from cost_function import CostFunction
 from evaluate_counterfactuals import EvaluateCounterfactuals
+from recover_original import RecoverOriginal
 from highlight_changes import HighlightChanges
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
@@ -36,17 +37,18 @@ def PlotParetoFronts(toolbox, fronts, objective_list):
             else ax[i].scatter(costs[:,0], costs[:,1], color='r')
         ax.title.set_text('Front 1') if n_fronts == 1 else ax[i].title.set_text('Front '+str(i+1))
 
-def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_bb, x_theta, x_original, discrete_indices,
-                 continuous_indices, feature_encoder, feature_scaler, ea_scaler, feature_width, blackbox,
-                 probability_thresh, cf_label, cf_range, nbrs_theta, selection_probability, lof_model,
-                 hdbscan_model, action_operation, action_priority, corr_models):
+def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_ord, x_theta, x_original, blackbox,
+                 predict_class_fn, predict_proba_fn, discrete_indices, continuous_indices, ea_scaler,
+                 probability_thresh, cf_label, cf_range, nbrs_theta, selection_probability,
+                 lof_model, hdbscan_model, action_operation, action_priority, corr_models):
 
     toolbox = base.Toolbox()
     creator.create("FitnessMulti", base.Fitness, weights=OBJ_W)
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
-    toolbox.register("evaluate", CostFunction, x_bb, x_theta, x_original, discrete_indices, continuous_indices,
-                     feature_encoder, feature_scaler, ea_scaler, feature_width, blackbox, probability_thresh,
-                     cf_label, cf_range, lof_model, hdbscan_model, action_operation, action_priority, corr_models)
+    toolbox.register("evaluate", CostFunction, x_ord, x_theta, x_original, blackbox, predict_class_fn, predict_proba_fn,
+                     discrete_indices, continuous_indices, ea_scaler, probability_thresh, cf_label, cf_range,lof_model,
+                     hdbscan_model, action_operation, action_priority, corr_models)
+
     toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, x_theta, nbrs_theta, selection_probability)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -107,38 +109,31 @@ def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
     fronts = tools.emo.sortLogNondominated(pop, MU)
     return fronts, pop, snapshot, record, logbook
 
-def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
+def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, task, X_train, Y_train,
                   probability_thresh=None, cf_label=None, x_range=None, cf_range=None):
 
-    ## Reading dataset information
-    feature_names = dataset['feature_names']
-    feature_encoder = dataset['feature_encoder']
-    feature_scaler = dataset['feature_scaler']
-    discrete_indices = dataset['discrete_indices']
-    continuous_indices = dataset['continuous_indices']
-    feature_min = np.min(dataset['X'], axis=0)
-    feature_max = np.max(dataset['X'], axis=0)
-    feature_width = feature_max - feature_min
-
     # Scaling data to (0,1) for EA
-    ea_scaler = MinMaxScaler()
+    ea_scaler = MinMaxScaler(feature_range=(0,1))
     ea_scaler.fit(X_train)
-    X_train_theta = BB2Theta(X_train, ea_scaler)
+    X_train_theta = ord2theta(X_train, ea_scaler)
 
     ## KNN model of correctly classified samples same class as counter-factual
-    pred_train = blackbox.predict(X_train)
+    X_train_ohe = ord2ohe(X_train, dataset)
+    pred_train = predict_class_fn(X_train_ohe)
     if cf_label is None:
         abs_error = np.abs(Y_train-pred_train)
         mae = np.mean(abs_error)
-        gt = X_train[np.where(abs_error<=mae)]
-        pred_gt = blackbox.predict(gt)
-        gt = gt[np.where(np.logical_and(pred_gt>=cf_range[0], pred_gt<=cf_range[1]))]
-        gt_theta = BB2Theta(gt, ea_scaler)
+        gt_idx = np.where(abs_error<=mae)
+        pred_gt = predict_class_fn(X_train_ohe[gt_idx])
+        gt_sc_idx = np.where(np.logical_and(pred_gt >= cf_range[0], pred_gt <= cf_range[1]))
+        gt = X_train[gt_idx[0][gt_sc_idx[0]]]
+        gt_theta = ord2theta(gt, ea_scaler)
     else:
-        gt = X_train[np.where(pred_train == Y_train)]
-        pred_gt = blackbox.predict(gt)
-        gt = gt[np.where(pred_gt == cf_label)]
-        gt_theta = BB2Theta(gt, ea_scaler)
+        gt_idx = np.where(pred_train == Y_train)
+        pred_gt = predict_class_fn(X_train_ohe[gt_idx])
+        gt_sc_idx = np.where(pred_gt == cf_label)
+        gt = X_train[gt_idx[0][gt_sc_idx[0]]]
+        gt_theta = ord2theta(gt, ea_scaler)
 
     K_nbrs = min(500, len(gt_theta))
     gt_nbrModel = NearestNeighbors(n_neighbors=K_nbrs, algorithm='kd_tree').fit(gt_theta)
@@ -185,8 +180,8 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
     if dataset['name'] == 'breast-cancer':
         preferences = {}
 
-        action_operation = [None] * len(x_bb)
-        action_priority = [None] * len(x_bb)
+        action_operation = [None] * len(x_ord)
+        action_priority = [None] * len(x_ord)
         for p in preferences:
             index = dataset['feature_names'].index(p)
             action_operation[index] = preferences[p][0]
@@ -247,8 +242,8 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
     elif dataset['name'] == 'credit-card-default':
         preferences = {}
 
-        action_operation = [None] * len(x_bb)
-        action_priority = [None] * len(x_bb)
+        action_operation = [None] * len(x_ord)
+        action_priority = [None] * len(x_ord)
         for p in preferences:
             index = dataset['feature_names'].index(p)
             action_operation[index] = preferences[p][0]
@@ -257,7 +252,6 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
     ###################### Adult data set ######################
     # discrete_features = {'work-class': [0.0, 6.0],
     #                     'education': [0.0, 15.0],
-    #                     'education-num': [0.0, 15.0],
     #                     'marital-status': [0.0, 6.0],
     #                     'occupation': [0.0, 13.0],
     #                     'relationship': [0.0, 5.0],
@@ -268,6 +262,7 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
     #
     # continuous_features = {'age': [17.0, 90.0],
     #                         'fnlwgt': [13769.0, 1484705.0],
+    #                         'education-num': [0.0, 15.0],
     #                         'capital-gain': [0.0, 99999.0],
     #                         'capital-loss': [0.0, 4356.0],
     #                         'hours-per-week': [1.0, 99.0],
@@ -305,8 +300,8 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
 
         preferences = {}
 
-        action_operation = [None] * len(x_bb)
-        action_priority = [None] * len(x_bb)
+        action_operation = [None] * len(x_ord)
+        action_priority = [None] * len(x_ord)
         for p in preferences:
             index = dataset['feature_names'].index(p)
             action_operation[index] = preferences[p][0]
@@ -345,8 +340,8 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
     elif dataset['name'] == 'boston-house-prices':
         preferences = {}
 
-        action_operation = [None] * len(x_bb)
-        action_priority = [None] * len(x_bb)
+        action_operation = [None] * len(x_ord)
+        action_priority = [None] * len(x_ord)
         for p in preferences:
             index = dataset['feature_names'].index(p)
             action_operation[index] = preferences[p][0]
@@ -358,6 +353,8 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
     # Pearson's R for continuous-continuous cases
     # Correlation Ratio for categorical-continuous cases
     # Cramer's V for categorical-categorical cases
+    continuous_indices = dataset['continuous_indices']
+    discrete_indices = dataset['discrete_indices']
     corr = nominal.associations(X_train, nominal_columns=discrete_indices,theil_u=False, plot=False)['corr']
     corr = corr.to_numpy()
     corr[np.diag_indices(corr.shape[0])] = 0
@@ -387,10 +384,9 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
 
 
     ## Evolutioanry algorithm setup
-
     # Initializing the population
-    x_theta = BB2Theta(x_bb, ea_scaler)
-    x_original = BB2Original(x_bb, feature_encoder, feature_scaler, discrete_indices, continuous_indices)
+    x_theta = ord2theta(x_ord, ea_scaler)
+    x_original = ord2org(x_ord, dataset)
 
     distances, indices = gt_nbrModel.kneighbors(x_theta.reshape(1, -1))
     nbrs_theta = gt_theta[indices[0]].copy()
@@ -410,7 +406,7 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
     OBJ_name = ['Prediction', 'Distance', 'Proximity', 'Actionable', 'Sparsity', 'Connectedness', 'Correlation']
 
     # EA parameters
-    NDIM = len(x_bb)
+    NDIM = len(x_ord)
     NOBJ = len(OBJ_W)
     NGEN = 10
     CXPB = 0.5
@@ -421,10 +417,10 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
     BOUND_LOW, BOUND_UP = 0, 1
 
     # Creating toolbox for the EA
-    toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_bb, x_theta, x_original, discrete_indices,
-                           continuous_indices, feature_encoder, feature_scaler, ea_scaler, feature_width, blackbox,
-                           probability_thresh, cf_label, cf_range, nbrs_theta, selection_probability, lof_model,
-                           hdbscan_model, action_operation, action_priority, corr_models)
+    toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_ord, x_theta, x_original, blackbox,
+                         predict_class_fn, predict_proba_fn, discrete_indices, continuous_indices, ea_scaler,
+                         probability_thresh, cf_label, cf_range, nbrs_theta, selection_probability,
+                         lof_model, hdbscan_model, action_operation, action_priority, corr_models)
 
     ## Running EA
     fronts, pop, snapshot, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
@@ -433,29 +429,28 @@ def MOCFExplainer(x_bb, blackbox, dataset, task, X_train, Y_train,
     # solutions = np.asarray(fronts[0])
     solutions = np.concatenate(np.asarray([s for s in snapshot]))
 
-    cfs = Theta2BB(solutions, ea_scaler)
-    cfs = pd.DataFrame(data=cfs, columns=feature_names)
+    feature_names = dataset['feature_names']
+    cfs_ord = theta2ord(solutions, ea_scaler)
+    cfs_ord = pd.DataFrame(data=cfs_ord, columns=feature_names)
 
     ## Evaluating counter-factuals
-    cfs, cfs_eval = EvaluateCounterfactuals(cfs, solutions, blackbox, toolbox, OBJ_name, task)
+    MOCF_output = {'toolbox': toolbox,
+                    'ea_scaler': ea_scaler,
+                    'OBJ_name': OBJ_name
+                 }
+    cfs_ord, cfs_eval = EvaluateCounterfactuals(cfs_ord, blackbox, task, MOCF_output)
 
     ## Recovering original data
-    cfs_original = BB2Original(cfs, feature_encoder, feature_scaler, discrete_indices, continuous_indices)
-    cfs_original = pd.concat([x_original, cfs_original])
-    index = pd.Series(['x'] + ['cf_'+str(i) for i in range(len(cfs_original)-1)])
-    cfs_original = cfs_original.set_index(index)
+    x_org, cfs_org = RecoverOriginal(x_ord, cfs_ord, dataset)
 
     ## Highlighting changes
-    cfs_original_highlight = HighlightChanges(cfs_original)
+    cfs_org_highlight = HighlightChanges(x_org, cfs_org)
 
     ## Returning the results
-    output = {'solutions': solutions,
-              'cfs': cfs,
-              'cfs_original':cfs_original,
-              'cfs_original_highlight': cfs_original_highlight,
+    output = {'cfs_ord': cfs_ord,
+              'cfs_org': cfs_org,
+              'cfs_org_highlight': cfs_org_highlight,
               'cfs_eval': cfs_eval,
-              'fronts': fronts,
-              'pop': pop,
               'toolbox': toolbox,
               'ea_scaler': ea_scaler,
               'OBJ_name': OBJ_name

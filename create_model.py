@@ -15,9 +15,9 @@ def CreateModel(dataset, X_train, X_test, Y_train, Y_test, task, model_name, con
             blackbox.add(keras.layers.Dense(10, input_shape=(X_train_ohe.shape[1],),
                                             kernel_regularizer=keras.regularizers.l1(0.001), activation=tf.nn.relu))
             blackbox.add(keras.layers.Dense(1, activation=tf.nn.sigmoid))
-            blackbox.compile(loss='binary_crossentropy', optimizer=tf.keras.optimizers.Adam(0.01), metrics=['accuracy'])
-            blackbox.fit(X_train_ohe, Y_train, validation_split=0.20, epochs=20, verbose=1)
-            pred_test = (blackbox.predict(X_test_ohe) > 0.5).astype("int32")
+            blackbox.compile(loss='binary_crossentropy', optimizer=tf.keras.optimizers.Adam(0.001), metrics=['accuracy'])
+            blackbox.fit(X_train_ohe, Y_train, validation_split=0.20, epochs=10, verbose=1)
+            pred_test = blackbox.predict_classes(X_test_ohe).ravel()
             bb_accuracy_score = accuracy_score(Y_test, pred_test)
             print(model_name , 'blackbox accuracy=', bb_accuracy_score)
             bb_f1_score = f1_score(Y_test, pred_test,average='macro')

@@ -1,6 +1,6 @@
 import numpy as np
 
-def HighlightChanges(df):
+def HighlightChanges(x, df):
     df_highlight = df.copy(deep=True)
     for f in range(df.shape[1]):
         ind = np.where(df.iloc[:,f] == df.iloc[0,f])[0]

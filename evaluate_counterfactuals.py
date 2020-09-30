@@ -1,7 +1,12 @@
 import numpy as np
 import pandas as pd
 
-def EvaluateCounterfactuals(cfs, solutions, blackbox, toolbox, OBJ_name, task):
+def EvaluateCounterfactuals(cfs, blackbox, task, MOCF_output):
+
+    toolbox = MOCF_output['toolbox']
+    OBJ_name = MOCF_output['OBJ_name']
+    ea_scaler = MOCF_output['ea_scaler']
+    solutions = BB2Theta(cfs, ea_scaler)
 
     evaluation = np.asarray([np.asarray(toolbox.evaluate(ind)) for ind in solutions])
     if task == 'classification':

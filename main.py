@@ -1,4 +1,5 @@
 from prepare_datasets import *
+from mappings import ord2ohe
 from mocf_explainer import MOCFExplainer
 from dice_explainer import DiCEExplainer
 from cf_explainer import CFExplainer
@@ -46,32 +47,38 @@ def main():
         dataset = prepare_dataset_fn(dataset_path,dataset_name)
 
         ## Splitting the data set into train and test sets
-        X, y = dataset['X'], dataset['y']
+        X, y = dataset['X_ord'], dataset['y']
         X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
         for blackbox_name, blackbox_constructor in blackbox_list.items():
             print('blackbox=', blackbox_name)
 
             ## Creating black-box model
-            blackbox = CreateModel(X_train, X_test, Y_train, Y_test, task, blackbox_name, blackbox_constructor)
+            blackbox = CreateModel(dataset, X_train, X_test, Y_train, Y_test, task, blackbox_name, blackbox_constructor)
+            if blackbox_name is 'dnn':
+                predict_class_fn = lambda x: blackbox.predict_classes(x).ravel()
+                predict_proba_fn = lambda x: np.asarray([1-blackbox.predict(x).ravel(), blackbox.predict(x).ravel()]).transpose()
+            else:
+                predict_class_fn = lambda x: blackbox.predict(x).ravel()
+                predict_proba_fn = lambda x: blackbox.predict_proba(x)
 
             ## Explaining the instance using counter-factuals
             # Classification
             if task is 'classification':
                 ind = 0
                 x = X_test[ind]
-                x_label = blackbox.predict(x.reshape(1, -1))
+                x_ohe = ord2ohe(x, dataset)
+                x_label = predict_class_fn(x_ohe.reshape(1,-1))
                 cf_label = int(1 - x_label)      # Counter-factual label
                 probability_thresh = 0.6         # Desired probability threshold
 
-                ## DiCE Explainer
-                DiCE_output = DiCEExplainer(x, blackbox, X_train, Y_train, dataset, task, None)
-
                 ## MOCF Explainer
-                MOCF_output = MOCFExplainer(x, blackbox, dataset, task, X_train, Y_train,
-                                            probability_thresh=probability_thresh, cf_label=cf_label)
+                MOCF_output = MOCFExplainer(x, blackbox, predict_class_fn, predict_proba_fn, dataset, task, X_train,
+                                            Y_train, probability_thresh=probability_thresh, cf_label=cf_label)
 
-
+                ## DiCE Explainer
+                DiCE_output = DiCEExplainer(x, blackbox, predict_class_fn, predict_proba_fn, X_train, Y_train, dataset,
+                                            task, MOCF_output, n_cf=5)
 
                 ## CF Explainer
                 CF_output = CFExplainer(x, blackbox, dataset, task, probability_thresh, MOCF_output)
@@ -83,10 +90,10 @@ def main():
 
             # Regression
             elif task is 'regression':
-                def SelectResponseRange(x, blackbox, dataset):
+                def SelectResponseRange(x, predict_class_fn, dataset):
                     q = np.quantile(dataset['y'], q=np.linspace(0,1,11))
                     ranges = [[q[i], q[i+1]] for i in range(len(q)-1)]
-                    response_x = blackbox.predict(x.reshape(1, -1))
+                    response_x = predict_class_fn(x.reshape(1, -1))
                     x_range = -1
                     for i in range(len(ranges)):
                         if ranges[i][0] <= response_x <= ranges[i][1]:
@@ -99,11 +106,12 @@ def main():
 
                 ind = 0
                 x = X_test[ind]
-                x_range, cf_range = SelectResponseRange(x, blackbox, dataset)    # Desired response range
+                x_ohe = ord2ohe(x, dataset)
+                x_range, cf_range = SelectResponseRange(x_ohe, predict_class_fn, dataset)    # Desired response range
 
                 ## MOCF Explainer
-                MOCF_output = MOCFExplainer(x, blackbox, dataset, task, X_train, Y_train,
-                                            x_range = x_range, cf_range=cf_range)
+                MOCF_output = MOCFExplainer(x, blackbox, predict_class_fn, predict_proba_fn, dataset, task, X_train,
+                                            Y_train, x_range = x_range, cf_range=cf_range)
 
                 ## CF Explainer
 

@@ -1,5 +1,4 @@
 import numpy as np
-from mappings import BB2Theta, Theta2BB, BB2Original
 from prediction_distance import PredictionDistance
 from feature_distance import FeatureDistance
 from proximity import Proximity
@@ -8,9 +7,9 @@ from actionable_recourse import ActionableRecourse
 from connectedness import Connectedness
 from correlation import Correlation
 
-def CostFunction(x_bb, x_theta, x_original, discrete_indices, continuous_indices, feature_encoder, feature_scaler,
-                 ea_scaler, feature_width, blackbox, probability_thresh, cf_label, cf_range, lof_model, hdbscan_model,
-                 action_operation, action_priority, corr_models, cf_theta):
+def CostFunction(x_ord, x_theta, x_original, blackbox, predict_class_fn, predict_proba_fn, discrete_indices,
+                 continuous_indices, ea_scaler, probability_thresh, cf_label, cf_range,lof_model,
+                 hdbscan_model, action_operation, action_priority, corr_models, cf_theta):
 
     ## Constructing the counterfactual instance cf from the individual
     cf_theta = np.asarray(cf_theta)

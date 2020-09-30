@@ -1,43 +1,53 @@
-import pandas as pd
 import numpy as np
 
-def BB2Theta(bb, ea_scaler):
-    try:
-        theta = ea_scaler.transform(bb.reshape(1, -1)).ravel()
+def ord2ohe(X_ord, dataset):
+    ohe_feature_encoder = dataset['ohe_feature_encoder']
+    len_continuous_ord = dataset['len_continuous_ord']
+    len_discrete_ord = dataset['len_discrete_ord']
 
-    except Exception:
-        theta = ea_scaler.transform(bb)
+    if X_ord.shape.__len__() == 1:
+        X_continuous = X_ord[len_continuous_ord[0]:len_continuous_ord[1]]
+        X_discrete = X_ord[len_discrete_ord[0]:len_discrete_ord[1]]
+        X_discrete = ohe_feature_encoder.transform(X_discrete.reshape(1,-1)).ravel()
+        X_ohe = np.r_[X_continuous, X_discrete]
+        return X_ohe
+    else:
+        X_continuous = X_ord[:,len_continuous_ord[0]:len_continuous_ord[1]]
+        X_discrete = X_ord[:,len_discrete_ord[0]:len_discrete_ord[1]]
+        X_discrete = ohe_feature_encoder.transform(X_discrete)
+        X_ohe = np.c_[X_continuous,X_discrete]
+        return X_ohe
 
-    return theta
+def ord2org(X_ord, dataset):
+    ord_feature_encoder = dataset['ord_feature_encoder']
+    len_continuous_ord = dataset['len_continuous_ord']
+    len_discrete_ord = dataset['len_discrete_ord']
 
-def Theta2BB(theta, ea_scaler):
-    try:
-        theta = ea_scaler.inverse_transform(theta.reshape(1, -1)).ravel()
+    if X_ord.shape.__len__() == 1:
+        X_continuous = X_ord[len_continuous_ord[0]:len_continuous_ord[1]]
+        X_discrete = X_ord[len_discrete_ord[0]:len_discrete_ord[1]]
+        X_discrete = ord_feature_encoder.inverse_transform(X_discrete.reshape(1,-1)).ravel()
+        X_org = np.r_[X_continuous, X_discrete]
+        return X_org
+    else:
+        X_continuous = X_ord[:,len_continuous_ord[0]:len_continuous_ord[1]]
+        X_discrete = X_ord[:,len_discrete_ord[0]:len_discrete_ord[1]]
+        X_discrete = ord_feature_encoder.inverse_transform(X_discrete)
+        X_org = np.c_[X_continuous,X_discrete]
+        return X_org
 
-    except Exception:
-        theta = ea_scaler.inverse_transform(theta)
+def ord2theta(X_ord, ea_scaler):
+    if X_ord.shape.__len__() == 1:
+        X_theta = ea_scaler.transform(X_ord.reshape(1,-1)).ravel()
+        return X_theta
+    else:
+        X_theta = ea_scaler.transform(X_ord)
+        return X_theta
 
-    return theta
-
-def BB2Original(bb, feature_encoder, feature_scaler, discrete_indices, continuous_indices):
-    try:
-        original = pd.DataFrame(data=np.zeros([1,len(bb)]))
-        if len(discrete_indices):
-            decoded_data = feature_encoder.inverse_transform(bb[discrete_indices].reshape(1,-1)).ravel()
-            original.iloc[0,discrete_indices] = decoded_data
-
-        if len(continuous_indices):
-            descaled_data = feature_scaler.inverse_transform(bb[continuous_indices].reshape(1,-1)).ravel()
-            original.iloc[0,continuous_indices] = descaled_data
-
-    except Exception:
-        original = pd.DataFrame(data=np.zeros(bb.shape))
-        if len(discrete_indices):
-            decoded_data = feature_encoder.inverse_transform(bb.iloc[:,discrete_indices])
-            original.iloc[:,discrete_indices] = decoded_data
-
-        if len(continuous_indices):
-            descaled_data = feature_scaler.inverse_transform(bb.iloc[:,continuous_indices])
-            original.iloc[:,continuous_indices] = descaled_data
-
-    return original
+def theta2ord(X_theta, ea_scaler):
+    if X_theta.shape.__len__() == 1:
+        X_ord = ea_scaler.inverse_transform(X_theta.reshape(1,-1)).ravel()
+        return X_ord
+    else:
+        X_ord = ea_scaler.inverse_transform(X_theta)
+        return X_ord

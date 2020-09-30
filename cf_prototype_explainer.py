@@ -3,7 +3,6 @@ import pandas as pd
 from alibi.explainers import CounterFactualProto
 import tensorflow as tf
 tf.compat.v1.disable_eager_execution()
-from mappings import BB2Theta, Theta2BB, BB2Original
 from evaluate_counterfactuals import EvaluateCounterfactuals
 from highlight_changes import HighlightChanges
 
