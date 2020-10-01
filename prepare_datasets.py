@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, LabelEncoder, MinMaxScaler
+from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, LabelEncoder, StandardScaler, MinMaxScaler
 
 ## Preparing Breast Cancer dataset
 def PrepareBreastCancer(dataset_path, dataset_name):
@@ -131,7 +131,7 @@ def PrepareCreditCardDefault(dataset_path, dataset_name):
     discrete_indices = [df_X_org.columns.get_loc(f) for f in discrete_features]
 
     ## Scaling continuous features
-    num_feature_scaler = MinMaxScaler(feature_range=(-1,1))
+    num_feature_scaler = StandardScaler()
     scaled_data = num_feature_scaler.fit_transform(df_X_org.iloc[:, continuous_indices].to_numpy())
     scaled_data = pd.DataFrame(data=scaled_data, columns=continuous_features)
 
@@ -238,7 +238,7 @@ def PrepareAdult(dataset_path, dataset_name):
                          'race', 'sex', 'native-country']
 
     df_X_org = pd.concat([df_X_org[continuous_features], df_X_org[discrete_features]], axis=1)
-
+    df_X_org[continuous_features] = StandardScaler().fit_transform(df_X_org[continuous_features])
     continuous_indices = [df_X_org.columns.get_loc(f) for f in continuous_features]
     discrete_indices = [df_X_org.columns.get_loc(f) for f in discrete_features]
 
@@ -351,7 +351,7 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
     discrete_indices = [df_X_org.columns.get_loc(f) for f in discrete_features]
 
     # Scaling continuous features
-    num_feature_scaler = MinMaxScaler(feature_range=(-1,1))
+    num_feature_scaler = StandardScaler()
     scaled_data = num_feature_scaler.fit_transform(df_X_org.iloc[:, continuous_indices].to_numpy())
     scaled_data = pd.DataFrame(data=scaled_data, columns=continuous_features)
 

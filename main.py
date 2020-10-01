@@ -68,20 +68,20 @@ def main():
                 ind = 0
                 x = X_test[ind]
                 x_ohe = ord2ohe(x, dataset)
-                x_label = predict_class_fn(x_ohe.reshape(1,-1))
-                cf_label = int(1 - x_label)      # Counter-factual label
+                x_class = predict_class_fn(x_ohe.reshape(1,-1))
+                cf_class = int(1 - x_class)      # Counter-factual class
                 probability_thresh = 0.6         # Desired probability threshold
 
                 ## MOCF Explainer
                 MOCF_output = MOCFExplainer(x, blackbox, predict_class_fn, predict_proba_fn, dataset, task, X_train,
-                                            Y_train, probability_thresh=probability_thresh, cf_label=cf_label)
+                                            Y_train, probability_thresh=probability_thresh, cf_class=cf_class)
 
                 ## DiCE Explainer
                 DiCE_output = DiCEExplainer(x, blackbox, predict_class_fn, predict_proba_fn, X_train, Y_train, dataset,
-                                            task, MOCF_output, n_cf=5)
+                                            task, MOCF_output, n_cf=5, probability_thresh=probability_thresh)
 
                 ## CF Explainer
-                CF_output = CFExplainer(x, blackbox, dataset, task, probability_thresh, MOCF_output)
+                CF_output = CFExplainer(x, blackbox, dataset, task, MOCF_output, probability_thresh=probability_thresh)
 
                 ## CFProto Explainer
                 CFProto_output = CFPrototypeExplainer(x, blackbox, X_train, dataset, task, MOCF_output)

@@ -6,8 +6,7 @@ from deap import algorithms, base, creator, tools
 from mappings import ord2ohe, ord2org, ord2theta, theta2ord
 from cost_function import CostFunction
 from evaluate_counterfactuals import EvaluateCounterfactuals
-from recover_original import RecoverOriginal
-from highlight_changes import HighlightChanges
+from recover_originals import RecoverOriginals
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import pairwise_distances, f1_score, r2_score
@@ -37,17 +36,17 @@ def PlotParetoFronts(toolbox, fronts, objective_list):
             else ax[i].scatter(costs[:,0], costs[:,1], color='r')
         ax.title.set_text('Front 1') if n_fronts == 1 else ax[i].title.set_text('Front '+str(i+1))
 
-def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_ord, x_theta, x_original, blackbox,
-                 predict_class_fn, predict_proba_fn, discrete_indices, continuous_indices, ea_scaler,
-                 probability_thresh, cf_label, cf_range, nbrs_theta, selection_probability,
+def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_ord, x_theta, x_org, dataset, predict_class_fn,
+                 predict_proba_fn, discrete_indices, continuous_indices, feature_width, ea_scaler,
+                 probability_thresh, cf_class, cf_range, nbrs_theta, selection_probability,
                  lof_model, hdbscan_model, action_operation, action_priority, corr_models):
 
     toolbox = base.Toolbox()
     creator.create("FitnessMulti", base.Fitness, weights=OBJ_W)
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
-    toolbox.register("evaluate", CostFunction, x_ord, x_theta, x_original, blackbox, predict_class_fn, predict_proba_fn,
-                     discrete_indices, continuous_indices, ea_scaler, probability_thresh, cf_label, cf_range,lof_model,
-                     hdbscan_model, action_operation, action_priority, corr_models)
+    toolbox.register("evaluate", CostFunction, x_ord, x_theta, x_org, dataset, predict_class_fn, predict_proba_fn,
+                     discrete_indices, continuous_indices, feature_width, ea_scaler, probability_thresh,
+                     cf_class, cf_range, lof_model, hdbscan_model, action_operation, action_priority, corr_models)
 
     toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, x_theta, nbrs_theta, selection_probability)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
@@ -110,7 +109,7 @@ def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
     return fronts, pop, snapshot, record, logbook
 
 def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, task, X_train, Y_train,
-                  probability_thresh=None, cf_label=None, x_range=None, cf_range=None):
+                  probability_thresh=None, cf_class=None, x_range=None, cf_range=None):
 
     # Scaling data to (0,1) for EA
     ea_scaler = MinMaxScaler(feature_range=(0,1))
@@ -120,7 +119,7 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
     ## KNN model of correctly classified samples same class as counter-factual
     X_train_ohe = ord2ohe(X_train, dataset)
     pred_train = predict_class_fn(X_train_ohe)
-    if cf_label is None:
+    if cf_class is None:
         abs_error = np.abs(Y_train-pred_train)
         mae = np.mean(abs_error)
         gt_idx = np.where(abs_error<=mae)
@@ -131,7 +130,7 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
     else:
         gt_idx = np.where(pred_train == Y_train)
         pred_gt = predict_class_fn(X_train_ohe[gt_idx])
-        gt_sc_idx = np.where(pred_gt == cf_label)
+        gt_sc_idx = np.where(pred_gt == cf_class)
         gt = X_train[gt_idx[0][gt_sc_idx[0]]]
         gt_theta = ord2theta(gt, ea_scaler)
 
@@ -386,7 +385,7 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
     ## Evolutioanry algorithm setup
     # Initializing the population
     x_theta = ord2theta(x_ord, ea_scaler)
-    x_original = ord2org(x_ord, dataset)
+    x_org = ord2org(x_ord, dataset)
 
     distances, indices = gt_nbrModel.kneighbors(x_theta.reshape(1, -1))
     nbrs_theta = gt_theta[indices[0]].copy()
@@ -415,22 +414,23 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
     H = factorial(NOBJ + P - 1) / (factorial(P) * factorial(NOBJ - 1))
     MU = int(H + (4 - H % 4))
     BOUND_LOW, BOUND_UP = 0, 1
+    feature_width = np.max(X_train, axis=0) - np.min(X_train, axis=0)
 
     # Creating toolbox for the EA
-    toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_ord, x_theta, x_original, blackbox,
-                         predict_class_fn, predict_proba_fn, discrete_indices, continuous_indices, ea_scaler,
-                         probability_thresh, cf_label, cf_range, nbrs_theta, selection_probability,
-                         lof_model, hdbscan_model, action_operation, action_priority, corr_models)
+    toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_ord, x_theta, x_org, dataset, predict_class_fn,
+                           predict_proba_fn, discrete_indices, continuous_indices, feature_width, ea_scaler,
+                           probability_thresh, cf_class, cf_range, nbrs_theta, selection_probability, lof_model,
+                           hdbscan_model, action_operation, action_priority, corr_models)
 
     ## Running EA
     fronts, pop, snapshot, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
 
     ## Constructing counter-factuals
-    # solutions = np.asarray(fronts[0])
-    solutions = np.concatenate(np.asarray([s for s in snapshot]))
+    # cfs_theta = np.asarray(fronts[0])
+    cfs_theta = np.concatenate(np.asarray([s for s in snapshot]))
 
     feature_names = dataset['feature_names']
-    cfs_ord = theta2ord(solutions, ea_scaler)
+    cfs_ord = theta2ord(cfs_theta, ea_scaler, discrete_indices)
     cfs_ord = pd.DataFrame(data=cfs_ord, columns=feature_names)
 
     ## Evaluating counter-factuals
@@ -438,19 +438,17 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
                     'ea_scaler': ea_scaler,
                     'OBJ_name': OBJ_name
                  }
-    cfs_ord, cfs_eval = EvaluateCounterfactuals(cfs_ord, blackbox, task, MOCF_output)
+    cfs_ord, cfs_eval = EvaluateCounterfactuals(cfs_ord, dataset, predict_class_fn, predict_proba_fn, task, MOCF_output)
 
     ## Recovering original data
-    x_org, cfs_org = RecoverOriginal(x_ord, cfs_ord, dataset)
-
-    ## Highlighting changes
-    cfs_org_highlight = HighlightChanges(x_org, cfs_org)
+    x_org, cfs_org, x_cfs_org, x_cfs_highlight = RecoverOriginals(x_ord, cfs_ord, dataset)
 
     ## Returning the results
     output = {'cfs_ord': cfs_ord,
               'cfs_org': cfs_org,
-              'cfs_org_highlight': cfs_org_highlight,
               'cfs_eval': cfs_eval,
+              'x_cfs_org': x_cfs_org,
+              'x_cfs_highlight': x_cfs_highlight,
               'toolbox': toolbox,
               'ea_scaler': ea_scaler,
               'OBJ_name': OBJ_name

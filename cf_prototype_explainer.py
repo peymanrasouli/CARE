@@ -4,7 +4,6 @@ from alibi.explainers import CounterFactualProto
 import tensorflow as tf
 tf.compat.v1.disable_eager_execution()
 from evaluate_counterfactuals import EvaluateCounterfactuals
-from highlight_changes import HighlightChanges
 
 def CFPrototypeExplainer(x_bb, blackbox, X_train, dataset, task, MOCF_output):
 

@@ -4,9 +4,8 @@ from alibi.explainers import CounterFactual
 import tensorflow as tf
 tf.compat.v1.disable_eager_execution()
 from evaluate_counterfactuals import EvaluateCounterfactuals
-from highlight_changes import HighlightChanges
 
-def CFExplainer(x_bb, blackbox, dataset, task, probability_thresh, MOCF_output):
+def CFExplainer(x_bb, blackbox, dataset, task, MOCF_output, probability_thresh=0.5):
 
     feature_names = dataset['feature_names']
     feature_encoder = dataset['feature_encoder']

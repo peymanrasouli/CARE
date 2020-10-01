@@ -4,11 +4,10 @@ import dice_ml
 import tensorflow as tf
 tf.InteractiveSession()
 from evaluate_counterfactuals import EvaluateCounterfactuals
-from recover_original import RecoverOriginal
-from highlight_changes import HighlightChanges
+from recover_originals import RecoverOriginals
 
-def DiCEExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn,
-                  X_train, Y_train, dataset, task, MOCF_output, n_cf=5):
+def DiCEExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, X_train, Y_train,
+                  dataset, task, MOCF_output, n_cf=5, probability_thresh=0.5):
 
     ## Dataset for DiCE model
     feature_names = dataset['feature_names']
@@ -38,27 +37,24 @@ def DiCEExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn,
     for f in discrete_features:
         x_ord_dice[f] = str(int(x_ord_dice[f]))
 
-    # dice_exp = exp.generate_counterfactuals(x_ord_dice, total_CFs=5, desired_class="opposite", proximity_weight=1.5, diversity_weight=1.0)
-    dice_exp = exp.generate_counterfactuals(x_ord_dice, total_CFs=n_cf, desired_class="opposite")
+    dice_exp = exp.generate_counterfactuals(x_ord_dice, total_CFs=n_cf, stopping_threshold=probability_thresh)
 
     ## Extracting solutions
     cfs_ord = dice_exp.final_cfs_df.iloc[:,:-1]
     cfs_ord[discrete_features] = cfs_ord[discrete_features].astype(int)
 
     ## Evaluating counter-factuals
-    cfs_ord, cfs_eval = EvaluateCounterfactuals(cfs_ord, blackbox, task, MOCF_output)
+    cfs_ord, cfs_eval = EvaluateCounterfactuals(cfs_ord, dataset, predict_class_fn, predict_proba_fn, task, MOCF_output)
 
     ## Recovering original data
-    x_org, cfs_org = RecoverOriginal(x_ord, cfs_ord, dataset)
-
-    ## Highlighting changes
-    cfs_org_highlight = HighlightChanges(x_org, cfs_org)
+    x_org, cfs_org, x_cfs_org, x_cfs_highlight = RecoverOriginals(x_ord, cfs_ord, dataset)
 
     ## Returning the results
     output = {'cfs_ord': cfs_ord,
               'cfs_org': cfs_org,
-              'cfs_org_highlight': cfs_org_highlight,
               'cfs_eval': cfs_eval,
+              'x_cfs_org': x_cfs_org,
+              'x_cfs_highlight': x_cfs_highlight,
               }
 
     return output
