@@ -1,68 +1,69 @@
 import numpy as np
 import pandas as pd
 from alibi.explainers import CounterFactualProto
+from alibi.utils.mapping import ohe_to_ord, ord_to_ohe
+from mappings import ord2ohe
 import tensorflow as tf
-tf.compat.v1.disable_eager_execution()
+tf.disable_v2_behavior()
+tf.disable_eager_execution()
 from evaluate_counterfactuals import EvaluateCounterfactuals
+from recover_originals import RecoverOriginals
 
-def CFPrototypeExplainer(x_bb, blackbox, X_train, dataset, task, MOCF_output):
+def CFPrototypeExplainer(x_ord, predict_class_fn, predict_proba_fn, X_train, dataset, task, MOCF_output):
 
-    feature_names = dataset['feature_names']
-    feature_encoder = dataset['feature_encoder']
-    feature_scaler = dataset['feature_scaler']
-    discrete_indices = dataset['discrete_indices']
-    continuous_indices = dataset['continuous_indices']
-    feature_min = np.min(dataset['X'], axis=0)
-    feature_max = np.max(dataset['X'], axis=0)
-    feature_range = tuple([feature_min.reshape(1, -1), feature_max.reshape(1, -1)])
+    ## Preparing parameters
+    cat_vars_ord = {}
+    for i,d in enumerate(dataset['discrete_indices']):
+        cat_vars_ord[d] = dataset['n_cat_discrete'][i]
+    cat_vars_ohe = ord_to_ohe(X_train, cat_vars_ord)[1]
 
-    x_bb_ = x_bb.reshape(1, -1)
-    n_features = x_bb_.shape
+    x_ohe = ord2ohe(x_ord,dataset)
+    x_ohe = x_ohe.reshape((1,) + x_ohe.shape)
+    shape = x_ohe.shape
+    beta = .01
+    c_init = 1.
+    c_steps = 5
+    max_iterations = 500
+    rng_min = np.min(X_train, axis=0)
+    rng_max = np.max(X_train, axis=0)
+    rng = tuple([rng_min.reshape(1, -1), rng_max.reshape(1, -1)])
+    rng_shape = (1,) + X_train.shape[1:]
+    feature_range = ((np.ones(rng_shape) * rng[0]).astype(np.float32),
+                     (np.ones(rng_shape) * rng[1]).astype(np.float32))
 
-    cat_vars = {}
-    for d in dataset['discrete_indices']:
-        cat_vars[d] = int(feature_range[1][0,d] + 1)
+    ## Creating prototype counter-factual explainer
+    prototype_cf_explainer = CounterFactualProto(predict=predict_proba_fn, shape=shape, beta=beta,
+                                                 feature_range=feature_range, cat_vars=cat_vars_ohe, ohe=True,
+                                                 c_init=c_init, c_steps=c_steps, max_iterations = max_iterations)
 
-    # # Prototype CF
-    prototype_cf_explainer = CounterFactualProto(predict=blackbox.predict_proba, shape=n_features,
-                                                 feature_range=feature_range, cat_vars=cat_vars, ohe=False)
-
+    ## Fitting the explainer on the training data
     prototype_cf_explainer.fit(X_train, d_type='abdm', disc_perc=[25, 50, 75])
 
-    explanations = prototype_cf_explainer.explain(x_bb_)
+    ## Generating counter-factuals
+    explanations = prototype_cf_explainer.explain(x_ohe)
 
+    ## Extracting solutions
     cfs = []
     cfs.append(explanations.cf['X'].ravel())
     for iter, res in explanations.all.items():
         for cf in res:
             cfs.append(cf.ravel())
-
-    cfs = np.asarray(cfs)
-    cfs = pd.DataFrame(data=cfs, columns=feature_names)
+    feature_names = dataset['feature_names']
+    cfs_ord = np.asarray(cfs)
+    cfs_ord = pd.DataFrame(data=cfs_ord, columns=feature_names)
 
     ## Evaluating counter-factuals
-    toolbox = MOCF_output['toolbox']
-    OBJ_name = MOCF_output['OBJ_name']
-    ea_scaler = MOCF_output['ea_scaler']
-    solutions = BB2Theta(cfs, ea_scaler)
-    cfs, cfs_eval = EvaluateCounterfactuals(cfs, solutions, blackbox, toolbox, OBJ_name, task)
+    cfs_ord, cfs_eval = EvaluateCounterfactuals(cfs_ord, dataset, predict_class_fn, predict_proba_fn, task, MOCF_output)
 
     ## Recovering original data
-    x_original = BB2Original(x_bb, feature_encoder, feature_scaler, discrete_indices, continuous_indices)
-    cfs_original = BB2Original(cfs, feature_encoder, feature_scaler, discrete_indices, continuous_indices)
-    cfs_original = pd.concat([x_original, cfs_original])
-    index = pd.Series(['x'] + ['cf_' + str(i) for i in range(len(cfs_original) - 1)])
-    cfs_original = cfs_original.set_index(index)
-
-    ## Highlighting changes
-    cfs_original_highlight = HighlightChanges(cfs_original)
+    x_org, cfs_org, x_cfs_org, x_cfs_highlight = RecoverOriginals(x_ord, cfs_ord, dataset)
 
     ## Returning the results
-    output = {'solutions': solutions,
-              'cfs': cfs,
-              'cfs_original': cfs_original,
-              'cfs_original_highlight': cfs_original_highlight,
+    output = {'cfs_ord': cfs_ord,
+              'cfs_org': cfs_org,
               'cfs_eval': cfs_eval,
+              'x_cfs_org': x_cfs_org,
+              'x_cfs_highlight': x_cfs_highlight,
               }
 
     return output

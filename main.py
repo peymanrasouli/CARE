@@ -2,7 +2,6 @@ from prepare_datasets import *
 from mappings import ord2ohe
 from mocf_explainer import MOCFExplainer
 from dice_explainer import DiCEExplainer
-from cf_explainer import CFExplainer
 from cf_prototype_explainer import CFPrototypeExplainer
 from create_model import CreateModel
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -72,6 +71,10 @@ def main():
                 cf_class = int(1 - x_class)      # Counter-factual class
                 probability_thresh = 0.6         # Counter-factual probability threshold
 
+                ## CFProto Explainer
+                CFProto_output = CFPrototypeExplainer(x, predict_class_fn, predict_proba_fn, X_train, dataset, task,
+                                                      None)
+
                 ## MOCF Explainer
                 MOCF_output = MOCFExplainer(x, blackbox, predict_class_fn, predict_proba_fn, dataset, task, X_train,
                                             Y_train, cf_class=cf_class, probability_thresh=probability_thresh)
@@ -80,11 +83,6 @@ def main():
                 DiCE_output = DiCEExplainer(x, blackbox, predict_class_fn, predict_proba_fn, X_train, Y_train, dataset,
                                             task, MOCF_output, n_cf=5, probability_thresh=probability_thresh)
 
-                ## CF Explainer
-                CF_output = CFExplainer(x, blackbox, dataset, task, MOCF_output, probability_thresh=probability_thresh)
-
-                ## CFProto Explainer
-                CFProto_output = CFPrototypeExplainer(x, blackbox, X_train, dataset, task, MOCF_output)
 
                 print('Done!')
 
@@ -112,10 +110,6 @@ def main():
                 ## MOCF Explainer
                 MOCF_output = MOCFExplainer(x, blackbox, predict_class_fn, predict_proba_fn, dataset, task, X_train,
                                             Y_train, x_range = x_range, cf_range=cf_range)
-
-                ## CF Explainer
-
-                ## CFProto Explainer
 
 if __name__ == '__main__':
     main()
