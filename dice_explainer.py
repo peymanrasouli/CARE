@@ -37,7 +37,14 @@ def DiCEExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, X_train, 
     for f in discrete_features:
         x_ord_dice[f] = str(int(x_ord_dice[f]))
 
-    dice_exp = exp.generate_counterfactuals(x_ord_dice, total_CFs=n_cf, stopping_threshold=probability_thresh)
+    # Params:
+    # posthoc_sparsity_param=0.1 ->[0,1]
+    # posthoc_sparsity_algorithm ="linear" -> {"linear", "binary"}
+    # proximity_weight=0.5,
+    # diversity_weight=1.0
+    # stopping_threshold=0.5
+    dice_exp = exp.generate_counterfactuals(x_ord_dice, total_CFs=n_cf, stopping_threshold=0.5,
+                                            posthoc_sparsity_algorithm ="binary")
 
     ## Extracting solutions
     cfs_ord = dice_exp.final_cfs_df.iloc[:,:-1]

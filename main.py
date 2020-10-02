@@ -23,8 +23,8 @@ def main():
     ## Defining the list of data sets
     datsets_list = {
         # 'breast-cancer': ('breast-cancer.csv', PrepareBreastCancer, 'classification'),
-        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
-        'adult': ('adult.csv', PrepareAdult, 'classification'),
+        'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        # 'adult': ('adult.csv', PrepareAdult, 'classification'),
         # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
     }
 
@@ -70,11 +70,11 @@ def main():
                 x_ohe = ord2ohe(x, dataset)
                 x_class = predict_class_fn(x_ohe.reshape(1,-1))
                 cf_class = int(1 - x_class)      # Counter-factual class
-                probability_thresh = 0.6         # Desired probability threshold
+                probability_thresh = 0.6         # Counter-factual probability threshold
 
                 ## MOCF Explainer
                 MOCF_output = MOCFExplainer(x, blackbox, predict_class_fn, predict_proba_fn, dataset, task, X_train,
-                                            Y_train, probability_thresh=probability_thresh, cf_class=cf_class)
+                                            Y_train, cf_class=cf_class, probability_thresh=probability_thresh)
 
                 ## DiCE Explainer
                 DiCE_output = DiCEExplainer(x, blackbox, predict_class_fn, predict_proba_fn, X_train, Y_train, dataset,

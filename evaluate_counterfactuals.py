@@ -21,12 +21,6 @@ def EvaluateCounterfactuals(cfs, dataset, predict_class_fn, predict_proba_fn, ta
         response = predict_class_fn(cfs_ohe)
         cfs_eval = pd.DataFrame(data=np.c_[evaluation, response], columns=OBJ_name+['Response'])
 
-    drop_ind = cfs_eval[cfs_eval['Prediction']>0].index
-
-    cfs.drop(drop_ind, inplace=True)
-    cfs.reset_index(drop=True, inplace=True)
-
-    cfs_eval.drop(drop_ind, inplace=True)
     index = pd.Series(['cf_'+str(i) for i in range(len(cfs_eval))])
     cfs_eval = cfs_eval.set_index(index)
 
