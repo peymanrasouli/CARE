@@ -18,6 +18,24 @@ def ord2ohe(X_ord, dataset):
         X_ohe = np.c_[X_continuous,X_discrete]
         return X_ohe
 
+def ohe2ord(X_ohe, dataset):
+    ohe_feature_encoder = dataset['ohe_feature_encoder']
+    len_continuous_ohe = dataset['len_continuous_ohe']
+    len_discrete_ohe = dataset['len_discrete_ohe']
+
+    if X_ohe.shape.__len__() == 1:
+        X_continuous = X_ohe[len_continuous_ohe[0]:len_continuous_ohe[1]]
+        X_discrete = X_ohe[len_discrete_ohe[0]:len_discrete_ohe[1]]
+        X_discrete = ohe_feature_encoder.inverse_transform(X_discrete.reshape(1,-1)).ravel()
+        X_ord = np.r_[X_continuous, X_discrete]
+        return X_ord
+    else:
+        X_continuous = X_ohe[:,len_continuous_ohe[0]:len_continuous_ohe[1]]
+        X_discrete = X_ohe[:,len_discrete_ohe[0]:len_discrete_ohe[1]]
+        X_discrete = ohe_feature_encoder.inverse_transform(X_discrete)
+        X_ord = np.c_[X_continuous,X_discrete]
+        return X_ord
+
 def ord2org(X_ord, dataset):
     num_feature_scaler = dataset['num_feature_scaler']
     ord_feature_encoder = dataset['ord_feature_encoder']

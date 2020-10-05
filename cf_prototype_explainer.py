@@ -2,15 +2,11 @@ import numpy as np
 import pandas as pd
 from alibi.explainers import CounterFactualProto
 from alibi.utils.mapping import ohe_to_ord, ord_to_ohe
-from mappings import ord2ohe
-import tensorflow as tf
-tf.disable_v2_behavior()
-tf.disable_eager_execution()
+from mappings import ord2ohe, ohe2ord
 from evaluate_counterfactuals import EvaluateCounterfactuals
 from recover_originals import RecoverOriginals
 
 def CFPrototypeExplainer(x_ord, predict_class_fn, predict_proba_fn, X_train, dataset, task, MOCF_output):
-
     ## Preparing parameters
     cat_vars_ord = {}
     for i,d in enumerate(dataset['discrete_indices']):
@@ -37,7 +33,8 @@ def CFPrototypeExplainer(x_ord, predict_class_fn, predict_proba_fn, X_train, dat
                                                  c_init=c_init, c_steps=c_steps, max_iterations = max_iterations)
 
     ## Fitting the explainer on the training data
-    prototype_cf_explainer.fit(X_train, d_type='abdm', disc_perc=[25, 50, 75])
+    X_train_ohe = ord2ohe(X_train, dataset)
+    prototype_cf_explainer.fit(X_train_ohe, d_type='abdm', disc_perc=[25, 50, 75])
 
     ## Generating counter-factuals
     explanations = prototype_cf_explainer.explain(x_ohe)
@@ -49,7 +46,9 @@ def CFPrototypeExplainer(x_ord, predict_class_fn, predict_proba_fn, X_train, dat
         for cf in res:
             cfs.append(cf.ravel())
     feature_names = dataset['feature_names']
-    cfs_ord = np.asarray(cfs)
+
+    cfs_ohe = np.asarray(cfs)
+    cfs_ord = ohe2ord(cfs_ohe, dataset)
     cfs_ord = pd.DataFrame(data=cfs_ord, columns=feature_names)
 
     ## Evaluating counter-factuals

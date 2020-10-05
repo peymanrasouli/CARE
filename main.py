@@ -22,8 +22,8 @@ def main():
     ## Defining the list of data sets
     datsets_list = {
         # 'breast-cancer': ('breast-cancer.csv', PrepareBreastCancer, 'classification'),
-        'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
-        # 'adult': ('adult.csv', PrepareAdult, 'classification'),
+        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        'adult': ('adult.csv', PrepareAdult, 'classification'),
         # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
     }
 
@@ -71,17 +71,22 @@ def main():
                 cf_class = int(1 - x_class)      # Counter-factual class
                 probability_thresh = 0.6         # Counter-factual probability threshold
 
+
+
                 ## CFProto Explainer
                 CFProto_output = CFPrototypeExplainer(x, predict_class_fn, predict_proba_fn, X_train, dataset, task,
                                                       None)
+
+
+                ## DiCE Explainer
+                DiCE_output = DiCEExplainer(x, blackbox, predict_class_fn, predict_proba_fn, X_train, Y_train, dataset,
+                                            task, None, n_cf=5, probability_thresh=probability_thresh)
+
 
                 ## MOCF Explainer
                 MOCF_output = MOCFExplainer(x, blackbox, predict_class_fn, predict_proba_fn, dataset, task, X_train,
                                             Y_train, cf_class=cf_class, probability_thresh=probability_thresh)
 
-                ## DiCE Explainer
-                DiCE_output = DiCEExplainer(x, blackbox, predict_class_fn, predict_proba_fn, X_train, Y_train, dataset,
-                                            task, MOCF_output, n_cf=5, probability_thresh=probability_thresh)
 
 
                 print('Done!')

@@ -5,7 +5,7 @@ import tensorflow as tf
 tf.InteractiveSession()
 from evaluate_counterfactuals import EvaluateCounterfactuals
 from recover_originals import RecoverOriginals
-
+## works well with version 1.13.0cr1
 def DiCEExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, X_train, Y_train,
                   dataset, task, MOCF_output, n_cf=5, probability_thresh=0.5):
 

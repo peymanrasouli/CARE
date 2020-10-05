@@ -407,7 +407,7 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
     # EA parameters
     NDIM = len(x_ord)
     NOBJ = len(OBJ_W)
-    NGEN = 5
+    NGEN = 10
     CXPB = 0.5
     MUTPB = 0.2
     P = 6
