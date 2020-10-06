@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, LabelEncoder, StandardScaler
 
 ## Preparing Breast Cancer dataset
@@ -130,6 +131,22 @@ def PrepareCreditCardDefault(dataset_path, dataset_name):
     continuous_indices = [df_X_org.columns.get_loc(f) for f in continuous_features]
     discrete_indices = [df_X_org.columns.get_loc(f) for f in discrete_features]
 
+    ## Extracting decimal points of continuous features
+    types = df_X_org[continuous_features].dtypes
+    continuous_decimals = []
+    for c in continuous_features:
+        if types[c] == float:
+            len_dec = []
+            for val in df_X_org[c]:
+                len_dec.append(len(str(val).split('.')[1]))
+            len_dec = max(set(len_dec), key=len_dec.count)
+            continuous_decimals.append(len_dec)
+        else:
+            continuous_decimals.append(0)
+
+    decimals = pd.Series(continuous_decimals, index=continuous_features)
+    df_X_org = df_X_org.round(decimals)
+
     ## Scaling continuous features
     num_feature_scaler = StandardScaler()
     scaled_data = num_feature_scaler.fit_transform(df_X_org.iloc[:, continuous_indices].to_numpy())
@@ -204,6 +221,7 @@ def PrepareCreditCardDefault(dataset_path, dataset_name):
         'discrete_indices': discrete_indices,
         'continuous_features': continuous_features,
         'continuous_indices': continuous_indices,
+        'continuous_decimals': continuous_decimals,
         'n_cat_discrete': n_cat_discrete,
         'len_discrete_ord': len_discrete_ord,
         'len_continuous_ord': len_continuous_ord,
@@ -241,6 +259,22 @@ def PrepareAdult(dataset_path, dataset_name):
 
     continuous_indices = [df_X_org.columns.get_loc(f) for f in continuous_features]
     discrete_indices = [df_X_org.columns.get_loc(f) for f in discrete_features]
+
+    ## Extracting decimal points of continuous features
+    types = df_X_org[continuous_features].dtypes
+    continuous_decimals = []
+    for c in continuous_features:
+        if types[c] == float:
+            len_dec = []
+            for val in df_X_org[c]:
+                len_dec.append(len(str(val).split('.')[1]))
+            len_dec = max(set(len_dec), key=len_dec.count)
+            continuous_decimals.append(len_dec)
+        else:
+            continuous_decimals.append(0)
+
+    decimals = pd.Series(continuous_decimals, index=continuous_features)
+    df_X_org = df_X_org.round(decimals)
 
     ## Scaling continuous features
     num_feature_scaler =StandardScaler()
@@ -316,6 +350,7 @@ def PrepareAdult(dataset_path, dataset_name):
         'discrete_indices': discrete_indices,
         'continuous_features': continuous_features,
         'continuous_indices': continuous_indices,
+        'continuous_decimals': continuous_decimals,
         'n_cat_discrete': n_cat_discrete,
         'len_discrete_ord': len_discrete_ord,
         'len_continuous_ord': len_continuous_ord,
@@ -349,6 +384,22 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
 
     continuous_indices = [df_X_org.columns.get_loc(f) for f in continuous_features]
     discrete_indices = [df_X_org.columns.get_loc(f) for f in discrete_features]
+
+    ## Extracting decimal points of continuous features
+    continuous_types = df_X_org[continuous_features].dtypes
+    continuous_decimals = []
+    for c in continuous_features:
+        if continuous_types[c] == float:
+            len_dec = []
+            for val in df_X_org[c]:
+                len_dec.append(len(str(val).split('.')[1]))
+            len_dec = max(set(len_dec), key=len_dec.count)
+            continuous_decimals.append(len_dec)
+        else:
+            continuous_decimals.append(0)
+
+    decimals = pd.Series(continuous_decimals, index=continuous_features)
+    df_X_org = df_X_org.round(decimals)
 
     # Scaling continuous features
     num_feature_scaler = StandardScaler()
@@ -414,6 +465,8 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
         'discrete_indices': discrete_indices,
         'continuous_features': continuous_features,
         'continuous_indices': continuous_indices,
+        'continuous_decimals': continuous_decimals,
+        'continuous_types': continuous_types,
         'n_cat_discrete': n_cat_discrete,
         'len_discrete_ord': len_discrete_ord,
         'len_continuous_ord': len_continuous_ord,

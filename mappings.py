@@ -36,15 +36,40 @@ def ohe2ord(X_ohe, dataset):
         X_ord = np.c_[X_continuous,X_discrete]
         return X_ord
 
+def org2ord(X_org, dataset):
+    num_feature_scaler = dataset['num_feature_scaler']
+    ord_feature_encoder = dataset['ord_feature_encoder']
+    len_continuous_org = dataset['len_continuous_org']
+    len_discrete_org = dataset['len_discrete_org']
+
+    if X_org.shape.__len__() == 1:
+        X_continuous = X_org[len_continuous_org[0]:len_continuous_org[1]]
+        X_continuous = num_feature_scaler.transform(X_continuous.reshape(1, -1)).ravel()
+        X_discrete = X_org[len_discrete_org[0]:len_discrete_org[1]]
+        X_discrete = ord_feature_encoder.transform(X_discrete.reshape(1,-1)).ravel()
+        X_ord = np.r_[X_continuous, X_discrete]
+        return X_ord
+    else:
+        X_continuous = X_org[:,len_continuous_org[0]:len_continuous_org[1]]
+        X_continuous = num_feature_scaler.transform(X_continuous)
+        X_discrete = X_org[:,len_discrete_org[0]:len_discrete_org[1]]
+        X_discrete = ord_feature_encoder.transform(X_discrete)
+        X_ord = np.c_[X_continuous,X_discrete]
+        return X_ord
+
+
 def ord2org(X_ord, dataset):
     num_feature_scaler = dataset['num_feature_scaler']
     ord_feature_encoder = dataset['ord_feature_encoder']
     len_continuous_ord = dataset['len_continuous_ord']
     len_discrete_ord = dataset['len_discrete_ord']
+    continuous_decimals = dataset['continuous_decimals']
 
     if X_ord.shape.__len__() == 1:
         X_continuous = X_ord[len_continuous_ord[0]:len_continuous_ord[1]]
         X_continuous = num_feature_scaler.inverse_transform(X_continuous.reshape(1, -1)).ravel()
+        for f, dec in enumerate(continuous_decimals):
+            X_continuous[f] = np.around(X_continuous[f], decimals=dec)
         X_discrete = X_ord[len_discrete_ord[0]:len_discrete_ord[1]]
         X_discrete = ord_feature_encoder.inverse_transform(X_discrete.reshape(1,-1)).ravel()
         X_org = np.r_[X_continuous, X_discrete]
@@ -52,6 +77,8 @@ def ord2org(X_ord, dataset):
     else:
         X_continuous = X_ord[:,len_continuous_ord[0]:len_continuous_ord[1]]
         X_continuous = num_feature_scaler.inverse_transform(X_continuous)
+        for f, dec in enumerate(continuous_decimals):
+            X_continuous[:,f] = np.around(X_continuous[:,f], decimals=dec)
         X_discrete = X_ord[:,len_discrete_ord[0]:len_discrete_ord[1]]
         X_discrete = ord_feature_encoder.inverse_transform(X_discrete)
         X_org = np.c_[X_continuous,X_discrete]
@@ -65,7 +92,8 @@ def ord2theta(X_ord, ea_scaler):
         X_theta = ea_scaler.transform(X_ord)
         return X_theta
 
-def theta2ord(X_theta, ea_scaler, discrete_indices):
+def theta2ord(X_theta, ea_scaler, dataset):
+    discrete_indices = dataset['discrete_indices']
     if X_theta.shape.__len__() == 1:
         X_ord = ea_scaler.inverse_transform(X_theta.reshape(1,-1)).ravel()
         X_ord[discrete_indices] = np.rint(X_ord[discrete_indices])
@@ -74,3 +102,8 @@ def theta2ord(X_theta, ea_scaler, discrete_indices):
         X_ord = ea_scaler.inverse_transform(X_theta)
         X_ord[:, discrete_indices] = np.rint(X_ord[:, discrete_indices])
         return X_ord
+
+def theta2org(X_theta, ea_scaler, dataset):
+    X_ord = theta2ord(X_theta, ea_scaler, dataset)
+    X_org = ord2org(X_ord, dataset)
+    return X_org

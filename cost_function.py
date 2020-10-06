@@ -6,7 +6,7 @@ from sparsity import Sparsity
 from actionable_recourse import ActionableRecourse
 from connectedness import Connectedness
 from correlation import Correlation
-from mappings import theta2ord, ord2ohe, ord2org
+from mappings import theta2org, org2ord, ord2ohe
 
 def CostFunction(x_ord, x_theta, x_org, dataset, predict_class_fn, predict_proba_fn, discrete_indices,
                  continuous_indices, feature_width, ea_scaler, probability_thresh, cf_class, cf_range,
@@ -14,9 +14,9 @@ def CostFunction(x_ord, x_theta, x_org, dataset, predict_class_fn, predict_proba
 
     ## Constructing the counterfactual instance cf from the individual
     cf_theta = np.asarray(cf_theta)
-    cf_ord = theta2ord(cf_theta, ea_scaler, discrete_indices)
+    cf_org = theta2org(cf_theta, ea_scaler, dataset)
+    cf_ord = org2ord(cf_org, dataset)
     cf_ohe = ord2ohe(cf_ord, dataset)
-    cf_org = ord2org(cf_ord, dataset)
 
     ## Objective 1: Prediction Distance
     f1 = PredictionDistance(cf_ohe, predict_class_fn, predict_proba_fn, probability_thresh, cf_class, cf_range)

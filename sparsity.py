@@ -1,3 +1,3 @@
-def Sparsity(x_bb, cf_bb):
-    cost = sum(x_bb != cf_bb)
+def Sparsity(x_org, cf_org):
+    cost = sum(x_org != cf_org)
     return cost

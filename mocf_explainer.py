@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from math import *
 from deap import algorithms, base, creator, tools
-from mappings import ord2ohe, ord2org, ord2theta, theta2ord
+from mappings import ord2ohe, ord2org, ord2theta, theta2ord, theta2org, org2ord
 from cost_function import CostFunction
 from evaluate_counterfactuals import EvaluateCounterfactuals
 from recover_originals import RecoverOriginals
@@ -430,8 +430,9 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
     cfs_theta = np.concatenate(np.asarray([s for s in snapshot]))
 
     feature_names = dataset['feature_names']
-    cfs_ord = theta2ord(cfs_theta, ea_scaler, discrete_indices)
-    cfs_ord = pd.DataFrame(data=cfs_ord, columns=feature_names)
+    cf_org = theta2org(cfs_theta, ea_scaler, dataset)
+    cf_ord = org2ord(cf_org, dataset)
+    cfs_ord = pd.DataFrame(data=cf_ord, columns=feature_names)
 
     ## Evaluating counter-factuals
     MOCF_output = {'toolbox': toolbox,

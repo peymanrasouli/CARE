@@ -23,18 +23,18 @@ def main():
     datsets_list = {
         # 'breast-cancer': ('breast-cancer.csv', PrepareBreastCancer, 'classification'),
         # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
-        'adult': ('adult.csv', PrepareAdult, 'classification'),
-        # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
+        # 'adult': ('adult.csv', PrepareAdult, 'classification'),
+        'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
     }
 
     ## Defining the list of black-boxes
     blackbox_list = {
-        'dnn': None,
+        # 'dnn': None,
         # 'lg': LogisticRegression,
         # 'gt': GradientBoostingClassifier,
         # 'rf': RandomForestClassifier,
         # 'nn': MLPClassifier,
-        # 'dtr': DecisionTreeRegressor,
+        'dtr': DecisionTreeRegressor,
     }
 
     for dataset_kw in datsets_list:

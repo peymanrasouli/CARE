@@ -1,22 +1,20 @@
 import numpy as np
 
-def Correlation(x_bb, cf_bb, cf_theta, corr_models, feature_width, discrete_indices, continuous_indices):
-
+def Correlation(x_ord, cf_ord, cf_theta, corr_models, feature_width, discrete_indices, continuous_indices):
     distance = []
-    cf_bb_ = cf_bb.copy()
-    delta = np.nonzero(x_bb-cf_bb)[0]
+    cf_ord_ = cf_ord.copy()
+    delta = np.nonzero(x_ord-cf_ord)[0]
     for m in corr_models:
         feature = m['feature']
         model = m['model']
         inputs = m['inputs']
         score = m['score']
         if feature in delta:
-            cf_bb_[feature] = model.predict(cf_theta[inputs].reshape(1, -1))
+            cf_ord_[feature] = model.predict(cf_theta[inputs].reshape(1, -1))
             if feature in discrete_indices:
-                distance.append(score * int(cf_bb[feature] != cf_bb_[feature]))
+                distance.append(score * int(cf_ord[feature] != cf_ord_[feature]))
             elif feature in continuous_indices:
-                distance.append(score * (1 / feature_width[feature]) * abs(cf_bb[feature] - cf_bb_[feature]))
-
+                distance.append(score * (1 / feature_width[feature]) * abs(cf_ord[feature] - cf_ord_[feature]))
     cost = 0 if distance == [] else np.mean(distance)
     return cost
 
