@@ -51,15 +51,15 @@ def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_ord, x_theta, x_or
     toolbox.register("attr_float", Initialization, BOUND_LOW, BOUND_UP, NDIM, x_theta, nbrs_theta, selection_probability)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    # toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
-    toolbox.register("mate", tools.cxTwoPoint)
+    toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
+    # toolbox.register("mate", tools.cxTwoPoint)
     toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
     ref_points = tools.uniform_reference_points(NOBJ, P)
     toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
     # toolbox.register("select", tools.selNSGA2)
     return toolbox
 
-def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
+def RunEA(toolbox, MU, NGEN, CXPB, MUTPB, SNAPSHOT_STEP):
     # Initialize statistics object
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", np.mean, axis=0)
@@ -102,8 +102,9 @@ def RunEA(toolbox, MU, NGEN, CXPB, MUTPB):
         logbook.record(pop=pop, gen=gen, evals=len(invalid_ind), **record)
         print(logbook.stream)
 
-        if not(gen % 3):
+        if not((gen+1) % SNAPSHOT_STEP):
             snapshot.append(tools.emo.sortLogNondominated(pop, MU)[0])
+    snapshot.append(tools.emo.sortLogNondominated(pop, MU)[0])
 
     fronts = tools.emo.sortLogNondominated(pop, MU)
     return fronts, pop, snapshot, record, logbook
@@ -408,11 +409,12 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
     NDIM = len(x_ord)
     NOBJ = len(OBJ_W)
     NGEN = 10
-    CXPB = 0.5
+    CXPB = 0.6
     MUTPB = 0.2
     P = 6
     H = factorial(NOBJ + P - 1) / (factorial(P) * factorial(NOBJ - 1))
     MU = int(H + (4 - H % 4))
+    SNAPSHOT_STEP = 3
     BOUND_LOW, BOUND_UP = 0, 1
     feature_width = np.max(X_train, axis=0) - np.min(X_train, axis=0)
 
@@ -423,7 +425,7 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
                            hdbscan_model, action_operation, action_priority, corr_models)
 
     ## Running EA
-    fronts, pop, snapshot, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB)
+    fronts, pop, snapshot, record, logbook= RunEA(toolbox, MU, NGEN, CXPB, MUTPB, SNAPSHOT_STEP)
 
     ## Constructing counter-factuals
     # cfs_theta = np.asarray(fronts[0])
@@ -435,10 +437,13 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
     cfs_ord = pd.DataFrame(data=cf_ord, columns=feature_names)
 
     ## Evaluating counter-factuals
+    OBJ_order = [1, 2, 6, 3, 5, 4, 7]
     MOCF_output = {'toolbox': toolbox,
-                    'ea_scaler': ea_scaler,
-                    'OBJ_name': OBJ_name
-                 }
+                   'ea_scaler': ea_scaler,
+                   'OBJ_name': OBJ_name,
+                   'OBJ_order': OBJ_order,
+                   'OBJ_W': OBJ_W}
+
     cfs_ord, cfs_eval = EvaluateCounterfactuals(cfs_ord, dataset, predict_class_fn, predict_proba_fn, task, MOCF_output)
 
     ## Recovering original data
@@ -452,7 +457,9 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
               'x_cfs_highlight': x_cfs_highlight,
               'toolbox': toolbox,
               'ea_scaler': ea_scaler,
-              'OBJ_name': OBJ_name
+              'OBJ_name': OBJ_name,
+              'OBJ_order': OBJ_order,
+              'OBJ_W': OBJ_W
     }
 
     return output

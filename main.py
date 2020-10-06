@@ -1,17 +1,17 @@
+import warnings
+warnings.filterwarnings("ignore")
+import numpy as np
 from prepare_datasets import *
 from mappings import ord2ohe
 from mocf_explainer import MOCFExplainer
 from dice_explainer import DiCEExplainer
 from cf_prototype_explainer import CFPrototypeExplainer
-from create_model import CreateModel
-from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from sklearn.neural_network import MLPClassifier, MLPRegressor
+from create_model import CreateModel, KerasNeuralNetwork
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.neural_network import MLPRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import train_test_split
-import numpy as np
-import warnings
-warnings.filterwarnings("ignore")
 
 def main():
     ## Defining path of data sets and experiment results
@@ -21,20 +21,18 @@ def main():
 
     ## Defining the list of data sets
     datsets_list = {
-        # 'breast-cancer': ('breast-cancer.csv', PrepareBreastCancer, 'classification'),
+        'adult': ('adult.csv', PrepareAdult, 'classification'),
         # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
-        # 'adult': ('adult.csv', PrepareAdult, 'classification'),
-        'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
+        # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
     }
 
     ## Defining the list of black-boxes
     blackbox_list = {
-        # 'dnn': None,
+        'dnn': KerasNeuralNetwork,
         # 'lg': LogisticRegression,
         # 'gt': GradientBoostingClassifier,
-        # 'rf': RandomForestClassifier,
-        # 'nn': MLPClassifier,
-        'dtr': DecisionTreeRegressor,
+        # 'mlp-r': MLPRegressor
+        # 'dt-r': DecisionTreeRegressor,
     }
 
     for dataset_kw in datsets_list:
@@ -110,5 +108,6 @@ def main():
                 MOCF_output = MOCFExplainer(x, blackbox, predict_class_fn, predict_proba_fn, dataset, task, X_train,
                                             Y_train, x_range = x_range, cf_range=cf_range)
 
+                print('Done!')
 if __name__ == '__main__':
     main()
