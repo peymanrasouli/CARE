@@ -40,7 +40,7 @@ def CreateModel(dataset, X_train, X_test, Y_train, Y_test, task, model_name, con
 
 def KerasNeuralNetwork(input_shape):
     constructor = keras.Sequential()
-    constructor.add(keras.layers.Dense(50, input_shape=(input_shape,),
+    constructor.add(keras.layers.Dense(10, input_shape=(input_shape,),
                                     kernel_regularizer=keras.regularizers.l1(0.001), activation=tf.nn.relu))
     constructor.add(keras.layers.Dense(1, activation=tf.nn.sigmoid))
     constructor.compile(loss='binary_crossentropy', optimizer=tf.keras.optimizers.Adam(0.001), metrics=['accuracy'])
