@@ -137,7 +137,7 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
         gt_ohe = X_train_ohe[gt_idx[0][gt_sc_idx[0]]]
         gt_theta = ord2theta(gt_ord, ea_scaler)
 
-    K_nbrs = min(200, len(gt_theta))
+    K_nbrs = min(200, len(gt_ord))
     gt_nbrModel = NearestNeighbors(n_neighbors=K_nbrs, algorithm='kd_tree').fit(gt_theta)
 
     x_theta = ord2theta(x_ord, ea_scaler)
