@@ -21,8 +21,8 @@ def main():
 
     ## Defining the list of data sets
     datsets_list = {
-        # 'adult': ('adult.csv', PrepareAdult, 'classification'),
-        'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        'adult': ('adult.csv', PrepareAdult, 'classification'),
+        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
         # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
     }
 
@@ -62,7 +62,7 @@ def main():
             ## Explaining the instance using counter-factuals
             # Classification
             if task is 'classification':
-                ind = 0
+                ind = 10
                 x = X_test[ind]
                 x_ohe = ord2ohe(x, dataset)
                 x_class = predict_class_fn(x_ohe.reshape(1,-1))

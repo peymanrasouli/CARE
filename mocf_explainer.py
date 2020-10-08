@@ -126,28 +126,34 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
         gt_idx = np.where(abs_error<=mae)
         pred_gt = predict_class_fn(X_train_ohe[gt_idx])
         gt_sc_idx = np.where(np.logical_and(pred_gt >= cf_range[0], pred_gt <= cf_range[1]))
-        gt = X_train[gt_idx[0][gt_sc_idx[0]]]
-        gt_theta = ord2theta(gt, ea_scaler)
+        gt_ord = X_train[gt_idx[0][gt_sc_idx[0]]]
+        gt_ohe = X_train_ohe[gt_idx[0][gt_sc_idx[0]]]
+        gt_theta = ord2theta(gt_ord, ea_scaler)
     else:
         gt_idx = np.where(pred_train == Y_train)
         pred_gt = predict_class_fn(X_train_ohe[gt_idx])
         gt_sc_idx = np.where(pred_gt == cf_class)
-        gt = X_train[gt_idx[0][gt_sc_idx[0]]]
-        gt_theta = ord2theta(gt, ea_scaler)
+        gt_ord = X_train[gt_idx[0][gt_sc_idx[0]]]
+        gt_ohe = X_train_ohe[gt_idx[0][gt_sc_idx[0]]]
+        gt_theta = ord2theta(gt_ord, ea_scaler)
 
-    K_nbrs = min(500, len(gt_theta))
+    K_nbrs = min(200, len(gt_theta))
     gt_nbrModel = NearestNeighbors(n_neighbors=K_nbrs, algorithm='kd_tree').fit(gt_theta)
+
+    x_theta = ord2theta(x_ord, ea_scaler)
+    distances, indices = gt_nbrModel.kneighbors(x_theta.reshape(1, -1))
+    nbrs_theta = gt_theta[indices[0]].copy()
 
     ## Creating local outlier factor model for proximity function
     lof_model = LocalOutlierFactor(n_neighbors=1, novelty=True)
-    lof_model.fit(gt_theta)
+    lof_model.fit(nbrs_theta)
 
     ## Creating hdbscan clustering model for connectedness function
-    dist = pairwise_distances(gt_theta, metric='minkowski')
+    dist = pairwise_distances(nbrs_theta, metric='minkowski')
     dist[np.where(dist==0)] = np.inf
     epsilon = np.max(np.min(dist,axis=0))
     hdbscan_model = hdbscan.HDBSCAN(min_samples=2, cluster_selection_epsilon=float(epsilon),
-                                    metric='minkowski', p=2, prediction_data=True).fit(gt_theta)
+                                    metric='minkowski', p=2, prediction_data=True).fit(nbrs_theta)
 
     ## Actionable operation vector
     ## Discrete options = {'fix','any',{a set of possible changes]}
@@ -385,14 +391,7 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
 
     ## Evolutioanry algorithm setup
     # Initializing the population
-    x_theta = ord2theta(x_ord, ea_scaler)
-    x_org = ord2org(x_ord, dataset)
-
-    distances, indices = gt_nbrModel.kneighbors(x_theta.reshape(1, -1))
-    nbrs_theta = gt_theta[indices[0]].copy()
-
     selection_probability = {'x': 0.1, 'neighbor':0.4, 'random':0.5}
-
 
     # Objective functions || -1.0: cost function | 1.0: fitness function
     f1 = -1.0   # Prediction Distance
@@ -419,6 +418,7 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
     feature_width = np.max(X_train, axis=0) - np.min(X_train, axis=0)
 
     # Creating toolbox for the EA
+    x_org = ord2org(x_ord, dataset)
     toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_ord, x_theta, x_org, dataset, predict_class_fn,
                            predict_proba_fn, discrete_indices, continuous_indices, feature_width, ea_scaler,
                            probability_thresh, cf_class, cf_range, nbrs_theta, selection_probability, lof_model,
