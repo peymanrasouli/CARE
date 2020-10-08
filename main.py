@@ -62,7 +62,7 @@ def main():
             ## Explaining the instance using counter-factuals
             # Classification
             if task is 'classification':
-                ind = 10
+                ind = 0
                 x = X_test[ind]
                 x_ohe = ord2ohe(x, dataset)
                 x_class = predict_class_fn(x_ohe.reshape(1,-1))

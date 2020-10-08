@@ -127,133 +127,28 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
         pred_gt = predict_class_fn(X_train_ohe[gt_idx])
         gt_sc_idx = np.where(np.logical_and(pred_gt >= cf_range[0], pred_gt <= cf_range[1]))
         gt_ord = X_train[gt_idx[0][gt_sc_idx[0]]]
-        gt_ohe = X_train_ohe[gt_idx[0][gt_sc_idx[0]]]
         gt_theta = ord2theta(gt_ord, ea_scaler)
     else:
         gt_idx = np.where(pred_train == Y_train)
         pred_gt = predict_class_fn(X_train_ohe[gt_idx])
         gt_sc_idx = np.where(pred_gt == cf_class)
         gt_ord = X_train[gt_idx[0][gt_sc_idx[0]]]
-        gt_ohe = X_train_ohe[gt_idx[0][gt_sc_idx[0]]]
         gt_theta = ord2theta(gt_ord, ea_scaler)
-
-    K_nbrs = min(200, len(gt_ord))
-    gt_nbrModel = NearestNeighbors(n_neighbors=K_nbrs, algorithm='kd_tree').fit(gt_theta)
-
-    x_theta = ord2theta(x_ord, ea_scaler)
-    distances, indices = gt_nbrModel.kneighbors(x_theta.reshape(1, -1))
-    nbrs_theta = gt_theta[indices[0]].copy()
 
     ## Creating local outlier factor model for proximity function
     lof_model = LocalOutlierFactor(n_neighbors=1, novelty=True)
-    lof_model.fit(nbrs_theta)
+    lof_model.fit(gt_theta)
 
     ## Creating hdbscan clustering model for connectedness function
-    dist = pairwise_distances(nbrs_theta, metric='minkowski')
+    dist = pairwise_distances(gt_theta, metric='minkowski')
     dist[np.where(dist==0)] = np.inf
     epsilon = np.max(np.min(dist,axis=0))
     hdbscan_model = hdbscan.HDBSCAN(min_samples=2, cluster_selection_epsilon=float(epsilon),
-                                    metric='minkowski', p=2, prediction_data=True).fit(nbrs_theta)
+                                    metric='minkowski', p=2, prediction_data=True).fit(gt_theta)
 
     ## Actionable operation vector
     ## Discrete options = {'fix','any',{a set of possible changes]}
     ## Continuous options = {'fix','any','increase','decrease',[a range of possible changes]}
-
-
-    ############## Breast cancer data set ##################
-    # discrete_features = {'age': [0.0, 5.0],
-    #                      'menopause': [0.0, 2.0],
-    #                      'tumor-size': [0.0, 10.0],
-    #                      'inv-node': [0.0, 6.0],
-    #                      'node-caps': [0.0, 1.0],
-    #                      'deg-malig': [0.0, 2.0],
-    #                      'breast': [0.0, 1.0],
-    #                      'breast-quad': [0.0, 4.0],
-    #                      'irradiat': [0.0, 1.0]}
-    # continuous_features = None
-
-    # preferences = {'age': (operation, priority),
-    #                'menopause': (operation, priority),
-    #                'tumor-size': (operation, priority),
-    #                'inv-node': (operation, priority),
-    #                'node-caps': (operation, priority),
-    #                'deg-malig': (operation, priority),
-    #                'breast': (operation, priority),
-    #                'breast-quad': (operation, priority),
-    #                'irradiat': (operation, priority),
-    #                }
-
-    if dataset['name'] == 'breast-cancer':
-        preferences = {}
-
-        action_operation = [None] * len(x_ord)
-        action_priority = [None] * len(x_ord)
-        for p in preferences:
-            index = dataset['feature_names'].index(p)
-            action_operation[index] = preferences[p][0]
-            action_priority[index] = preferences[p][1]
-
-
-        ################# Credit card default data set #################
-        # discrete_features = {'SEX': [0.0, 1.0],
-        #                      'EDUCATION': [0.0, 6.0],
-        #                      'MARRIAGE': [0.0, 3.0],
-        #                      'PAY_0': [0.0, 10.0],
-        #                      'PAY_2': [0.0, 10.0],
-        #                      'PAY_3': [0.0, 10.0],
-        #                      'PAY_4': [0.0, 10.0],
-        #                      'PAY_5': [0.0, 9.0],
-        #                      'PAY_6': [0.0, 9.0]}
-        #
-        # continuous_features = {'LIMIT_BAL': [10000.0, 1000000.0],
-        #                         'AGE': [21.0, 79.0],
-        #                         'BILL_AMT1': [-165580.0, 964511.0],
-        #                         'BILL_AMT2': [-69777.0, 983931.0],
-        #                         'BILL_AMT3': [-157264.0, 1664089.0],
-        #                         'BILL_AMT4': [-170000.0, 891586.0],
-        #                         'BILL_AMT5': [-81334.0, 927171.0],
-        #                         'BILL_AMT6': [-339603.0, 961664.0],
-        #                         'PAY_AMT1': [0.0, 873552.0],
-        #                         'PAY_AMT2': [0.0, 1684259.0],
-        #                         'PAY_AMT3': [0.0, 896040.0],
-        #                         'PAY_AMT4': [0.0, 621000.0],
-        #                         'PAY_AMT5': [0.0, 426529.0],
-        #                         'PAY_AMT6': [0.0, 528666.0]}
-
-        # preferences = {'LIMIT_BAL':(operation, priority),
-        #                 'SEX':(operation, priority),
-        #                 'EDUCATION':(operation, priority),
-        #                 'MARRIAGE':(operation, priority),
-        #                 'AGE':(operation, priority),
-        #                 'PAY_0':(operation, priority),
-        #                 'PAY_2':(operation, priority),
-        #                 'PAY_3':(operation, priority),
-        #                 'PAY_4':(operation, priority),
-        #                 'PAY_5':(operation, priority),
-        #                 'PAY_6':(operation, priority),
-        #                 'BILL_AMT1':(operation, priority),
-        #                 'BILL_AMT2':(operation, priority),
-        #                 'BILL_AMT3':(operation, priority),
-        #                 'BILL_AMT4':(operation, priority),
-        #                 'BILL_AMT5':(operation, priority),
-        #                 'BILL_AMT6':(operation, priority),
-        #                 'PAY_AMT1':(operation, priority),
-        #                 'PAY_AMT2':(operation, priority),
-        #                 'PAY_AMT3':(operation, priority),
-        #                 'PAY_AMT4':(operation, priority),
-        #                 'PAY_AMT5':(operation, priority),
-        #                 'PAY_AMT6':(operation, priority),
-        #                }
-
-    elif dataset['name'] == 'credit-card-default':
-        preferences = {}
-
-        action_operation = [None] * len(x_ord)
-        action_priority = [None] * len(x_ord)
-        for p in preferences:
-            index = dataset['feature_names'].index(p)
-            action_operation[index] = preferences[p][0]
-            action_priority[index] = preferences[p][1]
 
     ###################### Adult data set ######################
     # discrete_features = {'work-class': [0.0, 6.0],
@@ -290,20 +185,7 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
     #                 'native-country': (operation, priority),
     #                }
 
-
-    elif dataset['name'] == 'adult':
-        # preferences = {'age': ('increase', 5),
-        #                 'marital-status': ('fix', 6),
-        #                 'occupation':({0,1,2,3,4,5}, 4),
-        #                 'relationship': ('fix', 7),
-        #                 'race': ('fix', 10),
-        #                 'sex':('fix', 9),
-        #                 'capital-gain': ([0,10000], 1),
-        #                 'capital-loss': ([0,2000], 2),
-        #                 'hours-per-week': ('increase', 3),
-        #                 'native-country': ('fix', 8),
-        #                }
-
+    if dataset['name'] == 'adult':
         preferences = {}
 
         action_operation = [None] * len(x_ord)
@@ -312,6 +194,71 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
             index = dataset['feature_names'].index(p)
             action_operation[index] = preferences[p][0]
             action_priority[index] = preferences[p][1]
+
+
+
+    ################# Credit card default data set #################
+    # discrete_features = {'SEX': [0.0, 1.0],
+    #                      'EDUCATION': [0.0, 6.0],
+    #                      'MARRIAGE': [0.0, 3.0],
+    #                      'PAY_0': [0.0, 10.0],
+    #                      'PAY_2': [0.0, 10.0],
+    #                      'PAY_3': [0.0, 10.0],
+    #                      'PAY_4': [0.0, 10.0],
+    #                      'PAY_5': [0.0, 9.0],
+    #                      'PAY_6': [0.0, 9.0]}
+    #
+    # continuous_features = {'LIMIT_BAL': [10000.0, 1000000.0],
+    #                         'AGE': [21.0, 79.0],
+    #                         'BILL_AMT1': [-165580.0, 964511.0],
+    #                         'BILL_AMT2': [-69777.0, 983931.0],
+    #                         'BILL_AMT3': [-157264.0, 1664089.0],
+    #                         'BILL_AMT4': [-170000.0, 891586.0],
+    #                         'BILL_AMT5': [-81334.0, 927171.0],
+    #                         'BILL_AMT6': [-339603.0, 961664.0],
+    #                         'PAY_AMT1': [0.0, 873552.0],
+    #                         'PAY_AMT2': [0.0, 1684259.0],
+    #                         'PAY_AMT3': [0.0, 896040.0],
+    #                         'PAY_AMT4': [0.0, 621000.0],
+    #                         'PAY_AMT5': [0.0, 426529.0],
+    #                         'PAY_AMT6': [0.0, 528666.0]}
+
+    # preferences = {'LIMIT_BAL':(operation, priority),
+    #                 'SEX':(operation, priority),
+    #                 'EDUCATION':(operation, priority),
+    #                 'MARRIAGE':(operation, priority),
+    #                 'AGE':(operation, priority),
+    #                 'PAY_0':(operation, priority),
+    #                 'PAY_2':(operation, priority),
+    #                 'PAY_3':(operation, priority),
+    #                 'PAY_4':(operation, priority),
+    #                 'PAY_5':(operation, priority),
+    #                 'PAY_6':(operation, priority),
+    #                 'BILL_AMT1':(operation, priority),
+    #                 'BILL_AMT2':(operation, priority),
+    #                 'BILL_AMT3':(operation, priority),
+    #                 'BILL_AMT4':(operation, priority),
+    #                 'BILL_AMT5':(operation, priority),
+    #                 'BILL_AMT6':(operation, priority),
+    #                 'PAY_AMT1':(operation, priority),
+    #                 'PAY_AMT2':(operation, priority),
+    #                 'PAY_AMT3':(operation, priority),
+    #                 'PAY_AMT4':(operation, priority),
+    #                 'PAY_AMT5':(operation, priority),
+    #                 'PAY_AMT6':(operation, priority),
+    #                }
+
+    elif dataset['name'] == 'credit-card-default':
+        preferences = {}
+
+        action_operation = [None] * len(x_ord)
+        action_priority = [None] * len(x_ord)
+        for p in preferences:
+            index = dataset['feature_names'].index(p)
+            action_operation[index] = preferences[p][0]
+            action_priority[index] = preferences[p][1]
+
+
 
     ################## Boston house price data set ####################
     # discrete_features = {'CHAS': [0.0, 1.0]}
@@ -391,6 +338,11 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
 
     ## Evolutioanry algorithm setup
     # Initializing the population
+    K_nbrs = min(500, len(gt_theta))
+    gt_nbrModel = NearestNeighbors(n_neighbors=K_nbrs, algorithm='kd_tree').fit(gt_theta)
+    x_theta = ord2theta(x_ord, ea_scaler)
+    distances, indices = gt_nbrModel.kneighbors(x_theta.reshape(1, -1))
+    nbrs_theta = gt_theta[indices[0]].copy()
     selection_probability = {'x': 0.1, 'neighbor':0.4, 'random':0.5}
 
     # Objective functions || -1.0: cost function | 1.0: fitness function

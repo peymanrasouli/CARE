@@ -512,3 +512,36 @@ def PrepareBreastCancer(dataset_path, dataset_name):
     }
 
     return dataset
+
+    ############## Breast cancer data set ##################
+    # discrete_features = {'age': [0.0, 5.0],
+    #                      'menopause': [0.0, 2.0],
+    #                      'tumor-size': [0.0, 10.0],
+    #                      'inv-node': [0.0, 6.0],
+    #                      'node-caps': [0.0, 1.0],
+    #                      'deg-malig': [0.0, 2.0],
+    #                      'breast': [0.0, 1.0],
+    #                      'breast-quad': [0.0, 4.0],
+    #                      'irradiat': [0.0, 1.0]}
+    # continuous_features = None
+
+    # preferences = {'age': (operation, priority),
+    #                'menopause': (operation, priority),
+    #                'tumor-size': (operation, priority),
+    #                'inv-node': (operation, priority),
+    #                'node-caps': (operation, priority),
+    #                'deg-malig': (operation, priority),
+    #                'breast': (operation, priority),
+    #                'breast-quad': (operation, priority),
+    #                'irradiat': (operation, priority),
+    #                }
+
+    if dataset['name'] == 'breast-cancer':
+        preferences = {}
+
+        action_operation = [None] * len(x_ord)
+        action_priority = [None] * len(x_ord)
+        for p in preferences:
+            index = dataset['feature_names'].index(p)
+            action_operation[index] = preferences[p][0]
+            action_priority[index] = preferences[p][1]
