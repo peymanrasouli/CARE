@@ -110,7 +110,7 @@ def RunEA(toolbox, MU, NGEN, CXPB, MUTPB, SNAPSHOT_STEP):
     return fronts, pop, snapshot, record, logbook
 
 def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, task, X_train, Y_train,
-                  probability_thresh=None, cf_class=None, x_range=None, cf_range=None):
+                  probability_thresh=None, cf_class=None, x_range=None, cf_range=None, preferences=None):
 
     # Scaling data to (0,1) for EA
     ea_scaler = MinMaxScaler(feature_range=(0,1))
@@ -145,160 +145,6 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
     epsilon = np.max(np.min(dist,axis=0))
     hdbscan_model = hdbscan.HDBSCAN(min_samples=2, cluster_selection_epsilon=float(epsilon),
                                     metric='minkowski', p=2, prediction_data=True).fit(gt_theta)
-
-    ## Actionable operation vector
-    ## Discrete options = {'fix','any',{a set of possible changes]}
-    ## Continuous options = {'fix','any','increase','decrease',[a range of possible changes]}
-
-    ###################### Adult data set ######################
-    # discrete_features = {'work-class': [0.0, 6.0],
-    #                     'education': [0.0, 15.0],
-    #                     'marital-status': [0.0, 6.0],
-    #                     'occupation': [0.0, 13.0],
-    #                     'relationship': [0.0, 5.0],
-    #                     'race': [0.0, 4.0],
-    #                     'sex': [0.0, 1.0],
-    #                     'native-country': [0.0, 40.0]
-    #                    }
-    #
-    # continuous_features = {'age': [17.0, 90.0],
-    #                         'fnlwgt': [13769.0, 1484705.0],
-    #                         'education-num': [0.0, 15.0],
-    #                         'capital-gain': [0.0, 99999.0],
-    #                         'capital-loss': [0.0, 4356.0],
-    #                         'hours-per-week': [1.0, 99.0],
-    #                        }
-
-    # preferences = {'age': (operation, priority),
-    #                 'work-class': (operation, priority),
-    #                 'fnlwgt': (operation, priority),
-    #                 'education': (operation, priority),
-    #                 'education-num': (operation, priority),
-    #                 'marital-status': (operation, priority),
-    #                 'occupation':(operation, priority),
-    #                 'relationship': (operation, priority),
-    #                 'race': (operation, priority),
-    #                 'sex':(operation, priority),
-    #                 'capital-gain': (operation, priority),
-    #                 'capital-loss': (operation, priority),
-    #                 'hours-per-week': (operation, priority),
-    #                 'native-country': (operation, priority),
-    #                }
-
-    if dataset['name'] == 'adult':
-        preferences = {}
-
-        action_operation = [None] * len(x_ord)
-        action_priority = [None] * len(x_ord)
-        for p in preferences:
-            index = dataset['feature_names'].index(p)
-            action_operation[index] = preferences[p][0]
-            action_priority[index] = preferences[p][1]
-
-
-
-    ################# Credit card default data set #################
-    # discrete_features = {'SEX': [0.0, 1.0],
-    #                      'EDUCATION': [0.0, 6.0],
-    #                      'MARRIAGE': [0.0, 3.0],
-    #                      'PAY_0': [0.0, 10.0],
-    #                      'PAY_2': [0.0, 10.0],
-    #                      'PAY_3': [0.0, 10.0],
-    #                      'PAY_4': [0.0, 10.0],
-    #                      'PAY_5': [0.0, 9.0],
-    #                      'PAY_6': [0.0, 9.0]}
-    #
-    # continuous_features = {'LIMIT_BAL': [10000.0, 1000000.0],
-    #                         'AGE': [21.0, 79.0],
-    #                         'BILL_AMT1': [-165580.0, 964511.0],
-    #                         'BILL_AMT2': [-69777.0, 983931.0],
-    #                         'BILL_AMT3': [-157264.0, 1664089.0],
-    #                         'BILL_AMT4': [-170000.0, 891586.0],
-    #                         'BILL_AMT5': [-81334.0, 927171.0],
-    #                         'BILL_AMT6': [-339603.0, 961664.0],
-    #                         'PAY_AMT1': [0.0, 873552.0],
-    #                         'PAY_AMT2': [0.0, 1684259.0],
-    #                         'PAY_AMT3': [0.0, 896040.0],
-    #                         'PAY_AMT4': [0.0, 621000.0],
-    #                         'PAY_AMT5': [0.0, 426529.0],
-    #                         'PAY_AMT6': [0.0, 528666.0]}
-
-    # preferences = {'LIMIT_BAL':(operation, priority),
-    #                 'SEX':(operation, priority),
-    #                 'EDUCATION':(operation, priority),
-    #                 'MARRIAGE':(operation, priority),
-    #                 'AGE':(operation, priority),
-    #                 'PAY_0':(operation, priority),
-    #                 'PAY_2':(operation, priority),
-    #                 'PAY_3':(operation, priority),
-    #                 'PAY_4':(operation, priority),
-    #                 'PAY_5':(operation, priority),
-    #                 'PAY_6':(operation, priority),
-    #                 'BILL_AMT1':(operation, priority),
-    #                 'BILL_AMT2':(operation, priority),
-    #                 'BILL_AMT3':(operation, priority),
-    #                 'BILL_AMT4':(operation, priority),
-    #                 'BILL_AMT5':(operation, priority),
-    #                 'BILL_AMT6':(operation, priority),
-    #                 'PAY_AMT1':(operation, priority),
-    #                 'PAY_AMT2':(operation, priority),
-    #                 'PAY_AMT3':(operation, priority),
-    #                 'PAY_AMT4':(operation, priority),
-    #                 'PAY_AMT5':(operation, priority),
-    #                 'PAY_AMT6':(operation, priority),
-    #                }
-
-    elif dataset['name'] == 'credit-card-default':
-        preferences = {}
-
-        action_operation = [None] * len(x_ord)
-        action_priority = [None] * len(x_ord)
-        for p in preferences:
-            index = dataset['feature_names'].index(p)
-            action_operation[index] = preferences[p][0]
-            action_priority[index] = preferences[p][1]
-
-
-
-    ################## Boston house price data set ####################
-    # discrete_features = {'CHAS': [0.0, 1.0]}
-    # continuous_features = {'CRIM': [0.00632, 88.9762],
-    #                         'ZN': [0.0, 100.0],
-    #                         'INDUS': [0.46, 27.74],
-    #                         'NOX': [0.385, 0.871],
-    #                         'RM': [3.5610000000000004, 8.78],
-    #                         'AGE': [2.9, 100.0],
-    #                         'DIS': [1.1296, 12.1265],
-    #                         'RAD': [1.0, 24.0],
-    #                         'TAX': [187.0, 711.0],
-    #                         'PTRATIO': [12.6, 22.0],
-    #                         'BLACK': [0.32, 396.9],
-    #                         'LSTAT': [1.73, 37.97]}
-
-    # preferences = {'CRIM': (operation, priority),
-    #                 'ZN': (operation, priority),
-    #                 'INDUS': (operation, priority),
-    #                 'CHAS': (operation, priority),
-    #                 'NOX': (operation, priority),
-    #                 'RM': (operation, priority),
-    #                 'AGE': (operation, priority),
-    #                 'DIS': (operation, priority),
-    #                 'RAD': (operation, priority),
-    #                 'TAX': (operation, priority),
-    #                 'PTRATIO': (operation, priority),
-    #                 'BLACK': (operation, priority),
-    #                 'LSTAT': (operation, priority),
-    #                }
-
-    elif dataset['name'] == 'boston-house-prices':
-        preferences = {}
-
-        action_operation = [None] * len(x_ord)
-        action_priority = [None] * len(x_ord)
-        for p in preferences:
-            index = dataset['feature_names'].index(p)
-            action_operation[index] = preferences[p][0]
-            action_priority[index] = preferences[p][1]
 
     ## Feature correlation modeling
     # Calculate the correlation/strength-of-association of features in data-set
@@ -348,13 +194,15 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
     # Objective functions || -1.0: cost function | 1.0: fitness function
     f1 = -1.0   # Prediction Distance
     f2 = -1.0   # Feature Distance
-    f3 =  1.0   # Proximity
-    f4 = -1.0   # Actionable Recourse
-    f5 = -1.0   # Sparsity
-    f6 =  1.0   # Connectedness
-    f7 =  -1.0   # Correlation
+    f3 = -1.0   # Sparsity
+    f4 =  1.0   # Proximity
+    f5 =  1.0   # Connectedness
+    f6 = -1.0   # Actionable Recourse
+    f7 = -1.0   # Correlation
+
+
     OBJ_W = (f1, f2, f3, f4, f5, f6, f7)
-    OBJ_name = ['Prediction', 'Distance', 'Proximity', 'Actionable', 'Sparsity', 'Connectedness', 'Correlation']
+    OBJ_name = ['Prediction', 'Distance', 'Sparsity', 'Proximity',  'Connectedness', 'Actionable', 'Correlation']
 
     # EA parameters
     NDIM = len(x_ord)
@@ -371,6 +219,8 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
 
     # Creating toolbox for the EA
     x_org = ord2org(x_ord, dataset)
+    action_operation =  preferences['action_operation']
+    action_priority = preferences['action_priority']
     toolbox = SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_ord, x_theta, x_org, dataset, predict_class_fn,
                            predict_proba_fn, discrete_indices, continuous_indices, feature_width, ea_scaler,
                            probability_thresh, cf_class, cf_range, nbrs_theta, selection_probability, lof_model,
@@ -389,7 +239,7 @@ def MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, 
     cfs_ord = pd.DataFrame(data=cf_ord, columns=feature_names)
 
     ## Evaluating counter-factuals
-    OBJ_order = [1, 2, 6, 3, 5, 4, 7]
+    OBJ_order = [1, 2, 3, 4, 5, 6, 7]
     MOCF_output = {'toolbox': toolbox,
                    'ea_scaler': ea_scaler,
                    'OBJ_name': OBJ_name,

@@ -3,11 +3,11 @@ warnings.filterwarnings("ignore")
 import numpy as np
 from prepare_datasets import *
 from mappings import ord2ohe
+from user_preferences import UserPreferences
 from mocf_explainer import MOCFExplainer
 from dice_explainer import DiCEExplainer
 from cf_prototype_explainer import CFPrototypeExplainer
 from create_model import CreateModel, KerasNeuralNetwork
-from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.tree import DecisionTreeRegressor
@@ -29,7 +29,6 @@ def main():
     ## Defining the list of black-boxes
     blackbox_list = {
         'dnn': KerasNeuralNetwork,
-        # 'lg': LogisticRegression,
         # 'gt': GradientBoostingClassifier,
         # 'mlp-r': MLPRegressor
         # 'dt-r': DecisionTreeRegressor,
@@ -63,22 +62,26 @@ def main():
             # Classification
             if task is 'classification':
                 ind = 0
-                x = X_test[ind]
-                x_ohe = ord2ohe(x, dataset)
+                x_ord = X_test[ind]
+                x_ohe = ord2ohe(x_ord, dataset)
                 x_class = predict_class_fn(x_ohe.reshape(1,-1))
                 cf_class = int(1 - x_class)      # Counter-factual class
                 probability_thresh = 0.6         # Counter-factual probability threshold
 
+                ## User preferences
+                preferences = UserPreferences(dataset, x_ord)
+
                 ## MOCF Explainer
-                MOCF_output = MOCFExplainer(x, blackbox, predict_class_fn, predict_proba_fn, dataset, task, X_train,
-                                            Y_train, cf_class=cf_class, probability_thresh=probability_thresh)
+                MOCF_output = MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, task, X_train,
+                                            Y_train, cf_class=cf_class, probability_thresh=probability_thresh,
+                                            preferences=preferences)
 
                 ## CFProto Explainer
-                CFProto_output = CFPrototypeExplainer(x, predict_class_fn, predict_proba_fn, X_train, dataset, task,
+                CFProto_output = CFPrototypeExplainer(x_ord, predict_class_fn, predict_proba_fn, X_train, dataset, task,
                                                       MOCF_output=MOCF_output)
 
                 ## DiCE Explainer
-                DiCE_output = DiCEExplainer(x, blackbox, predict_class_fn, predict_proba_fn, X_train, Y_train, dataset,
+                DiCE_output = DiCEExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, X_train, Y_train, dataset,
                                             task, MOCF_output=MOCF_output, n_cf=10, probability_thresh=probability_thresh)
 
                 print('Done!')
@@ -100,12 +103,15 @@ def main():
                     return x_range, cf_range
 
                 ind = 0
-                x = X_test[ind]
-                x_ohe = ord2ohe(x, dataset)
+                x_ord = X_test[ind]
+                x_ohe = ord2ohe(x_ord, dataset)
                 x_range, cf_range = SelectResponseRange(x_ohe, predict_class_fn, dataset)    # Desired response range
 
+                ## User preferences
+                preferences = UserPreferences(dataset, x_ord)
+
                 ## MOCF Explainer
-                MOCF_output = MOCFExplainer(x, blackbox, predict_class_fn, predict_proba_fn, dataset, task, X_train,
+                MOCF_output = MOCFExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, dataset, task, X_train,
                                             Y_train, x_range = x_range, cf_range=cf_range)
 
                 print('Done!')

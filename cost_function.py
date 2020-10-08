@@ -24,17 +24,17 @@ def CostFunction(x_ord, x_theta, x_org, dataset, predict_class_fn, predict_proba
     ## Objective 2: Feature Distance
     f2 = FeatureDistance(x_ord, cf_ord, feature_width, discrete_indices, continuous_indices)
 
-    ## Objective 3: Proximity
-    f3 = Proximity(cf_theta, lof_model)
+    ## Objective 3: Sparsity
+    f3 = Sparsity(x_org, cf_org)
 
-    ## Objective 4: Actionable Recourse
-    f4 = ActionableRecourse(x_org, cf_org, action_operation, action_priority)
+    ## Objective 4: Proximity
+    f4 = Proximity(cf_theta, lof_model)
 
-    ## Objective 5: Sparsity
-    f5 = Sparsity(x_org, cf_org)
+    ## Objective 5: Connectedness
+    f5 = Connectedness(cf_theta, hdbscan_model)
 
-    ## Objective 6: Connectedness
-    f6 = Connectedness(cf_theta, hdbscan_model)
+    ## Objective 6: Actionable Recourse
+    f6 = ActionableRecourse(x_org, cf_org, action_operation, action_priority)
 
     ## Objective 7: Correlation
     f7 = Correlation(x_ord, cf_ord, cf_theta, corr_models, feature_width, discrete_indices, continuous_indices)

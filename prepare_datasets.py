@@ -24,6 +24,12 @@ def PrepareAdult(dataset_path, dataset_name):
     continuous_indices = [df_X_org.columns.get_loc(f) for f in continuous_features]
     discrete_indices = [df_X_org.columns.get_loc(f) for f in discrete_features]
 
+    feature_values = []
+    for c in continuous_features:
+        feature_values.append({c:[min(df_X_org[c]),max(df_X_org[c])]})
+    for d in discrete_features:
+        feature_values.append({d: set(df_X_org[d].unique())})
+
     ## Extracting decimal points of continuous features
     types = df_X_org[continuous_features].dtypes
     continuous_decimals = []
@@ -108,6 +114,7 @@ def PrepareAdult(dataset_path, dataset_name):
         'ohe_feature_encoder': ohe_feature_encoder,
         'num_feature_scaler': num_feature_scaler,
         'feature_names': feature_names,
+        'feature_values': feature_values,
         'feature_indices': feature_indices,
         'feature_ranges': feature_ranges,
         'discrete_features': discrete_features,
@@ -149,6 +156,12 @@ def PrepareCreditCardDefault(dataset_path, dataset_name):
 
     continuous_indices = [df_X_org.columns.get_loc(f) for f in continuous_features]
     discrete_indices = [df_X_org.columns.get_loc(f) for f in discrete_features]
+
+    feature_values = []
+    for c in continuous_features:
+        feature_values.append({c:[min(df_X_org[c]),max(df_X_org[c])]})
+    for d in discrete_features:
+        feature_values.append({d: set(df_X_org[d].unique())})
 
     ## Extracting decimal points of continuous features
     types = df_X_org[continuous_features].dtypes
@@ -234,6 +247,7 @@ def PrepareCreditCardDefault(dataset_path, dataset_name):
         'ohe_feature_encoder': ohe_feature_encoder,
         'num_feature_scaler': num_feature_scaler,
         'feature_names': feature_names,
+        'feature_values': feature_values,
         'feature_indices': feature_indices,
         'feature_ranges': feature_ranges,
         'discrete_features': discrete_features,
@@ -274,6 +288,12 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
 
     continuous_indices = [df_X_org.columns.get_loc(f) for f in continuous_features]
     discrete_indices = [df_X_org.columns.get_loc(f) for f in discrete_features]
+
+    feature_values = []
+    for c in continuous_features:
+        feature_values.append({c:[min(df_X_org[c]),max(df_X_org[c])]})
+    for d in discrete_features:
+        feature_values.append({d: set(df_X_org[d].unique())})
 
     ## Extracting decimal points of continuous features
     continuous_types = df_X_org[continuous_features].dtypes
@@ -349,6 +369,7 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
         'ohe_feature_encoder': ohe_feature_encoder,
         'num_feature_scaler': num_feature_scaler,
         'feature_names': feature_names,
+        'feature_values': feature_values,
         'feature_indices': feature_indices,
         'feature_ranges': feature_ranges,
         'discrete_features': discrete_features,
