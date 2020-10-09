@@ -7,7 +7,6 @@ from mappings import ord2ohe, ord2org, ord2theta, theta2ord, theta2org, org2ord
 from cost_function import CostFunction
 from evaluate_counterfactuals import EvaluateCounterfactuals
 from recover_originals import RecoverOriginals
-import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import pairwise_distances, f1_score, r2_score
 from dython import nominal
@@ -24,17 +23,6 @@ def Initialization(bound_low, bound_up, size, x_theta, nbrs_theta, selection_pro
         return list(nbrs_theta[idx].ravel())
     elif method == 'random':
         return list(np.random.uniform(bound_low, bound_up, size))
-
-def PlotParetoFronts(toolbox, fronts, objective_list):
-    n_fronts = len(fronts)
-    fig, ax = plt.subplots(n_fronts, figsize=(8,8))
-    fig.text(0.5, 0.04, 'f' + str(objective_list[0] + 1) + '(x)', ha='center')
-    fig.text(0.02, 0.5, 'f' + str(objective_list[1] + 1) + '(x)', rotation='vertical')
-    for i, f in enumerate(fronts):
-        costs = np.asarray([toolbox.evaluate(ind) for ind in f])[:,objective_list]
-        ax.scatter(costs[:,0], costs[:,1], color='r') if n_fronts == 1 \
-            else ax[i].scatter(costs[:,0], costs[:,1], color='r')
-        ax.title.set_text('Front 1') if n_fronts == 1 else ax[i].title.set_text('Front '+str(i+1))
 
 def SetupToolbox(NDIM, NOBJ, P, BOUND_LOW, BOUND_UP, OBJ_W, x_ord, x_theta, x_org, dataset, predict_class_fn,
                  predict_proba_fn, discrete_indices, continuous_indices, feature_width, ea_scaler,

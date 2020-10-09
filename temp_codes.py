@@ -545,3 +545,15 @@ def PrepareBreastCancer(dataset_path, dataset_name):
             index = dataset['feature_names'].index(p)
             action_operation[index] = preferences[p][0]
             action_priority[index] = preferences[p][1]
+
+
+def PlotParetoFronts(toolbox, fronts, objective_list):
+    n_fronts = len(fronts)
+    fig, ax = plt.subplots(n_fronts, figsize=(8,8))
+    fig.text(0.5, 0.04, 'f' + str(objective_list[0] + 1) + '(x)', ha='center')
+    fig.text(0.02, 0.5, 'f' + str(objective_list[1] + 1) + '(x)', rotation='vertical')
+    for i, f in enumerate(fronts):
+        costs = np.asarray([toolbox.evaluate(ind) for ind in f])[:,objective_list]
+        ax.scatter(costs[:,0], costs[:,1], color='r') if n_fronts == 1 \
+            else ax[i].scatter(costs[:,0], costs[:,1], color='r')
+        ax.title.set_text('Front 1') if n_fronts == 1 else ax[i].title.set_text('Front '+str(i+1))
