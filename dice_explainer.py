@@ -3,8 +3,8 @@ import pandas as pd
 import dice_ml
 import tensorflow as tf
 tf.InteractiveSession()
-from evaluate_counterfactuals import EvaluateCounterfactuals
-from recover_originals import RecoverOriginals
+from evaluate_counterfactuals import evaluateCounterfactuals
+from recover_originals import recoverOriginals
 
 def DiCEExplainer(x_ord, blackbox, predict_class_fn, predict_proba_fn, X_train, Y_train,
                   dataset, task, MOCF_output, n_cf=5, probability_thresh=0.5):

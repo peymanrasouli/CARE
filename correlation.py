@@ -1,10 +1,10 @@
 import numpy as np
 
-def Correlation(x_ord, cf_ord, cf_theta, corr_models, feature_width, discrete_indices, continuous_indices):
+def Correlation(x_ord, cf_ord, cf_theta, feature_width, continuous_indices, discrete_indices, correlation_model):
     distance = []
     cf_ord_ = cf_ord.copy()
     delta = np.nonzero(x_ord-cf_ord)[0]
-    for m in corr_models:
+    for m in correlation_model:
         feature = m['feature']
         model = m['model']
         inputs = m['inputs']

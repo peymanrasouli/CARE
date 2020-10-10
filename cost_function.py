@@ -1,9 +1,9 @@
 import numpy as np
-from prediction_distance import PredictionDistance
-from feature_distance import FeatureDistance
+# from prediction_distance import PredictionDistance
+# from feature_distance import FeatureDistance
 from proximity import Proximity
 from sparsity import Sparsity
-from actionable_recourse import ActionableRecourse
+# from actionable_recourse import ActionableRecourse
 from connectedness import Connectedness
 from correlation import Correlation
 from mappings import theta2org, org2ord, ord2ohe

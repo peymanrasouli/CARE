@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, LabelEncoder, StandardScaler
 
 ## Preparing Adult dataset
@@ -86,6 +87,7 @@ def PrepareAdult(dataset_path, dataset_name):
     feature_names = list(df_X_org.columns)
     feature_indices = {i: feature for i, feature in enumerate(feature_names)}
     feature_ranges = {feature_names[i]: [min(X_ord[:, i]), max(X_ord[:, i])] for i in range(X_ord.shape[1])}
+    feature_width = np.max(X_ord, axis=0) - np.min(X_ord, axis=0)
 
     n_cat_discrete = ord_encoded_data.nunique().to_list()
 
@@ -117,6 +119,7 @@ def PrepareAdult(dataset_path, dataset_name):
         'feature_values': feature_values,
         'feature_indices': feature_indices,
         'feature_ranges': feature_ranges,
+        'feature_width': feature_width,
         'discrete_features': discrete_features,
         'discrete_indices': discrete_indices,
         'continuous_features': continuous_features,
@@ -219,6 +222,7 @@ def PrepareCreditCardDefault(dataset_path, dataset_name):
     feature_names = list(df_X_org.columns)
     feature_indices = {i: feature for i, feature in enumerate(feature_names)}
     feature_ranges = {feature_names[i]: [min(X_ord[:, i]), max(X_ord[:, i])] for i in range(X_ord.shape[1])}
+    feature_width = np.max(X_ord, axis=0) - np.min(X_ord, axis=0)
 
     n_cat_discrete = ord_encoded_data.nunique().to_list()
 
@@ -250,6 +254,7 @@ def PrepareCreditCardDefault(dataset_path, dataset_name):
         'feature_values': feature_values,
         'feature_indices': feature_indices,
         'feature_ranges': feature_ranges,
+        'feature_width': feature_width,
         'discrete_features': discrete_features,
         'discrete_indices': discrete_indices,
         'continuous_features': continuous_features,
@@ -343,6 +348,7 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
     feature_names = list(df_X_org.columns)
     feature_indices = {i: feature for i, feature in enumerate(feature_names)}
     feature_ranges = {feature_names[i]: [min(X_ord[:, i]), max(X_ord[:, i])] for i in range(X_ord.shape[1])}
+    feature_width = np.max(X_ord, axis=0) - np.min(X_ord, axis=0)
 
     n_cat_discrete = ord_encoded_data.nunique().to_list()
 
@@ -372,6 +378,7 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
         'feature_values': feature_values,
         'feature_indices': feature_indices,
         'feature_ranges': feature_ranges,
+        'feature_width': feature_width,
         'discrete_features': discrete_features,
         'discrete_indices': discrete_indices,
         'continuous_features': continuous_features,

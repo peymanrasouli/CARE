@@ -3,8 +3,8 @@ import pandas as pd
 from alibi.explainers import CounterFactualProto
 from alibi.utils.mapping import ohe_to_ord, ord_to_ohe
 from mappings import ord2ohe, ohe2ord
-from evaluate_counterfactuals import EvaluateCounterfactuals
-from recover_originals import RecoverOriginals
+from evaluate_counterfactuals import evaluateCounterfactuals
+from recover_originals import recoverOriginals
 
 def CFPrototypeExplainer(x_ord, predict_class_fn, predict_proba_fn, X_train, dataset, task, MOCF_output):
     ## Preparing parameters

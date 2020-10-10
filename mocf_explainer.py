@@ -5,8 +5,8 @@ from math import *
 from deap import algorithms, base, creator, tools
 from mappings import ord2ohe, ord2org, ord2theta, theta2ord, theta2org, org2ord
 from cost_function import CostFunction
-from evaluate_counterfactuals import EvaluateCounterfactuals
-from recover_originals import RecoverOriginals
+from evaluate_counterfactuals import evaluateCounterfactuals
+# from recover_originals import RecoverOriginals
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import pairwise_distances, f1_score, r2_score
 from dython import nominal

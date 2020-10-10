@@ -1,4 +1,8 @@
-def ActionableRecourse(x_org, cf_org, action_operation, action_priority):
+def actionableRecourse(x_org, cf_org, user_preferences):
+
+    action_operation = user_preferences['action_operation']
+    action_priority = user_preferences['action_priority']
+
     cost = []
     idx =  [i for i, op in enumerate(action_operation) if op is not None]
     for i in idx:
