@@ -27,8 +27,8 @@ def main():
 
     ## Defining the list of black-boxes
     blackbox_list = {
-        # 'dnn': KerasNeuralNetwork,
-        'gt': GradientBoostingClassifier,
+        'dnn': KerasNeuralNetwork,
+        # 'gt': GradientBoostingClassifier,
         # 'mlp-r': MLPRegressor
         # 'dt-r': DecisionTreeRegressor,
     }
