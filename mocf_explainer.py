@@ -6,14 +6,14 @@ def MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_pr
                   soundCF=False, feasibleAR=False, user_preferences=None,
                   probability_thresh=0.5, cf_class='opposite', cf_quantile='neighbor'):
 
-    # creating the MOCF explainer
+    # creating an instance of MOCF explainer
     explainer = MOCF(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                      soundCF=soundCF, feasibleAR=feasibleAR)
 
     # fitting the explainer on the training data
     explainer.fit(X_train, Y_train)
 
-    # explain instance
+    # explain instance x_ord
     explanation = explainer.explain(x_ord, cf_class=cf_class, cf_quantile=cf_quantile,
                                     probability_thresh=probability_thresh, user_preferences=user_preferences)
 
