@@ -36,17 +36,17 @@ def MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_pr
 
 
     # returning the results
-    MOCF_output = {'cfs_ord': cfs_ord,
-                    'cfs_org': cfs_org,
-                    'cfs_eval': cfs_eval,
-                    'x_cfs_ord': x_cfs_ord,
-                    'x_cfs_eval': x_cfs_eval,
-                    'x_cfs_org': x_cfs_org,
-                    'x_cfs_highlight': x_cfs_highlight,
-                    'toolbox': toolbox,
-                    'featureScaler': featureScaler,
-                    'objective_names': objective_names,
-                    'objective_weights': objective_weights,
-                    }
+    output = {'cfs_ord': cfs_ord,
+                'cfs_org': cfs_org,
+                'cfs_eval': cfs_eval,
+                'x_cfs_ord': x_cfs_ord,
+                'x_cfs_eval': x_cfs_eval,
+                'x_cfs_org': x_cfs_org,
+                'x_cfs_highlight': x_cfs_highlight,
+                'toolbox': toolbox,
+                'featureScaler': featureScaler,
+                'objective_names': objective_names,
+                'objective_weights': objective_weights,
+                }
 
-    return MOCF_output
+    return output

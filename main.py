@@ -1,5 +1,8 @@
 import warnings
 warnings.filterwarnings("ignore")
+import pandas as pd
+pd.set_option('max_columns', None)
+pd.set_option('display.width', 1000)
 from prepare_datasets import *
 from sklearn.model_selection import train_test_split
 from create_model import CreateModel, KerasNeuralNetwork
@@ -24,8 +27,8 @@ def main():
 
     ## Defining the list of black-boxes
     blackbox_list = {
-        'dnn': KerasNeuralNetwork,
-        # 'gt': GradientBoostingClassifier,
+        # 'dnn': KerasNeuralNetwork,
+        'gt': GradientBoostingClassifier,
         # 'mlp-r': MLPRegressor
         # 'dt-r': DecisionTreeRegressor,
     }
@@ -61,10 +64,16 @@ def main():
                 x_ord = X_test[ind]
                 # set user preferences
                 user_preferences = userPreferences(dataset, x_ord)
-                # explain instance using MOCF
-                MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                              soundCF=False, feasibleAR=False, user_preferences=user_preferences,
-                                              probability_thresh=0.5, cf_class='opposite', cf_quantile='neighbor')
+                # explain instance x_ord using MOCF
+                output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
+                                        soundCF=False, feasibleAR=False, user_preferences=user_preferences,
+                                        probability_thresh=0.5, cf_class='opposite', cf_quantile='neighbor')
+                # print n best counter-factuals and their corresponding objective values
+                n = 5
+                print('\n')
+                print(output['x_cfs_highlight'].head(n= n + 1))
+                print(output['x_cfs_eval'].head(n= n + 1))
+                print('\n')
                 print('Done!')
 
             # Regression
@@ -74,10 +83,16 @@ def main():
                 x_ord = X_test[ind]
                 # set user preferences
                 user_preferences = userPreferences(dataset, x_ord)
-                # explain instance using MOCF
-                MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                            soundCF=False, feasibleAR=False, user_preferences=user_preferences,
-                                            probability_thresh=0.5, cf_class='opposite', cf_quantile='neighbor')
+                # explain instance x_ord using MOCF
+                output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
+                                        soundCF=False, feasibleAR=False, user_preferences=user_preferences,
+                                        probability_thresh=0.5, cf_class='opposite', cf_quantile='neighbor')
+                # print n best counter-factuals and their corresponding objective values
+                n = 5
+                print('\n')
+                print(output['x_cfs_highlight'].head(n= n + 1))
+                print(output['x_cfs_eval'].head(n= n + 1))
+                print('\n')
                 print('Done!')
 
 if __name__ == '__main__':
