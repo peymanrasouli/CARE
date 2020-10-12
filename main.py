@@ -7,7 +7,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.tree import DecisionTreeRegressor
 from user_preferences import userPreferences
-from mocf_explainer import mocfExplainer
+from mocf_explainer import MOCFExplainer
 
 def main():
     ## Defining path of data sets and experiment results
@@ -56,24 +56,28 @@ def main():
 
             # Classification
             if task is 'classification':
-                ## User preferences
-
-                explainer = mocfExplainer(dataset, task=task, predict_fn=predict_fn,predict_proba_fn=predict_proba_fn, soundCF=False)
-                explainer.fit(X_train, Y_train)
-                ind = 1
+                # instance to explain
+                ind = 0
                 x_ord = X_test[ind]
-                preferences = userPreferences(dataset, x_ord)
-                explanation = explainer.explain(x_ord, cf_class='opposite', probability_thresh=0.6, user_preferences=preferences)
+                # set user preferences
+                user_preferences = userPreferences(dataset, x_ord)
+                # explain instance using MOCF
+                MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
+                                              soundCF=False, feasibleAR=False, user_preferences=user_preferences,
+                                              probability_thresh=0.5, cf_class='opposite', cf_quantile='neighbor')
                 print('Done!')
 
             # Regression
             elif task is 'regression':
-                explainer = mocfExplainer(dataset, task=task, predict_fn=predict_fn, soundCF=True)
-                explainer.fit(X_train, Y_train)
+                # instance to explain
                 ind = 0
                 x_ord = X_test[ind]
-                preferences = userPreferences(dataset, x_ord)
-                explanation = explainer.explain(x_ord, cf_quantile='neighbor', user_preferences=preferences)
+                # set user preferences
+                user_preferences = userPreferences(dataset, x_ord)
+                # explain instance using MOCF
+                MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
+                                            soundCF=False, feasibleAR=False, user_preferences=user_preferences,
+                                            probability_thresh=0.5, cf_class='opposite', cf_quantile='neighbor')
                 print('Done!')
 
 if __name__ == '__main__':
