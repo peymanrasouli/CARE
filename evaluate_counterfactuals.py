@@ -1,14 +1,18 @@
-import numpy as np
 import pandas as pd
-from mappings import ord2theta, ord2ohe
+from utils import *
 
-def evaluateCounterfactuals(cfs, dataset, predict_fn, predict_proba_fn, task, toolbox,
-                            objective_names, objective_weights, eaScaler):
+def evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn, predict_proba_fn, task, toolbox,
+                            objective_names, objective_weights, featureScaler, feature_names):
 
-    cfs.drop_duplicates(inplace=True)
-    cfs.reset_index(drop=True, inplace=True)
-    cfs_theta = ord2theta(cfs, eaScaler)
-    cfs_ohe = ord2ohe(cfs.to_numpy(), dataset)
+    cfs_ord.drop_duplicates(inplace=True)
+    cfs_ord.reset_index(drop=True, inplace=True)
+
+    x_ord = pd.DataFrame(data=x_ord.reshape(1, -1), columns=feature_names)
+    cfs_ord = pd.concat([x_ord, cfs_ord])
+    cfs_ord.reset_index(drop=True, inplace=True)
+
+    cfs_theta = ord2theta(cfs_ord, featureScaler)
+    cfs_ohe = ord2ohe(cfs_ord.to_numpy(), dataset)
 
     evaluation = np.asarray([np.asarray(toolbox.evaluate(ind)) for ind in cfs_theta])
     if task == 'classification':
@@ -21,9 +25,17 @@ def evaluateCounterfactuals(cfs, dataset, predict_fn, predict_proba_fn, task, to
 
     objective_weights = [False if objective_weights[i] == 1.0 else True for i in range(len(objective_weights))]
     cfs_eval = cfs_eval.sort_values(by=objective_names, ascending=objective_weights)
-    cfs = cfs.reindex(cfs_eval.index)
+    cfs_ord = cfs_ord.reindex(cfs_eval.index)
+
+    x_cfs_ord = pd.concat([cfs_ord.loc[[0]], cfs_ord])
+    x_cfs_eval = pd.concat([cfs_eval.loc[[0]], cfs_eval])
 
     index = pd.Series(['cf_'+str(i) for i in range(len(cfs_eval))])
+    cfs_ord = cfs_ord.set_index(index)
     cfs_eval = cfs_eval.set_index(index)
 
-    return cfs, cfs_eval
+    index = pd.Series(['x'] + ['cf_' + str(i) for i in range(len(x_cfs_ord) - 1)])
+    x_cfs_ord = x_cfs_ord.set_index(index)
+    x_cfs_eval = x_cfs_eval.set_index(index)
+
+    return cfs_ord, cfs_eval, x_cfs_ord, x_cfs_eval

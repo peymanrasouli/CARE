@@ -1,13 +1,12 @@
 import pandas as pd
-import numpy as np
-from mappings import ord2org
+from utils import *
 
-def recoverOriginals(x_ord, cfs_ord, dataset):
+def recoverOriginals(x_ord, cfs_ord, dataset, feature_names):
 
     x_org = ord2org(x_ord, dataset)
-    x_org = pd.DataFrame(data=x_org.reshape(1,-1), columns=dataset['feature_names'])
+    x_org = pd.DataFrame(data=x_org.reshape(1,-1), columns=feature_names)
     cfs_org = ord2org(cfs_ord.to_numpy(), dataset)
-    cfs_org = pd.DataFrame(data=cfs_org, columns=dataset['feature_names'])
+    cfs_org = pd.DataFrame(data=cfs_org, columns=feature_names)
     x_cfs_org= pd.concat([x_org, cfs_org])
 
     index = pd.Series(['x'] + ['cf_' + str(i) for i in range(len(x_cfs_org) - 1)])

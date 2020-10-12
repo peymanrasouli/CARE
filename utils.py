@@ -84,26 +84,26 @@ def ord2org(X_ord, dataset):
         X_org = np.c_[X_continuous,X_discrete]
         return X_org
 
-def ord2theta(X_ord, ea_scaler):
+def ord2theta(X_ord, featureScaler):
     if X_ord.shape.__len__() == 1:
-        X_theta = ea_scaler.transform(X_ord.reshape(1,-1)).ravel()
+        X_theta = featureScaler.transform(X_ord.reshape(1,-1)).ravel()
         return X_theta
     else:
-        X_theta = ea_scaler.transform(X_ord)
+        X_theta = featureScaler.transform(X_ord)
         return X_theta
 
-def theta2ord(X_theta, ea_scaler, dataset):
+def theta2ord(X_theta, featureScaler, dataset):
     discrete_indices = dataset['discrete_indices']
     if X_theta.shape.__len__() == 1:
-        X_ord = ea_scaler.inverse_transform(X_theta.reshape(1,-1)).ravel()
+        X_ord = featureScaler.inverse_transform(X_theta.reshape(1,-1)).ravel()
         X_ord[discrete_indices] = np.rint(X_ord[discrete_indices])
         return X_ord
     else:
-        X_ord = ea_scaler.inverse_transform(X_theta)
+        X_ord = featureScaler.inverse_transform(X_theta)
         X_ord[:, discrete_indices] = np.rint(X_ord[:, discrete_indices])
         return X_ord
 
-def theta2org(X_theta, ea_scaler, dataset):
-    X_ord = theta2ord(X_theta, ea_scaler, dataset)
+def theta2org(X_theta, featureScaler, dataset):
+    X_ord = theta2ord(X_theta, featureScaler, dataset)
     X_org = ord2org(X_ord, dataset)
     return X_org

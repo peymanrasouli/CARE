@@ -1,6 +1,6 @@
-from mappings import ord2org
+from utils import *
 
-def UserPreferences(dataset, x_ord):
+def userPreferences(dataset, x_ord):
 
     x_org = ord2org(x_ord, dataset)
 
