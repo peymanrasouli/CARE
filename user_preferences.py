@@ -52,8 +52,8 @@ def userPreferences(dataset, x_ord):
 
         print('\n')
         print('----- user-specified actions -----')
-        actions = {'age':([30,35],2),
-                   'capital-gain':([3000,8000],1),
+        actions = {'age':('increase',2),
+                   'capital-gain':([5000,1000],1),
                    'sex':('fix',3),
                    'race':('fix',4)}
 
