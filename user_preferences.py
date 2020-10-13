@@ -5,12 +5,12 @@ def userPreferences(dataset, x_ord):
     x_org = ord2org(x_ord, dataset)
 
     print('\n')
-    print('===== possible values =====')
+    print('----- possible values -----')
     for f_val in dataset['feature_values']:
         print(f_val)
 
     print('\n')
-    print('===== instance values =====')
+    print('----- instance values -----')
     for i, f in enumerate(dataset['feature_names']):
         print(f+':', x_org[i])
 
@@ -51,7 +51,7 @@ def userPreferences(dataset, x_ord):
         #                     ' Thailand', ' Cuba', ' China'}}
 
         print('\n')
-        print('===== user-specified actions =====')
+        print('----- user-specified actions -----')
         actions = {}
 
         action_operation = [None] * len(x_ord)
@@ -92,7 +92,38 @@ def userPreferences(dataset, x_ord):
         # {'PAY_6': {0, 2, 3, 4, 5, 6, 7, 8, -1, -2}}
 
         print('\n')
-        print('===== user-specified actions =====')
+        print('----- user-specified actions -----')
+        actions = {}
+
+        action_operation = [None] * len(x_ord)
+        action_priority = [None] * len(x_ord)
+        for p in actions:
+            index = dataset['feature_names'].index(p)
+            action_operation[index] = actions[p][0]
+            action_priority[index] = actions[p][1]
+            print(p + ':', actions[p][0], 'with priority', '-' + str(actions[p][1]) + '-')
+
+    ## Heart disease data set
+    elif dataset['name'] == 'heart-disease':
+        ## Feature names and their possible values
+        ## Features with range [] values are continuous (e.g., age) and features with set {} values (e.g., sex) are discrete
+
+        # {'age': [29, 77]},
+        # {'trestbps': [94, 200]},
+        # {'chol': [126, 564]},
+        # {'thalach': [71, 202]},
+        # {'oldpeak': [0.0, 6.2]},
+        # {'sex': {0, 1}},
+        # {'cp': {1, 2, 3, 4}},
+        # {'fbs': {0, 1}},
+        # {'restecg': {0, 1, 2}},
+        # {'exang': {0, 1}},
+        # {'slope': {1, 2, 3}},
+        # {'ca': {0.0, 1.0, 2.0, 3.0}},
+        # {'thal': {3.0, 6.0, 7.0}}
+
+        print('\n')
+        print('---- user-specified actions -----')
         actions = {}
 
         action_operation = [None] * len(x_ord)
@@ -123,7 +154,7 @@ def userPreferences(dataset, x_ord):
         # {'CHAS': {0, 1}}
 
         print('\n')
-        print('===== user-specified actions =====')
+        print('----- user-specified actions -----')
         actions = {}
 
         action_operation = [None] * len(x_ord)

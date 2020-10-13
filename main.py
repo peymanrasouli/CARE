@@ -22,6 +22,7 @@ def main():
     datsets_list = {
         'adult': ('adult.csv', PrepareAdult, 'classification'),
         # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        # 'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
         # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
     }
 
@@ -70,7 +71,7 @@ def main():
                 # explain instance x_ord using MOCF
                 output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
                                         soundCF=False, feasibleAR=False, user_preferences=user_preferences,
-                                        probability_thresh=0.5, cf_class='opposite', cf_quantile='neighbor')
+                                        probability_thresh=0.5, cf_class='opposite')
 
                 # print n best counter-factuals and their corresponding objective values
                 n = 5
@@ -94,7 +95,7 @@ def main():
                 # explain instance x_ord using MOCF
                 output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
                                         soundCF=False, feasibleAR=False, user_preferences=user_preferences,
-                                        probability_thresh=0.5, cf_class='opposite', cf_quantile='neighbor')
+                                        cf_quantile='neighbor')
 
                 # print n best counter-factuals and their corresponding objective values
                 n = 5
