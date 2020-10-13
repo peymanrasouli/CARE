@@ -64,7 +64,7 @@ def main():
             # explain instance x_ord using MOCF
             MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
                                         soundCF=False, feasibleAR=False, user_preferences=user_preferences,
-                                        probability_thresh=0.5, cf_class='opposite', cf_quantile='neighbor')
+                                        cf_class='opposite', probability_thresh=0.5)
 
             # explain instance x_ord using CFPrototype
             CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, task,
@@ -73,7 +73,7 @@ def main():
             # explain instance x_ord using DiCE
             DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset,
                                         task, MOCF_output, desired_class="opposite", probability_thresh=0.5,
-                                        user_preferences=user_preferences, n_cf=10)
+                                        feasibleAR=False, user_preferences=user_preferences, n_cf=10)
 
             # print n best counter-factuals and their corresponding objective values
             n = 5

@@ -16,7 +16,7 @@ def userPreferences(dataset, x_ord):
 
     ## discrete operations = {'fix', {a set of possible changes}}
     ## continuous operations = {'fix', 'increase', 'decrease', [a range of possible changes]}
-    ## actions = {feature_name_1: (operation, priority), feature_name_2: (operation, priority), ...}
+    ## actions = {feature_name_1: (operation, importance), feature_name_2: (operation, importance), ...}
 
     ## Adult data set
     if dataset['name'] == 'adult':
@@ -52,15 +52,18 @@ def userPreferences(dataset, x_ord):
 
         print('\n')
         print('----- user-specified actions -----')
-        actions = {}
+        actions = {'age':([30,35],2),
+                   'capital-gain':([3000,8000],1),
+                   'sex':('fix',3),
+                   'race':('fix',4)}
 
         action_operation = [None] * len(x_ord)
-        action_priority = [None] * len(x_ord)
+        action_importance = [None] * len(x_ord)
         for p in actions:
             index = dataset['feature_names'].index(p)
             action_operation[index] = actions[p][0]
-            action_priority[index] = actions[p][1]
-            print(p + ':', actions[p][0], 'with priority', '-' + str(actions[p][1]) + '-')
+            action_importance[index] = actions[p][1]
+            print(p + ':', actions[p][0], 'with importance', '(' + str(actions[p][1]) + ')')
 
     ## Credit card default data set
     elif dataset['name'] == 'credit-card-default':
@@ -96,12 +99,12 @@ def userPreferences(dataset, x_ord):
         actions = {}
 
         action_operation = [None] * len(x_ord)
-        action_priority = [None] * len(x_ord)
+        action_importance = [None] * len(x_ord)
         for p in actions:
             index = dataset['feature_names'].index(p)
             action_operation[index] = actions[p][0]
-            action_priority[index] = actions[p][1]
-            print(p + ':', actions[p][0], 'with priority', '-' + str(actions[p][1]) + '-')
+            action_importance[index] = actions[p][1]
+            print(p + ':', actions[p][0], 'with importance', '(' + str(actions[p][1]) + ')')
 
     ## Heart disease data set
     elif dataset['name'] == 'heart-disease':
@@ -127,12 +130,12 @@ def userPreferences(dataset, x_ord):
         actions = {}
 
         action_operation = [None] * len(x_ord)
-        action_priority = [None] * len(x_ord)
+        action_importance = [None] * len(x_ord)
         for p in actions:
             index = dataset['feature_names'].index(p)
             action_operation[index] = actions[p][0]
-            action_priority[index] = actions[p][1]
-            print(p + ':', actions[p][0], 'with priority', '-' + str(actions[p][1]) + '-')
+            action_importance[index] = actions[p][1]
+            print(p + ':', actions[p][0], 'with importance', '(' + str(actions[p][1]) + ')')
 
     ## Boston house price data set
     elif dataset['name'] == 'boston-house-prices':
@@ -158,15 +161,15 @@ def userPreferences(dataset, x_ord):
         actions = {}
 
         action_operation = [None] * len(x_ord)
-        action_priority = [None] * len(x_ord)
+        action_importance = [None] * len(x_ord)
         for p in actions:
             index = dataset['feature_names'].index(p)
             action_operation[index] = actions[p][0]
-            action_priority[index] = actions[p][1]
-            print(p + ':', actions[p][0], 'with priority', '-' + str(actions[p][1]) + '-')
+            action_importance[index] = actions[p][1]
+            print(p + ':', actions[p][0], 'with importance', '(' + str(actions[p][1]) + ')')
 
     print('\n')
     preferences = {'action_operation': action_operation,
-                   'action_priority': action_priority}
+                   'action_importance': action_importance}
 
     return preferences
