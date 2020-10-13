@@ -7,10 +7,10 @@ from prepare_datasets import *
 from sklearn.model_selection import train_test_split
 from create_model import CreateModel, KerasNeuralNetwork
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.neural_network import MLPRegressor
-from sklearn.tree import DecisionTreeRegressor
 from user_preferences import userPreferences
 from mocf_explainer import MOCFExplainer
+from cf_prototype_explainer import CFPrototypeExplainer
+from dice_explainer import DiCEExplainer
 
 def main():
     # defining path of data sets and experiment results
@@ -22,15 +22,12 @@ def main():
     datsets_list = {
         'adult': ('adult.csv', PrepareAdult, 'classification'),
         # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
-        # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
     }
 
     # defining the list of black-boxes
     blackbox_list = {
         'dnn': KerasNeuralNetwork,
         # 'gt': GradientBoostingClassifier,
-        # 'mlp-r': MLPRegressor
-        # 'dt-r': DecisionTreeRegressor,
     }
 
     for dataset_kw in datsets_list:
@@ -48,7 +45,7 @@ def main():
         for blackbox_name, blackbox_constructor in blackbox_list.items():
             print('blackbox=', blackbox_name)
 
-            # Creating black-box model
+            # creating black-box model
             blackbox = CreateModel(dataset, X_train, X_test, Y_train, Y_test, task, blackbox_name, blackbox_constructor)
             if blackbox_name is 'dnn':
                 predict_fn = lambda x: blackbox.predict_classes(x).ravel()
@@ -57,53 +54,48 @@ def main():
                 predict_fn = lambda x: blackbox.predict(x).ravel()
                 predict_proba_fn = lambda x: blackbox.predict_proba(x)
 
-            # classification task
-            if task is 'classification':
+            # instance to explain
+            ind = 0
+            x_ord = X_test[ind]
 
-                # instance to explain
-                ind = 0
-                x_ord = X_test[ind]
+            # set user preferences
+            user_preferences = userPreferences(dataset, x_ord)
 
-                # set user preferences
-                user_preferences = userPreferences(dataset, x_ord)
-
-                # explain instance x_ord using MOCF
-                output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
+            # explain instance x_ord using MOCF
+            MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
                                         soundCF=False, feasibleAR=False, user_preferences=user_preferences,
                                         probability_thresh=0.5, cf_class='opposite', cf_quantile='neighbor')
 
-                # print n best counter-factuals and their corresponding objective values
-                n = 5
-                print('\n')
-                print(output['x_cfs_highlight'].head(n= n + 1))
-                print(output['x_cfs_eval'].head(n= n + 1))
+            # explain instance x_ord using CFPrototype
+            CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, task,
+                                                      MOCF_output, target_class=None)
 
-                print('\n')
-                print('Done!')
+            # explain instance x_ord using DiCE
+            DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset,
+                                        task, MOCF_output, desired_class="opposite", probability_thresh=0.5,
+                                        user_preferences=user_preferences, n_cf=10)
 
-            # regression task
-            elif task is 'regression':
+            # print n best counter-factuals and their corresponding objective values
+            n = 5
 
-                # instance to explain
-                ind = 0
-                x_ord = X_test[ind]
+            print('\n')
+            print('MOCF counter-factuals')
+            print(MOCF_output['x_cfs_highlight'].head(n= n + 1))
+            print(MOCF_output['x_cfs_eval'].head(n= n + 1))
 
-                # set user preferences
-                user_preferences = userPreferences(dataset, x_ord)
+            print('\n')
+            print('CFPrototype counter-factuals')
+            print(CFPrototype_output['x_cfs_highlight'].head(n=n + 1))
+            print(CFPrototype_output['x_cfs_eval'].head(n=n + 1))
 
-                # explain instance x_ord using MOCF
-                output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                        soundCF=False, feasibleAR=False, user_preferences=user_preferences,
-                                        probability_thresh=0.5, cf_class='opposite', cf_quantile='neighbor')
+            print('\n')
+            print('DiCE counter-factuals')
+            print(DiCE_output['x_cfs_highlight'].head(n=n + 1))
+            print(DiCE_output['x_cfs_eval'].head(n=n + 1))
 
-                # print n best counter-factuals and their corresponding objective values
-                n = 5
-                print('\n')
-                print(output['x_cfs_highlight'].head(n= n + 1))
-                print(output['x_cfs_eval'].head(n= n + 1))
+            print('\n')
+            print('Done!')
 
-                print('\n')
-                print('Done!')
 
 if __name__ == '__main__':
     main()
