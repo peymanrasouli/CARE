@@ -31,8 +31,8 @@ class MOCF():
                  corr_model_train_perc=0.7,
                  corr_model_acc_thresh=0.7,
                  n_generation=20,
-                 hof_size=50,
-                 hof_final=True,
+                 hof_size=100,
+                 hof_final=False,
                  x_init=0.3,
                  neighbor_init=0.6,
                  random_init=1,
@@ -104,9 +104,9 @@ class MOCF():
 
         elif self.feasibleAR == False and self.soundCF == True:
             # objective names
-            self.objective_names = ['prediction', 'distance', 'sparsity', 'proximity', 'connectedness']
+            self.objective_names = ['prediction', 'proximity', 'connectedness', 'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
-            self.objective_weights = (-1.0, -1.0, -1.0, 1.0, 1.0)
+            self.objective_weights = (-1.0, 1.0, 1.0, -1.0, -1.0)
             # number of objectives
             self.n_objectives = 5
 
@@ -123,26 +123,26 @@ class MOCF():
 
                 # objective 1: prediction distance
                 prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
-                                                probability_thresh, cf_class, cf_range)
-                # objective 2: feature distance
-                distance_cost = featureDistance(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
-
-                # objective 3: Sparsity
-                sparsity_cost = sparsity(x_org, cf_org)
-
-                # objective 4: proximity
+                                                     probability_thresh, cf_class, cf_range)
+                # objective 2: proximity
                 proximity_fitness = proximity(cf_theta, proximity_model)
 
-                ## objective 5: connectedness
+                ## objective 3: connectedness
                 connectedness_fitness = connectedness(cf_theta, connectedness_model)
 
-                return prediction_cost, distance_cost, sparsity_cost, proximity_fitness, connectedness_fitness
+                # objective 4: feature distance
+                distance_cost = featureDistance(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
+
+                # objective 5: Sparsity
+                sparsity_cost = sparsity(x_org, cf_org)
+
+                return prediction_cost, proximity_fitness, connectedness_fitness, distance_cost, sparsity_cost
 
             return objectiveFunction
 
         elif self.feasibleAR == True and self.soundCF == False:
             # objective names
-            self.objective_names = ['prediction', 'distance', 'sparsity', 'actionable', 'correlation']
+            self.objective_names = ['prediction', 'actionable', 'correlation', 'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
             self.objective_weights = (-1.0, -1.0, -1.0, -1.0, -1.0)
             # number of objectives
@@ -161,30 +161,31 @@ class MOCF():
 
                 # objective 1: prediction distance
                 prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
-                                                probability_thresh, cf_class, cf_range)
-                # objective 2: feature distance
-                distance_cost = featureDistance(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
+                                                     probability_thresh, cf_class, cf_range)
 
-                # objective 3: Sparsity
-                sparsity_cost = sparsity(x_org, cf_org)
-
-                ## objective 4: actionable recourse
+                ## objective 2: actionable recourse
                 actionable_cost = actionableRecourse(x_org, cf_org, user_preferences)
 
-                ## objective 5: correlation
+                ## objective 3: correlation
                 correlation_cost = correlation(x_ord, cf_ord, cf_theta, feature_width,
-                                          continuous_indices, discrete_indices, correlationModel)
+                                               continuous_indices, discrete_indices, correlationModel)
 
-                return prediction_cost, distance_cost, sparsity_cost, actionable_cost, correlation_cost
+                # objective 4: feature distance
+                distance_cost = featureDistance(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
+
+                # objective 5: Sparsity
+                sparsity_cost = sparsity(x_org, cf_org)
+
+                return prediction_cost, actionable_cost, correlation_cost, distance_cost, sparsity_cost
 
             return objectiveFunction
 
         elif self.feasibleAR == True and self.soundCF == True:
             # objective names
-            self.objective_names = ['prediction', 'distance', 'sparsity', 'proximity', 'connectedness',
-                                    'actionable', 'correlation']
+            self.objective_names = ['prediction', 'proximity', 'connectedness', 'actionable', 'correlation',
+                                    'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
-            self.objective_weights = (-1.0, -1.0, -1.0, 1.0, 1.0, -1.0, -1.0)
+            self.objective_weights = (-1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0)
             # number of objectives
             self.n_objectives = 7
 
@@ -202,26 +203,27 @@ class MOCF():
                 # objective 1: prediction distance
                 prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
                                                 probability_thresh, cf_class, cf_range)
-                # objective 2: feature distance
-                distance_cost = featureDistance(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
-
-                # objective 3: Sparsity
-                sparsity_cost = sparsity(x_org, cf_org)
-
-                # objective 4: proximity
+                # objective 2: proximity
                 proximity_fitness = proximity(cf_theta, proximity_model)
 
-                ## objective 5: connectedness
+                ## objective 3: connectedness
                 connectedness_fitness = connectedness(cf_theta, connectedness_model)
 
-                ## objective 6: actionable recourse
+                ## objective 4: actionable recourse
                 actionable_cost = actionableRecourse(x_org, cf_org, user_preferences)
 
-                ## objective 7: correlation
+                ## objective 5: correlation
                 correlation_cost = correlation(x_ord, cf_ord, cf_theta, feature_width,
-                                          continuous_indices, discrete_indices, correlationModel)
+                                               continuous_indices, discrete_indices, correlationModel)
 
-                return prediction_cost, distance_cost, sparsity_cost, proximity_fitness, connectedness_fitness, actionable_cost, correlation_cost
+                # objective 6: feature distance
+                distance_cost = featureDistance(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
+
+                # objective 7: Sparsity
+                sparsity_cost = sparsity(x_org, cf_org)
+
+                return prediction_cost, proximity_fitness, connectedness_fitness, actionable_cost, correlation_cost, \
+                       distance_cost, sparsity_cost
 
             return objectiveFunction
 
@@ -553,4 +555,3 @@ class MOCF():
                         }
 
         return explanations
-
