@@ -70,8 +70,8 @@ def main():
 
                 # explain instance x_ord using MOCF
                 output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                        soundCF=False, feasibleAR=False, user_preferences=user_preferences,
-                                        cf_class='opposite', probability_thresh=0.5)
+                                       soundCF=False, feasibleAR=False, hof_final=False,
+                                       user_preferences=user_preferences, cf_class='opposite', probability_thresh=0.5)
 
                 # print n best counter-factuals and their corresponding objective values
                 n = 5
@@ -94,8 +94,8 @@ def main():
 
                 # explain instance x_ord using MOCF
                 output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                        soundCF=False, feasibleAR=False, user_preferences=user_preferences,
-                                        cf_quantile='neighbor')
+                                       soundCF=False, feasibleAR=False, hof_final=False,
+                                       user_preferences=user_preferences, cf_quantile='neighbor')
 
                 # print n best counter-factuals and their corresponding objective values
                 n = 5

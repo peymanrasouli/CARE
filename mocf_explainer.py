@@ -3,12 +3,12 @@ from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 
 def MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                  soundCF=False, feasibleAR=False, user_preferences=None,
+                  soundCF=False, feasibleAR=False, hof_final=False, user_preferences=None,
                   cf_class='opposite', probability_thresh=0.5, cf_quantile='neighbor'):
 
     # creating an instance of MOCF explainer
     explainer = MOCF(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                     soundCF=soundCF, feasibleAR=feasibleAR)
+                     soundCF=soundCF, feasibleAR=feasibleAR, hof_final=hof_final)
 
     # fitting the explainer on the training data
     explainer.fit(X_train, Y_train)

@@ -7,7 +7,7 @@ from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 
 def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset, task, MOCF_output,
-                  desired_class="opposite", probability_thresh=0.5, feasibleAR=False, user_preferences=None, n_cf=5):
+                  feasibleAR=False, user_preferences=None, n_cf=5, desired_class="opposite", probability_thresh=0.5):
 
     # preparing ataset for DiCE model
     feature_names = dataset['feature_names']
