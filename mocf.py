@@ -31,12 +31,13 @@ class MOCF():
                  corr_model_train_perc=0.7,
                  corr_model_acc_thresh=0.7,
                  n_generation=20,
-                 snapshot_step=3,
+                 hof_size=50,
+                 hof_final=True,
                  x_init=0.3,
-                 neighbor_init=0.8,
+                 neighbor_init=0.6,
                  random_init=1,
                  crossover_perc=0.6,
-                 mutation_perc=0.2,
+                 mutation_perc=0.3,
                  division_factor=6,
                  ):
 
@@ -57,7 +58,8 @@ class MOCF():
         self.corr_model_train_perc = corr_model_train_perc
         self.corr_model_acc_thresh = corr_model_acc_thresh
         self.n_generation = n_generation
-        self.snapshot_step = snapshot_step
+        self.hof_size = hof_size
+        self.hof_final = hof_final
         self.init_probability = [x_init, neighbor_init, random_init] / np.sum([x_init, neighbor_init, random_init])
         self.crossover_perc = crossover_perc
         self.mutation_perc = mutation_perc
@@ -421,6 +423,8 @@ class MOCF():
         stats.register("min", np.min, axis=0)
         stats.register("max", np.max, axis=0)
 
+        hof = tools.HallOfFame(self.hof_size)
+        hof_gen = []
         logbook = tools.Logbook()
         logbook.header = "gen", "evals", "min", "avg", "max"
 
@@ -438,7 +442,6 @@ class MOCF():
         print(logbook.stream)
 
         # Begin the generational process
-        snapshot = []
         for gen in range(1, self.n_generation):
             offspring = algorithms.varAnd(pop, self.toolbox, self.crossover_perc, self.mutation_perc)
 
@@ -452,17 +455,15 @@ class MOCF():
             pop = self.toolbox.select(pop + offspring, self.n_population)
 
             # Compile statistics about the new population
+            hof.update(pop)
+            hof_gen.append(hof.items)
             record = stats.compile(pop)
             logbook.record(pop=pop, gen=gen, evals=len(invalid_ind), **record)
             print(logbook.stream)
 
-            if not ((gen + 1) % self.snapshot_step):
-                snapshot.append(tools.emo.sortLogNondominated(pop, self.n_population)[0])
-
-        snapshot.append(tools.emo.sortLogNondominated(pop, self.n_population)[0])
         fronts = tools.emo.sortLogNondominated(pop, self.n_population)
 
-        return fronts, pop, snapshot, record, logbook
+        return fronts, pop, hof, hof_gen, record, logbook
 
     # explain instance using multi-objective counter-factuals
     def explain(self,
@@ -531,10 +532,14 @@ class MOCF():
         n_reference_points = factorial(self.n_objectives + self.division_factor - 1) / \
                              (factorial(self.division_factor) * factorial(self.n_objectives - 1))
         self.n_population = int(n_reference_points + (4 - n_reference_points % 4))
-        fronts, pop, snapshot, record, logbook = self.runEA()
+        fronts, pop, hof, hof_gen, record, logbook = self.runEA()
 
         ## constructing counter-factuals
-        cfs_theta = np.concatenate(np.asarray([s for s in snapshot]))
+        if self.hof_final:
+            cfs_theta = np.asarray([i for i in hof.items])
+        else:
+            cfs_theta = np.concatenate(np.asarray([i for i in hof_gen]))
+
         cf_org = theta2org(cfs_theta, self.featureScaler, self.dataset)
         cf_ord = org2ord(cf_org, self.dataset)
         cfs_ord = pd.DataFrame(data=cf_ord, columns=self.feature_names)

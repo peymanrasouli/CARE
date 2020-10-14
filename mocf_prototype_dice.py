@@ -55,7 +55,7 @@ def main():
                 predict_proba_fn = lambda x: blackbox.predict_proba(x)
 
             # instance to explain
-            ind = 0
+            ind = 1
             x_ord = X_test[ind]
 
             # set user preferences
@@ -63,7 +63,7 @@ def main():
 
             # explain instance x_ord using MOCF
             MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                        soundCF=False, feasibleAR=False, user_preferences=user_preferences,
+                                        soundCF=True, feasibleAR=True, user_preferences=user_preferences,
                                         cf_class='opposite', probability_thresh=0.5)
 
             # explain instance x_ord using CFPrototype
@@ -76,7 +76,7 @@ def main():
                                         feasibleAR=False, user_preferences=user_preferences, n_cf=10)
 
             # print n best counter-factuals and their corresponding objective values
-            n = 5
+            n = 10
 
             print('\n')
             print('MOCF counter-factuals')
