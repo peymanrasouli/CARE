@@ -127,7 +127,7 @@ class MOCF():
                 # objective 2: proximity
                 proximity_fitness = proximity(cf_theta, proximity_model)
 
-                ## objective 3: connectedness
+                # objective 3: connectedness
                 connectedness_fitness = connectedness(cf_theta, connectedness_model)
 
                 # objective 4: feature distance
@@ -163,10 +163,10 @@ class MOCF():
                 prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
                                                      probability_thresh, cf_class, cf_range)
 
-                ## objective 2: actionable recourse
+                # objective 2: actionable recourse
                 actionable_cost = actionableRecourse(x_org, cf_org, user_preferences)
 
-                ## objective 3: correlation
+                # objective 3: correlation
                 correlation_cost = correlation(x_ord, cf_ord, cf_theta, feature_width,
                                                continuous_indices, discrete_indices, correlationModel)
 
@@ -206,10 +206,10 @@ class MOCF():
                 # objective 2: proximity
                 proximity_fitness = proximity(cf_theta, proximity_model)
 
-                ## objective 3: connectedness
+                # objective 3: connectedness
                 connectedness_fitness = connectedness(cf_theta, connectedness_model)
 
-                ## objective 4: actionable recourse
+                # objective 4: actionable recourse
                 actionable_cost = actionableRecourse(x_org, cf_org, user_preferences)
 
                 ## objective 5: correlation

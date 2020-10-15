@@ -74,7 +74,7 @@ def main():
                                        user_preferences=user_preferences, cf_class='opposite', probability_thresh=0.5)
 
                 # print n best counter-factuals and their corresponding objective values
-                n = 5
+                n = 10
                 print('\n')
                 print(output['x_cfs_highlight'].head(n= n + 1))
                 print(output['x_cfs_eval'].head(n= n + 1))
@@ -98,7 +98,7 @@ def main():
                                        user_preferences=user_preferences, cf_quantile='neighbor')
 
                 # print n best counter-factuals and their corresponding objective values
-                n = 5
+                n = 10
                 print('\n')
                 print(output['x_cfs_highlight'].head(n= n + 1))
                 print(output['x_cfs_eval'].head(n= n + 1))

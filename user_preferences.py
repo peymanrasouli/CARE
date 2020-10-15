@@ -52,9 +52,9 @@ def userPreferences(dataset, x_ord):
 
         print('\n')
         print('----- user-specified actions -----')
-        actions = {'age':('increase',3),
-                   # 'capital-gain':([10000,20000],2),
-                   # 'hours-per-week':('decrease',1),
+        actions = {'age':('fix',3),
+                   'capital-gain':([2000,10000],2),
+                   'hours-per-week':([40,60],1),
                    'sex':('fix',4),
                    'race':('fix',5)}
 
