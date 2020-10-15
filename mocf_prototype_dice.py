@@ -6,10 +6,9 @@ pd.set_option('display.width', 1000)
 from prepare_datasets import *
 from sklearn.model_selection import train_test_split
 from create_model import CreateModel, KerasNeuralNetwork
-from sklearn.ensemble import GradientBoostingClassifier
 from user_preferences import userPreferences
 from mocf_explainer import MOCFExplainer
-from cf_prototype_explainer import CFPrototypeExplainer
+from cfprototype_explainer import CFPrototypeExplainer
 from dice_explainer import DiCEExplainer
 
 def main():
@@ -26,8 +25,7 @@ def main():
 
     # defining the list of black-boxes
     blackbox_list = {
-        'dnn': KerasNeuralNetwork,
-        # 'gt': GradientBoostingClassifier,
+        'dnn': KerasNeuralNetwork
     }
 
     for dataset_kw in datsets_list:
@@ -47,12 +45,8 @@ def main():
 
             # creating black-box model
             blackbox = CreateModel(dataset, X_train, X_test, Y_train, Y_test, task, blackbox_name, blackbox_constructor)
-            if blackbox_name is 'dnn':
-                predict_fn = lambda x: blackbox.predict_classes(x).ravel()
-                predict_proba_fn = lambda x: np.asarray([1-blackbox.predict(x).ravel(), blackbox.predict(x).ravel()]).transpose()
-            else:
-                predict_fn = lambda x: blackbox.predict(x).ravel()
-                predict_proba_fn = lambda x: blackbox.predict_proba(x)
+            predict_fn = lambda x: blackbox.predict_classes(x).ravel()
+            predict_proba_fn = lambda x: np.asarray([1-blackbox.predict(x).ravel(), blackbox.predict(x).ravel()]).transpose()
 
             # instance to explain
             ind = 0

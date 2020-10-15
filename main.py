@@ -49,7 +49,7 @@ def main():
         for blackbox_name, blackbox_constructor in blackbox_list.items():
             print('blackbox=', blackbox_name)
 
-            # Creating black-box model
+            # creating black-box model
             blackbox = CreateModel(dataset, X_train, X_test, Y_train, Y_test, task, blackbox_name, blackbox_constructor)
             if blackbox_name is 'dnn':
                 predict_fn = lambda x: blackbox.predict_classes(x).ravel()

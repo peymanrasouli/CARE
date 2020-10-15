@@ -38,17 +38,17 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
                 permitted_range[feature_names[i]] = op_scaled
 
         # creating data a instance
-        d = dice_ml.Data(dataframe=data_frame,
+        data = dice_ml.Data(dataframe=data_frame,
                          continuous_features=continuous_features,
                          outcome_name='class',
                          permitted_range=permitted_range)
 
         # setting the pre-trained ML model for explainer
         backend = 'TF1'
-        m = dice_ml.Model(model=blackbox, backend=backend)
+        model = dice_ml.Model(model=blackbox, backend=backend)
 
         # creating a DiCE explainer instance
-        exp = dice_ml.Dice(d, m)
+        dice_explainer = dice_ml.Dice(data, model)
 
         ## generating counter-factuals
         x_ord_dice = {}
@@ -58,30 +58,31 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
         for f in discrete_features:
             x_ord_dice[f] = str(int(x_ord_dice[f]))
 
-        # Params:
+        # important params:
         # posthoc_sparsity_param=0.1 ->[0,1]
         # posthoc_sparsity_algorithm ="linear" -> {"linear", "binary"}
         # proximity_weight=0.5,
         # diversity_weight=1.0
         # stopping_threshold=0.5
-        dice_exp = exp.generate_counterfactuals(x_ord_dice, total_CFs=n_cf, desired_class=desired_class,
-                                                stopping_threshold=probability_thresh,
-                                                posthoc_sparsity_algorithm="binary",
-                                                features_to_vary=features_to_vary)
+        explanations = dice_explainer.generate_counterfactuals(x_ord_dice, total_CFs=n_cf,
+                                                               desired_class=desired_class,
+                                                               stopping_threshold=probability_thresh,
+                                                               posthoc_sparsity_algorithm="binary",
+                                                               features_to_vary=features_to_vary)
     else:
         # creating data a instance
-        d = dice_ml.Data(dataframe=data_frame,
+        data = dice_ml.Data(dataframe=data_frame,
                          continuous_features=continuous_features,
                          outcome_name='class')
 
         # setting the pre-trained ML model for explainer
         backend = 'TF1'
-        m = dice_ml.Model(model=blackbox, backend=backend)
+        model = dice_ml.Model(model=blackbox, backend=backend)
 
         # creating a DiCE explainer instance
-        exp = dice_ml.Dice(d, m)
+        dice_explainer = dice_ml.Dice(data, model)
 
-        ## generating counter-factuals
+        # generating counter-factuals
         x_ord_dice = {}
         for key, value in zip(feature_names, list(x_ord)):
             x_ord_dice[key] = value
@@ -89,34 +90,41 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
         for f in discrete_features:
             x_ord_dice[f] = str(int(x_ord_dice[f]))
 
-        # Params:
+        # important params:
         # posthoc_sparsity_param=0.1 ->[0,1]
         # posthoc_sparsity_algorithm ="linear" -> {"linear", "binary"}
         # proximity_weight=0.5,
         # diversity_weight=1.0
         # stopping_threshold=0.5
-        dice_exp = exp.generate_counterfactuals(x_ord_dice, total_CFs=n_cf, desired_class=desired_class,
-                                                stopping_threshold=probability_thresh,
-                                                posthoc_sparsity_algorithm="binary")
+        explanations = dice_explainer.generate_counterfactuals(x_ord_dice, total_CFs=n_cf,
+                                                               desired_class=desired_class,
+                                                               stopping_threshold=probability_thresh,
+                                                               posthoc_sparsity_algorithm="binary")
 
-    ## extracting solutions
-    cfs_ord = dice_exp.final_cfs_df.iloc[:,:-1]
+    # extracting solutions
+    cfs_ord = explanations.final_cfs_df.iloc[:,:-1]
     cfs_ord[discrete_features] = cfs_ord[discrete_features].astype(int)
 
-    ## evaluating counter-factuals
+    # evaluating counter-factuals
     toolbox = MOCF_output['toolbox']
     objective_names = MOCF_output['objective_names']
     objective_weights = MOCF_output['objective_weights']
     featureScaler = MOCF_output['featureScaler']
     feature_names = dataset['feature_names']
 
-    cfs_ord, cfs_eval, x_cfs_ord, x_cfs_eval = evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn,
-                                                                       predict_proba_fn, task, toolbox,
-                                                                       objective_names, objective_weights,
-                                                                       featureScaler, feature_names)
+    cfs_ord, \
+    cfs_eval, \
+    x_cfs_ord, \
+    x_cfs_eval = evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn,
+                                        predict_proba_fn, task, toolbox,
+                                        objective_names, objective_weights,
+                                        featureScaler, feature_names)
 
     # recovering counter-factuals in original format
-    x_org, cfs_org, x_cfs_org, x_cfs_highlight = recoverOriginals(x_ord, cfs_ord, dataset, feature_names)
+    x_org, \
+    cfs_org, \
+    x_cfs_org, \
+    x_cfs_highlight = recoverOriginals(x_ord, cfs_ord, dataset, feature_names)
 
     # returning the results
     output = {'cfs_ord': cfs_ord,

@@ -26,13 +26,19 @@ def MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_pr
     feature_names = dataset['feature_names']
 
     # evaluating counter-factuals
-    cfs_ord, cfs_eval, x_cfs_ord, x_cfs_eval = evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn,
-                                                                       predict_proba_fn, task, toolbox,
-                                                                       objective_names, objective_weights,
-                                                                       featureScaler, feature_names)
+    cfs_ord, \
+    cfs_eval, \
+    x_cfs_ord, \
+    x_cfs_eval = evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn,
+                                        predict_proba_fn, task, toolbox,
+                                        objective_names, objective_weights,
+                                        featureScaler, feature_names)
 
     # recovering counter-factuals in original format
-    x_org, cfs_org, x_cfs_org, x_cfs_highlight = recoverOriginals(x_ord, cfs_ord, dataset, feature_names)
+    x_org, \
+    cfs_org, \
+    x_cfs_org, \
+    x_cfs_highlight = recoverOriginals(x_ord, cfs_ord, dataset, feature_names)
 
     # returning the results
     output = {'cfs_ord': cfs_ord,

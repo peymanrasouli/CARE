@@ -23,15 +23,15 @@ def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, 
                      (np.ones(rng_shape) * rng[1]).astype(np.float32))
 
     # creating prototype counter-factual explainer
-    prototype_cf_explainer = CounterFactualProto(predict=predict_proba_fn, shape=shape, feature_range=feature_range,
+    cfprototype_explainer = CounterFactualProto(predict=predict_proba_fn, shape=shape, feature_range=feature_range,
                                                  cat_vars=cat_vars_ohe, ohe=True)
 
     # Fitting the explainer on the training data
     X_train_ohe = ord2ohe(X_train, dataset)
-    prototype_cf_explainer.fit(X_train_ohe, d_type='abdm', disc_perc=[25, 50, 75])
+    cfprototype_explainer.fit(X_train_ohe, d_type='abdm', disc_perc=[25, 50, 75])
 
     # generating counter-factuals
-    explanations = prototype_cf_explainer.explain(x_ohe,target_class=target_class)
+    explanations = cfprototype_explainer.explain(x_ohe,target_class=target_class)
 
     # extracting solutions
     cfs = []
@@ -45,20 +45,26 @@ def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, 
     cfs_ord = ohe2ord(cfs_ohe, dataset)
     cfs_ord = pd.DataFrame(data=cfs_ord, columns=feature_names)
 
-    ## evaluating counter-factuals
+    # evaluating counter-factuals
     toolbox = MOCF_output['toolbox']
     objective_names = MOCF_output['objective_names']
     objective_weights = MOCF_output['objective_weights']
     featureScaler = MOCF_output['featureScaler']
     feature_names = dataset['feature_names']
 
-    cfs_ord, cfs_eval, x_cfs_ord, x_cfs_eval = evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn,
-                                                                       predict_proba_fn, task, toolbox,
-                                                                       objective_names, objective_weights,
-                                                                       featureScaler, feature_names)
+    cfs_ord,\
+    cfs_eval, \
+    x_cfs_ord, \
+    x_cfs_eval = evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn,
+                                        predict_proba_fn, task, toolbox,
+                                        objective_names, objective_weights,
+                                        featureScaler, feature_names)
 
     # recovering counter-factuals in original format
-    x_org, cfs_org, x_cfs_org, x_cfs_highlight = recoverOriginals(x_ord, cfs_ord, dataset, feature_names)
+    x_org, \
+    cfs_org, \
+    x_cfs_org, \
+    x_cfs_highlight = recoverOriginals(x_ord, cfs_ord, dataset, feature_names)
 
     # returning the results
     output = {'cfs_ord': cfs_ord,
