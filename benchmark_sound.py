@@ -51,7 +51,7 @@ def main():
 
             ################################### Explaining test samples #########################################
             # setting the size of the experiment
-            N = 10  # number of instances to explain
+            N = 3  # number of instances to explain
             n_diversity = 5  # number of counter-factuals for measuring diversity
 
             # creating/opening a csv file for storing results
@@ -76,19 +76,19 @@ def main():
                 os.remove(experiment_path + 'benchmark_sound_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity))
             eval_results_csv = open(experiment_path + 'benchmark_sound_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity), 'a')
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                      ('MOCF', '', '', '', '', '',
-                       'CFPrototype', '', '', '', '', '',
-                       'DiCE', '', '', '', '', '')
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+                      ('MOCF', '', '', '', '', '', '',
+                       'CFPrototype', '', '', '', '', '', '',
+                       'DiCE', '', '', '', '', '', '')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                      ('prediction', 'proximity', 'connectedness', 'distance', 'sparsity', 'diversity',
-                       'prediction', 'proximity', 'connectedness', 'distance', 'sparsity', 'diversity',
-                       'prediction', 'proximity', 'connectedness', 'distance', 'sparsity', 'diversity')
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+                      ('prediction', 'proximity', 'connectedness', 'distance', 'sparsity', 'diversity', 'validity',
+                       'prediction', 'proximity', 'connectedness', 'distance', 'sparsity', 'diversity', 'validity',
+                       'prediction', 'proximity', 'connectedness', 'distance', 'sparsity', 'diversity', 'validity')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                       ('=average(A5:A1000)', '=average(B5:B1000)',
                        '=average(C5:C1000)', '=average(D5:D1000)',
                        '=average(E5:E1000)', '=average(F5:F1000)',
@@ -97,10 +97,12 @@ def main():
                        '=average(K5:K1000)', '=average(L5:L1000)',
                        '=average(M5:M1000)', '=average(N5:N1000)',
                        '=average(O5:O1000)', '=average(P5:P1000)',
-                       '=average(Q5:Q1000)', '=average(R5:R1000)')
+                       '=average(Q5:Q1000)', '=average(R5:R1000)',
+                       '=average(S5:S1000)', '=average(T5:T1000)',
+                       '=average(U5:U1000)')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                       ('=stdev(A5:A1000)', '=stdev(B5:B1000)',
                        '=stdev(C5:C1000)', '=stdev(D5:D1000)',
                        '=stdev(E5:E1000)', '=stdev(F5:F1000)',
@@ -109,7 +111,9 @@ def main():
                        '=stdev(K5:K1000)', '=stdev(L5:L1000)',
                        '=stdev(M5:M1000)', '=stdev(N5:N1000)',
                        '=stdev(O5:O1000)', '=stdev(P5:P1000)',
-                       '=stdev(Q5:Q1000)', '=stdev(R5:R1000)')
+                       '=stdev(Q5:Q1000)', '=stdev(R5:R1000)',
+                       '=stdev(S5:S1000)', '=stdev(T5:T1000)',
+                       '=stdev(U5:U1000)')
             eval_results_csv.write(header)
             eval_results_csv.flush()
 
@@ -196,9 +200,9 @@ def main():
                                   len(set(dice_feature_names[i]) | set(dice_feature_names[ii]))
                         dice_jaccard.append(jaccard)
 
-                eval_results = np.r_[mocf_cfs_eval.iloc[0,:-2] ,1.0 - np.mean(mocf_jaccard),
-                                    cfprototype_cfs_eval.iloc[0,:-2], 1.0 - np.mean(cfprototype_jaccard),
-                                    dice_cfs_eval.iloc[0,:-2], 1.0 - np.mean(dice_jaccard)]
+                eval_results = np.r_[mocf_cfs_eval.iloc[0, :-2], 1.0 - np.mean(mocf_jaccard), int(mocf_cfs_eval.iloc[0, 0] == 0),
+                                     cfprototype_cfs_eval.iloc[0, :-2], 1.0 - np.mean(cfprototype_jaccard), int(cfprototype_cfs_eval.iloc[0, 0] == 0),
+                                     dice_cfs_eval.iloc[0, :-2], 1.0 - np.mean(dice_jaccard), int(dice_cfs_eval.iloc[0, 0] == 0)]
 
                 eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
                 eval_results = ','.join(eval_results)

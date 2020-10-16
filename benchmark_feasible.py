@@ -52,7 +52,7 @@ def main():
 
             ################################### Explaining test samples #########################################
             # setting the size of the experiment
-            N = 10  # number of instances to explain
+            N = 3  # number of instances to explain
             n_diversity = 5  # number of counter-factuals for measuring diversity
 
             # creating/opening a csv file for storing results
@@ -75,32 +75,34 @@ def main():
                 os.remove(experiment_path + 'benchmark_feasible_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity))
             eval_results_csv = open(experiment_path + 'benchmark_feasible_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity), 'a')
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                      ('MOCF', '', '', '', '', '',
-                       'DiCE', '', '', '', '', '')
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+                      ('MOCF', '', '', '', '', '', '',
+                       'DiCE', '', '', '', '', '', '')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                      ('prediction', 'actionable', 'correlation', 'distance', 'sparsity', 'diversity',
-                       'prediction', 'actionable', 'correlation', 'distance', 'sparsity', 'diversity')
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+                      ('prediction', 'actionable', 'correlation', 'distance', 'sparsity', 'diversity', 'validity',
+                       'prediction', 'actionable', 'correlation', 'distance', 'sparsity', 'diversity', 'validity')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                       ('=average(A5:A1000)', '=average(B5:B1000)',
                        '=average(C5:C1000)', '=average(D5:D1000)',
                        '=average(E5:E1000)', '=average(F5:F1000)',
                        '=average(G5:G1000)', '=average(H5:H1000)',
                        '=average(I5:I1000)', '=average(J5:J1000)',
-                       '=average(K5:K1000)', '=average(L5:L1000)')
+                       '=average(K5:K1000)', '=average(L5:L1000)',
+                       '=average(M5:M1000)', '=average(N5:N1000)')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                       ('=stdev(A5:A1000)', '=stdev(B5:B1000)',
                        '=stdev(C5:C1000)', '=stdev(D5:D1000)',
                        '=stdev(E5:E1000)', '=stdev(F5:F1000)',
                        '=stdev(G5:G1000)', '=stdev(H5:H1000)',
                        '=stdev(I5:I1000)', '=stdev(J5:J1000)',
-                       '=stdev(K5:K1000)', '=stdev(L5:L1000)')
+                       '=stdev(K5:K1000)', '=stdev(L5:L1000)',
+                       '=stdev(M5:M1000)', '=stdev(N5:N1000)',)
             eval_results_csv.write(header)
             eval_results_csv.flush()
 
@@ -166,8 +168,8 @@ def main():
                                   len(set(dice_feature_names[i]) | set(dice_feature_names[ii]))
                         dice_jaccard.append(jaccard)
 
-                eval_results = np.r_[mocf_cfs_eval.iloc[0,:-2] ,1.0 - np.mean(mocf_jaccard),
-                                    dice_cfs_eval.iloc[0,:-2], 1.0 - np.mean(dice_jaccard)]
+                eval_results = np.r_[mocf_cfs_eval.iloc[0, :-2], 1.0 - np.mean(mocf_jaccard), int(mocf_cfs_eval.iloc[0, 0] == 0),
+                                     dice_cfs_eval.iloc[0, :-2], 1.0 - np.mean(dice_jaccard), int(dice_cfs_eval.iloc[0, 0] == 0)]
 
                 eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
                 eval_results = ','.join(eval_results)
