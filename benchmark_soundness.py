@@ -120,10 +120,10 @@ def main():
             n = 5  # number of counter-factuals for every instance
 
             # creating/opening a csv file for storing results
-            exists = os.path.isfile(experiment_path + 'benchmark_%s_soundness_cfs_%s_%s.csv'%(dataset_name, N, n))
+            exists = os.path.isfile(experiment_path + 'benchmark_soundness_%s_cfs_%s_%s.csv'%(dataset['name'], N, n))
             if exists:
-                os.remove(experiment_path + 'benchmark_%s_soundness_cfs_%s_%s.csv'%(dataset_name, N, n))
-            cfs_results_csv = open(experiment_path + 'benchmark_%s_soundness_cfs_%s_%s.csv'%(dataset_name, N, n), 'a')
+                os.remove(experiment_path + 'benchmark_soundness_%s_cfs_%s_%s.csv'%(dataset['name'], N, n))
+            cfs_results_csv = open(experiment_path + 'benchmark_soundness_%s_cfs_%s_%s.csv'%(dataset['name'], N, n), 'a')
 
             feature_space = ['' for _ in range(X_train.shape[1]-1 + 7)]
             header = ['','MOCF']
@@ -136,10 +136,10 @@ def main():
             cfs_results_csv.flush()
 
             # creating/opening a csv file for storing results
-            exists = os.path.isfile(experiment_path + 'benchmark_%s_soundness_eval_%s_%s.csv'%(dataset_name, N, n))
+            exists = os.path.isfile(experiment_path + 'benchmark_soundness_%s_eval_%s_%s.csv'%(dataset['name'], N, n))
             if exists:
-                os.remove(experiment_path + 'benchmark_%s_soundness_eval_%s_%s.csv'%(dataset_name, N, n))
-            eval_results_csv = open(experiment_path + 'benchmark_%s_soundness_eval_%s_%s.csv'%(dataset_name, N, n), 'a')
+                os.remove(experiment_path + 'benchmark_soundness_%s_eval_%s_%s.csv'%(dataset['name'], N, n))
+            eval_results_csv = open(experiment_path + 'benchmark_soundness_%s_eval_%s_%s.csv'%(dataset['name'], N, n), 'a')
 
             header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,\n' % \
                       ('MOCF', '', '', '', '', '',
