@@ -117,13 +117,13 @@ def main():
             ################################### Explaining test samples #########################################
             # setting the size of the experiment
             N = 10  # number of instances to explain
-            n = 5  # number of counter-factuals for every instance
+            n_diversity = 5  # number of counter-factuals for measuring diversity
 
             # creating/opening a csv file for storing results
-            exists = os.path.isfile(experiment_path + 'benchmark_soundness_%s_cfs_%s_%s.csv'%(dataset['name'], N, n))
+            exists = os.path.isfile(experiment_path + 'benchmark_soundness_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_diversity))
             if exists:
-                os.remove(experiment_path + 'benchmark_soundness_%s_cfs_%s_%s.csv'%(dataset['name'], N, n))
-            cfs_results_csv = open(experiment_path + 'benchmark_soundness_%s_cfs_%s_%s.csv'%(dataset['name'], N, n), 'a')
+                os.remove(experiment_path + 'benchmark_soundness_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_diversity))
+            cfs_results_csv = open(experiment_path + 'benchmark_soundness_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_diversity), 'a')
 
             feature_space = ['' for _ in range(X_train.shape[1]-1 + 7)]
             header = ['','MOCF']
@@ -136,10 +136,10 @@ def main():
             cfs_results_csv.flush()
 
             # creating/opening a csv file for storing results
-            exists = os.path.isfile(experiment_path + 'benchmark_soundness_%s_eval_%s_%s.csv'%(dataset['name'], N, n))
+            exists = os.path.isfile(experiment_path + 'benchmark_soundness_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity))
             if exists:
-                os.remove(experiment_path + 'benchmark_soundness_%s_eval_%s_%s.csv'%(dataset['name'], N, n))
-            eval_results_csv = open(experiment_path + 'benchmark_soundness_%s_eval_%s_%s.csv'%(dataset['name'], N, n), 'a')
+                os.remove(experiment_path + 'benchmark_soundness_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity))
+            eval_results_csv = open(experiment_path + 'benchmark_soundness_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity), 'a')
 
             header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,\n' % \
                       ('MOCF', '', '', '', '', '',
@@ -250,7 +250,7 @@ def main():
                     x_ord_dice[key] = value
                 for f in discrete_features:
                     x_ord_dice[f] = str(int(x_ord_dice[f]))
-                dice_explanations  = dice_explainer.generate_counterfactuals(x_ord_dice, total_CFs=n,
+                dice_explanations  = dice_explainer.generate_counterfactuals(x_ord_dice, total_CFs=n_diversity,
                                                                              desired_class="opposite",
                                                                              stopping_threshold=0.5,
                                                                              posthoc_sparsity_algorithm="binary")
@@ -275,48 +275,58 @@ def main():
                 dice_x_cfs_highlight = recoverOriginals(x_ord, dice_cfs_ord, dataset, feature_names)
 
 
-                cfs_results = pd.concat([mocf_x_cfs_highlight.iloc[:n+1], mocf_x_cfs_eval.iloc[:n+1],
-                                         cfprototype_x_cfs_highlight.iloc[:n+1], cfprototype_x_cfs_eval.iloc[:n+1],
-                                         dice_x_cfs_highlight.iloc[:n+1], dice_x_cfs_eval.iloc[:n+1]], axis=1)
+                # storing the best counter-factual found by methods
+                cfs_results = pd.concat([mocf_x_cfs_highlight.iloc[:2], mocf_x_cfs_eval.iloc[:2],
+                                         cfprototype_x_cfs_highlight.iloc[:2], cfprototype_x_cfs_eval.iloc[:2],
+                                         dice_x_cfs_highlight.iloc[:2], dice_x_cfs_eval.iloc[:2]], axis=1)
                 cfs_results.to_csv(cfs_results_csv)
                 cfs_results_csv.write('\n')
                 cfs_results_csv.flush()
 
-                # measuring the diversity of counter-factuals
+                # measuring the diversity of counter-factuals using Jaccard metric
+                n_diversity_mocf = min(n_diversity,mocf_cfs_eval.shape[0]-1)
+                n_diversity_cfprototype = min(n_diversity, cfprototype_cfs_eval.shape[0] - 1)
+                n_diversity_dice= min(n_diversity, dice_cfs_eval.shape[0] - 1)
+
                 mocf_feature_names = []
-                cfprototype_feature_names = []
-                dice_feature_names = []
-                for i in range(n):
+                for i in range(n_diversity_mocf):
                     mocf_feature_names.append([feature_names[ii] for ii in np.where(mocf_x_cfs_highlight.iloc[i+1] != '_')[0]])
-                    cfprototype_feature_names.append([feature_names[ii] for ii in np.where(cfprototype_x_cfs_highlight.iloc[i + 1] != '_')[0]])
-                    dice_feature_names.append([feature_names[ii] for ii in np.where(dice_x_cfs_highlight.iloc[i + 1] != '_')[0]])
                 mocf_feature_names = list(filter(None, mocf_feature_names))
+
+                cfprototype_feature_names = []
+                for i in range(n_diversity_cfprototype):
+                    cfprototype_feature_names.append([feature_names[ii] for ii in np.where(cfprototype_x_cfs_highlight.iloc[i + 1] != '_')[0]])
                 cfprototype_feature_names = list(filter(None, cfprototype_feature_names))
+
+                dice_feature_names = []
+                for i in range(n_diversity_dice):
+                    dice_feature_names.append([feature_names[ii] for ii in np.where(dice_x_cfs_highlight.iloc[i + 1] != '_')[0]])
                 dice_feature_names = list(filter(None, dice_feature_names))
 
                 mocf_jaccard = []
+                for i in range(0, len(mocf_feature_names)):
+                    for ii in range(i, len(mocf_feature_names)):
+                        jaccard = len(set(mocf_feature_names[i]) & set(mocf_feature_names[ii])) / \
+                                  len(set(mocf_feature_names[i]) | set(mocf_feature_names[ii]))
+                        mocf_jaccard.append(jaccard)
+
                 cfprototype_jaccard = []
+                for i in range(0, len(cfprototype_feature_names)):
+                    for ii in range(i, len(cfprototype_feature_names)):
+                        jaccard = len(set(cfprototype_feature_names[i]) & set(cfprototype_feature_names[ii])) / \
+                                  len(set(cfprototype_feature_names[i]) | set(cfprototype_feature_names[ii]))
+                        cfprototype_jaccard.append(jaccard)
+
                 dice_jaccard = []
-                for i in range(0, n):
-                    for ii in range(i, n):
-                        if len(mocf_feature_names) > ii:
-                            jaccard = len(set(mocf_feature_names[i]) & set(mocf_feature_names[ii])) / \
-                                      len(set(mocf_feature_names[i]) | set(mocf_feature_names[ii]))
-                            mocf_jaccard.append(jaccard)
+                for i in range(0, len(dice_feature_names)):
+                    for ii in range(i, len(dice_feature_names)):
+                        jaccard = len(set(dice_feature_names[i]) & set(dice_feature_names[ii])) / \
+                                  len(set(dice_feature_names[i]) | set(dice_feature_names[ii]))
+                        dice_jaccard.append(jaccard)
 
-                        if len(cfprototype_feature_names) > ii:
-                            jaccard = len(set(cfprototype_feature_names[i]) & set(cfprototype_feature_names[ii])) / \
-                                      len(set(cfprototype_feature_names[i]) | set(cfprototype_feature_names[ii]))
-                            cfprototype_jaccard.append(jaccard)
-
-                        if len(dice_feature_names) > ii:
-                            jaccard = len(set(dice_feature_names[i]) & set(dice_feature_names[ii])) / \
-                                      len(set(dice_feature_names[i]) | set(dice_feature_names[ii]))
-                            dice_jaccard.append(jaccard)
-
-                eval_results = np.r_[mocf_cfs_eval.iloc[:n,:-2].mean(), 1.0 - np.mean(mocf_jaccard),
-                                    cfprototype_cfs_eval.iloc[:n,:-2].mean(), 1.0 - np.mean(cfprototype_jaccard),
-                                    dice_cfs_eval.iloc[:n,:-2].mean(), 1.0 - np.mean(dice_jaccard)]
+                eval_results = np.r_[mocf_cfs_eval.iloc[0,:-2] ,1.0 - np.mean(mocf_jaccard),
+                                    cfprototype_cfs_eval.iloc[0,:-2], 1.0 - np.mean(cfprototype_jaccard),
+                                    dice_cfs_eval.iloc[0,:-2], 1.0 - np.mean(dice_jaccard)]
 
                 eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
                 eval_results = ','.join(eval_results)
