@@ -55,12 +55,12 @@ def main():
             n_diversity = 5  # number of counter-factuals for measuring diversity
 
             # creating/opening a csv file for storing results
-            exists = os.path.isfile(experiment_path + 'benchmark_base_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_diversity))
+            exists = os.path.isfile(experiment_path + 'benchmark_sound_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_diversity))
             if exists:
-                os.remove(experiment_path + 'benchmark_base_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_diversity))
-            cfs_results_csv = open(experiment_path + 'benchmark_base_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_diversity), 'a')
+                os.remove(experiment_path + 'benchmark_sound_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_diversity))
+            cfs_results_csv = open(experiment_path + 'benchmark_sound_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_diversity), 'a')
 
-            feature_space = ['' for _ in range(X_train.shape[1]-1 + 5)]
+            feature_space = ['' for _ in range(X_train.shape[1]-1 + 7)]
             header = ['','MOCF']
             header += feature_space
             header += ['CFPrototype']
@@ -71,39 +71,45 @@ def main():
             cfs_results_csv.flush()
 
             # creating/opening a csv file for storing results
-            exists = os.path.isfile(experiment_path + 'benchmark_base_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity))
+            exists = os.path.isfile(experiment_path + 'benchmark_sound_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity))
             if exists:
-                os.remove(experiment_path + 'benchmark_base_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity))
-            eval_results_csv = open(experiment_path + 'benchmark_base_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity), 'a')
+                os.remove(experiment_path + 'benchmark_sound_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity))
+            eval_results_csv = open(experiment_path + 'benchmark_sound_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity), 'a')
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                      ('MOCF', '', '', '',
-                       'CFPrototype', '', '', '',
-                       'DiCE', '', '', '')
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+                      ('MOCF', '', '', '', '', '',
+                       'CFPrototype', '', '', '', '', '',
+                       'DiCE', '', '', '', '', '')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                      ('prediction', 'distance', 'sparsity', 'diversity',
-                       'prediction', 'distance', 'sparsity', 'diversity',
-                       'prediction', 'distance', 'sparsity', 'diversity')
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+                      ('prediction', 'proximity', 'connectedness', 'distance', 'sparsity', 'diversity',
+                       'prediction', 'proximity', 'connectedness', 'distance', 'sparsity', 'diversity',
+                       'prediction', 'proximity', 'connectedness', 'distance', 'sparsity', 'diversity')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                       ('=average(A5:A1000)', '=average(B5:B1000)',
                        '=average(C5:C1000)', '=average(D5:D1000)',
                        '=average(E5:E1000)', '=average(F5:F1000)',
                        '=average(G5:G1000)', '=average(H5:H1000)',
                        '=average(I5:I1000)', '=average(J5:J1000)',
-                       '=average(K5:K1000)', '=average(L5:L1000)')
+                       '=average(K5:K1000)', '=average(L5:L1000)',
+                       '=average(M5:M1000)', '=average(N5:N1000)',
+                       '=average(O5:O1000)', '=average(P5:P1000)',
+                       '=average(Q5:Q1000)', '=average(R5:R1000)')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                       ('=stdev(A5:A1000)', '=stdev(B5:B1000)',
                        '=stdev(C5:C1000)', '=stdev(D5:D1000)',
                        '=stdev(E5:E1000)', '=stdev(F5:F1000)',
                        '=stdev(G5:G1000)', '=stdev(H5:H1000)',
                        '=stdev(I5:I1000)', '=stdev(J5:J1000)',
-                       '=stdev(K5:K1000)', '=stdev(L5:L1000)')
+                       '=stdev(K5:K1000)', '=stdev(L5:L1000)',
+                       '=stdev(M5:M1000)', '=stdev(N5:N1000)',
+                       '=stdev(O5:O1000)', '=stdev(P5:P1000)',
+                       '=stdev(Q5:Q1000)', '=stdev(R5:R1000)')
             eval_results_csv.write(header)
             eval_results_csv.flush()
 
@@ -115,7 +121,7 @@ def main():
 
                 # explain instance x_ord using MOCF
                 MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                            soundCF=False, feasibleAR=False, hof_final=False,
+                                            soundCF=True, feasibleAR=False, hof_final=False,
                                             user_preferences=None, cf_class='opposite',
                                             probability_thresh=0.5)
 
@@ -139,6 +145,7 @@ def main():
                 dice_x_cfs_highlight = DiCE_output['x_cfs_highlight']
                 dice_cfs_eval = DiCE_output['cfs_eval']
                 dice_x_cfs_eval = DiCE_output['x_cfs_eval']
+
 
                 # storing the best counter-factual found by methods
                 cfs_results = pd.concat([mocf_x_cfs_highlight.iloc[:2], mocf_x_cfs_eval.iloc[:2],
