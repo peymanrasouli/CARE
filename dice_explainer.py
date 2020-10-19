@@ -7,7 +7,8 @@ from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 
 def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset, task, MOCF_output,
-                  feasibleAR=False, user_preferences=None, n_cf=5, desired_class="opposite", probability_thresh=0.5):
+                  feasibleAR=False, user_preferences=None, n_cf=5, desired_class="opposite", probability_thresh=0.5,
+                  proximity_weight=0.5, diversity_weight=1.0):
 
     # preparing ataset for DiCE model
     feature_names = dataset['feature_names']
@@ -68,7 +69,9 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
                                                                desired_class=desired_class,
                                                                stopping_threshold=probability_thresh,
                                                                posthoc_sparsity_algorithm="binary",
-                                                               features_to_vary=features_to_vary)
+                                                               features_to_vary=features_to_vary,
+                                                               proximity_weight=proximity_weight,
+                                                               diversity_weight=diversity_weight)
     else:
         # creating data a instance
         data = dice_ml.Data(dataframe=data_frame,
