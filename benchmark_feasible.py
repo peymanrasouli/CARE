@@ -26,7 +26,7 @@ def main():
 
     # defining the list of black-boxes
     blackbox_list = {
-        'dnn': KerasNeuralNetwork
+        'nn-c': KerasNeuralNetwork
     }
 
     for dataset_kw in datsets_list:
@@ -48,7 +48,6 @@ def main():
             blackbox = CreateModel(dataset, X_train, X_test, Y_train, Y_test, task, blackbox_name, blackbox_constructor)
             predict_fn = lambda x: blackbox.predict_classes(x).ravel()
             predict_proba_fn = lambda x: np.asarray([1-blackbox.predict(x).ravel(), blackbox.predict(x).ravel()]).transpose()
-
 
             ################################### Explaining test samples #########################################
             # setting the size of the experiment

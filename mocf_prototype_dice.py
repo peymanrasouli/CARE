@@ -25,7 +25,7 @@ def main():
 
     # defining the list of black-boxes
     blackbox_list = {
-        'dnn': KerasNeuralNetwork
+        'nn-c': KerasNeuralNetwork
     }
 
     for dataset_kw in datsets_list:

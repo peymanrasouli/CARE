@@ -9,7 +9,7 @@ def CreateModel(dataset, X_train, X_test, Y_train, Y_test, task, model_name, con
     X_test_ohe = ord2ohe(X_test, dataset)
 
     if task is 'classification':
-        if model_name is 'dnn':
+        if model_name is 'nn-c':
             blackbox = constructor(X_train_ohe.shape[1])
             blackbox.fit(X_train_ohe, Y_train, validation_split=0.20, epochs=5, verbose=1)
             pred_test = blackbox.predict_classes(X_test_ohe).ravel()
