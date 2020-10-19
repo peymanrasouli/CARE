@@ -546,6 +546,9 @@ class MOCF():
         cf_ord = org2ord(cf_org, self.dataset)
         cfs_ord = pd.DataFrame(data=cf_ord, columns=self.feature_names)
 
+        cfs_ord.drop_duplicates(inplace=True)
+        cfs_ord.reset_index(drop=True, inplace=True)
+
         ## returning the results
         explanations = {'cfs_ord': cfs_ord,
                         'toolbox': self.toolbox,

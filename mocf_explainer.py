@@ -21,7 +21,6 @@ def MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_pr
     cfs_ord = explanation['cfs_ord']
     toolbox = explanation['toolbox']
     objective_names = explanation['objective_names']
-    objective_weights = explanation['objective_weights']
     featureScaler = explanation['featureScaler']
     feature_names = dataset['feature_names']
 
@@ -29,10 +28,8 @@ def MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_pr
     cfs_ord, \
     cfs_eval, \
     x_cfs_ord, \
-    x_cfs_eval = evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn,
-                                        predict_proba_fn, task, toolbox,
-                                        objective_names, objective_weights,
-                                        featureScaler, feature_names)
+    x_cfs_eval = evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn, predict_proba_fn, task,
+                                         toolbox, objective_names, featureScaler, feature_names)
 
     # recovering counter-factuals in original format
     x_org, \
@@ -51,7 +48,6 @@ def MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_pr
                 'toolbox': toolbox,
                 'featureScaler': featureScaler,
                 'objective_names': objective_names,
-                'objective_weights': objective_weights,
                 }
 
     return output

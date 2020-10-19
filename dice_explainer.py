@@ -115,17 +115,15 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
     # evaluating counter-factuals
     toolbox = MOCF_output['toolbox']
     objective_names = MOCF_output['objective_names']
-    objective_weights = MOCF_output['objective_weights']
     featureScaler = MOCF_output['featureScaler']
     feature_names = dataset['feature_names']
 
     cfs_ord, \
     cfs_eval, \
     x_cfs_ord, \
-    x_cfs_eval = evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn,
-                                        predict_proba_fn, task, toolbox,
-                                        objective_names, objective_weights,
-                                        featureScaler, feature_names)
+    x_cfs_eval = evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn, predict_proba_fn, task,
+                                         toolbox, objective_names, featureScaler, feature_names)
+
 
     # recovering counter-factuals in original format
     x_org, \
@@ -141,10 +139,6 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
               'x_cfs_eval': x_cfs_eval,
               'x_cfs_org': x_cfs_org,
               'x_cfs_highlight': x_cfs_highlight,
-              'toolbox': toolbox,
-              'featureScaler': featureScaler,
-              'objective_names': objective_names,
-              'objective_weights': objective_weights,
               }
 
     return output

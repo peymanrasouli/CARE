@@ -50,7 +50,7 @@ def main():
 
             # creating black-box model
             blackbox = CreateModel(dataset, X_train, X_test, Y_train, Y_test, task, blackbox_name, blackbox_constructor)
-            if blackbox_name is 'dnn':
+            if blackbox_name == 'nn-c':
                 predict_fn = lambda x: blackbox.predict_classes(x).ravel()
                 predict_proba_fn = lambda x: np.asarray([1-blackbox.predict(x).ravel(), blackbox.predict(x).ravel()]).transpose()
             else:
