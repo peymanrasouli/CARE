@@ -51,7 +51,7 @@ def main():
 
             ################################### Explaining test samples #########################################
             # setting the size of the experiment
-            N = 3  # number of instances to explain
+            N = 10  # number of instances to explain
             n_diversity = 5  # number of counter-factuals for measuring diversity
 
             # creating/opening a csv file for storing results
@@ -112,6 +112,7 @@ def main():
             eval_results_csv.flush()
 
             # selecting instances to explain from test set
+            np.random.seed(42)
             X_explain = X_test[np.random.choice(range(X_test.shape[0]), size=N, replace=False)]
 
             # explaining instances

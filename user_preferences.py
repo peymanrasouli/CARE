@@ -14,8 +14,8 @@ def userPreferences(dataset, x_ord):
     for i, f in enumerate(dataset['feature_names']):
         print(f+':', x_org[i])
 
-    ## discrete operations = {'fix', {a set of possible changes}}
-    ## continuous operations = {'fix', 'increase', 'decrease', [a range of possible changes]}
+    ## discrete operations = {'fix', {v1, v2, v3, ...}}
+    ## continuous operations = {'fix', 'l', 'g', 'le', 'ge', [lb, ub]}
     ## actions = {feature_name_1: (operation, importance), feature_name_2: (operation, importance), ...}
 
     ## Adult data set
@@ -52,8 +52,9 @@ def userPreferences(dataset, x_ord):
 
         print('\n')
         print('----- user-specified actions -----')
-        actions = {'sex':('fix',1),
-                   'race':('fix',2)}
+        actions = {'age':('ge',1),
+                   'sex':('fix',2),
+                   'race':('fix',3)}
 
         action_operation = [None] * len(x_ord)
         action_importance = [None] * len(x_ord)

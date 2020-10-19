@@ -107,6 +107,7 @@ def main():
             eval_results_csv.flush()
 
             # selecting instances to explain from test set
+            np.random.seed(42)
             X_explain = X_test[np.random.choice(range(X_test.shape[0]), size=N, replace=False)]
 
             # explaining instances

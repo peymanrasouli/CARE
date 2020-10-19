@@ -35,8 +35,12 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
                 x_org_ub[i] = op[1]
                 x_ord_lb = org2ord(x_org_lb, dataset)
                 x_ord_ub = org2ord(x_org_ub, dataset)
-                op_scaled = [x_ord_lb[i], x_ord_ub[i]]
-                permitted_range[feature_names[i]] = op_scaled
+                range_scaled = [x_ord_lb[i], x_ord_ub[i]]
+                permitted_range[feature_names[i]] = range_scaled
+            if (i in continuous_indices) and (op == 'ge'):
+                permitted_range[feature_names[i]] = [x_ord[i], dataset['feature_ranges'][feature_names[i]][1]]
+            if (i in continuous_indices) and (op == 'le'):
+                permitted_range[feature_names[i]] = [dataset['feature_ranges'][feature_names[i]][0], x_ord[i]]
 
         # creating data a instance
         data = dice_ml.Data(dataframe=data_frame,

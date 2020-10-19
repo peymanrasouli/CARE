@@ -24,7 +24,8 @@ def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, 
 
     # creating prototype counter-factual explainer
     cfprototype_explainer = CounterFactualProto(predict=predict_proba_fn, shape=shape, feature_range=feature_range,
-                                                 cat_vars=cat_vars_ohe, ohe=True)
+                                                cat_vars=cat_vars_ohe, ohe=True, beta=0.1, theta=10,
+                                                use_kdtree=True, max_iterations=500, c_init=1.0, c_steps=5)
 
     # Fitting the explainer on the training data
     X_train_ohe = ord2ohe(X_train, dataset)
