@@ -13,7 +13,6 @@ from user_preferences import userPreferences
 from mocf import MOCF
 from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
-from plot_decision_surface import PlotDecisionSurface
 
 def main():
     # defining path of data sets and experiment results
