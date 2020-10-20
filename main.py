@@ -57,53 +57,26 @@ def main():
                 predict_fn = lambda x: blackbox.predict(x).ravel()
                 predict_proba_fn = lambda x: blackbox.predict_proba(x)
 
-            # classification task
-            if task is 'classification':
+            # instance to explain
+            ind = 0
+            x_ord = X_test[ind]
+            n_cf = 5
 
-                # instance to explain
-                ind = 0
-                x_ord = X_test[ind]
+            # set user preferences
+            user_preferences = userPreferences(dataset, x_ord)
 
-                # set user preferences
-                user_preferences = userPreferences(dataset, x_ord)
+            # explain instance x_ord using MOCF
+            output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
+                                   soundCF=False, feasibleAR=False, user_preferences=user_preferences,
+                                   cf_class='opposite', probability_thresh=0.5, cf_quantile='neighbor', n_cf=n_cf)
 
-                # explain instance x_ord using MOCF
-                output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                       soundCF=False, feasibleAR=False, hof_final=True,
-                                       user_preferences=user_preferences, cf_class='opposite', probability_thresh=0.5)
+            # print n best counter-factuals and their corresponding objective values
+            print('\n')
+            print(output['x_cfs_highlight'].head(n= n_cf + 1))
+            print(output['x_cfs_eval'].head(n= n_cf + 1))
 
-                # print n best counter-factuals and their corresponding objective values
-                n = 10
-                print('\n')
-                print(output['x_cfs_highlight'].head(n= n + 1))
-                print(output['x_cfs_eval'].head(n= n + 1))
-
-                print('\n')
-                print('Done!')
-
-            # regression task
-            elif task is 'regression':
-
-                # instance to explain
-                ind = 0
-                x_ord = X_test[ind]
-
-                # set user preferences
-                user_preferences = userPreferences(dataset, x_ord)
-
-                # explain instance x_ord using MOCF
-                output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                       soundCF=False, feasibleAR=False, hof_final=False,
-                                       user_preferences=user_preferences, cf_quantile='neighbor')
-
-                # print n best counter-factuals and their corresponding objective values
-                n = 10
-                print('\n')
-                print(output['x_cfs_highlight'].head(n= n + 1))
-                print(output['x_cfs_eval'].head(n= n + 1))
-
-                print('\n')
-                print('Done!')
+            print('\n')
+            print('Done!')
 
 if __name__ == '__main__':
     main()

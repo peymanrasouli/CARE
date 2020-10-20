@@ -25,6 +25,7 @@ class MOCF():
                  predict_proba_fn=None,
                  soundCF=False,
                  feasibleAR=False,
+                 n_cf=5,
                  response_quantile=4,
                  K_nbrs=500,
                  corr_thresh=0.2,
@@ -32,7 +33,6 @@ class MOCF():
                  corr_model_acc_thresh=0.7,
                  n_generation=20,
                  hof_size=100,
-                 hof_final=False,
                  x_init=0.3,
                  neighbor_init=0.6,
                  random_init=1,
@@ -52,6 +52,7 @@ class MOCF():
         self.predict_proba_fn = predict_proba_fn
         self.soundCF = soundCF
         self.feasibleAR = feasibleAR
+        self.n_cf = n_cf
         self.response_quantile = response_quantile
         self.K_nbrs = K_nbrs
         self.corr_thresh = corr_thresh
@@ -59,7 +60,6 @@ class MOCF():
         self.corr_model_acc_thresh = corr_model_acc_thresh
         self.n_generation = n_generation
         self.hof_size = hof_size
-        self.hof_final = hof_final
         self.init_probability = [x_init, neighbor_init, random_init] / np.sum([x_init, neighbor_init, random_init])
         self.crossover_perc = crossover_perc
         self.mutation_perc = mutation_perc
@@ -426,7 +426,6 @@ class MOCF():
         stats.register("max", np.max, axis=0)
 
         hof = tools.HallOfFame(self.hof_size)
-        hof_gen = []
         logbook = tools.Logbook()
         logbook.header = "gen", "evals", "min", "avg", "max"
 
@@ -458,14 +457,13 @@ class MOCF():
 
             # Compile statistics about the new population
             hof.update(pop)
-            hof_gen.append(hof.items)
             record = stats.compile(pop)
             logbook.record(pop=pop, gen=gen, evals=len(invalid_ind), **record)
             print(logbook.stream)
 
         fronts = tools.emo.sortLogNondominated(pop, self.n_population)
 
-        return fronts, pop, hof, hof_gen, record, logbook
+        return fronts, pop, hof, record, logbook
 
     # explain instance using multi-objective counter-factuals
     def explain(self,
@@ -534,23 +532,20 @@ class MOCF():
         n_reference_points = factorial(self.n_objectives + self.division_factor - 1) / \
                              (factorial(self.division_factor) * factorial(self.n_objectives - 1))
         self.n_population = int(n_reference_points + (4 - n_reference_points % 4))
-        fronts, pop, hof, hof_gen, record, logbook = self.runEA()
+        fronts, pop, hof, record, logbook = self.runEA()
 
         ## constructing counter-factuals
-        if self.hof_final:
-            cfs_theta = np.asarray([i for i in hof.items])
-        else:
-            cfs_theta = np.concatenate(np.asarray([i for i in hof_gen]))
+        cfs_theta = np.asarray([i for i in hof.items])
+        cfs_org = theta2org(cfs_theta, self.featureScaler, self.dataset)
+        cfs_ord = org2ord(cfs_org, self.dataset)
+        cfs_ord = pd.DataFrame(data=cfs_ord, columns=self.feature_names)
 
-        cf_org = theta2org(cfs_theta, self.featureScaler, self.dataset)
-        cf_ord = org2ord(cf_org, self.dataset)
-        cfs_ord = pd.DataFrame(data=cf_ord, columns=self.feature_names)
-
-        cfs_ord.drop_duplicates(inplace=True)
-        cfs_ord.reset_index(drop=True, inplace=True)
+        cfs_ord = cfs_ord.iloc[:self.n_cf,:]
+        best_cf_ord = cfs_ord.iloc[0]
 
         ## returning the results
         explanations = {'cfs_ord': cfs_ord,
+                        'best_cf_ord': best_cf_ord,
                         'toolbox': self.toolbox,
                         'featureScaler': self.featureScaler,
                         'objective_names': self.objective_names,

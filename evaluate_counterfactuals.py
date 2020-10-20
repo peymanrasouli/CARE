@@ -4,9 +4,6 @@ from utils import *
 def evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn, predict_proba_fn, task,
                             toolbox, objective_names, featureScaler, feature_names):
 
-    cfs_ord.drop_duplicates(inplace=True)
-    cfs_ord.reset_index(drop=True, inplace=True)
-
     x_ord = pd.DataFrame(data=x_ord.reshape(1, -1), columns=feature_names)
     x_cfs_ord = pd.concat([x_ord, cfs_ord])
     x_cfs_ord.reset_index(drop=True, inplace=True)

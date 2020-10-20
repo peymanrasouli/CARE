@@ -3,12 +3,12 @@ from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 
 def MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                  soundCF=False, feasibleAR=False, hof_final=False, user_preferences=None,
-                  cf_class='opposite', probability_thresh=0.5, cf_quantile='neighbor'):
+                  soundCF=False, feasibleAR=False, user_preferences=None,
+                  cf_class='opposite', probability_thresh=0.5, cf_quantile='neighbor', n_cf=5):
 
     # creating an instance of MOCF explainer
     explainer = MOCF(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                     soundCF=soundCF, feasibleAR=feasibleAR, hof_final=hof_final)
+                     soundCF=soundCF, feasibleAR=feasibleAR, n_cf=n_cf)
 
     # fitting the explainer on the training data
     explainer.fit(X_train, Y_train)
@@ -37,17 +37,25 @@ def MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_pr
     x_cfs_org, \
     x_cfs_highlight = recoverOriginals(x_ord, cfs_ord, dataset, feature_names)
 
+    # best counter-factual
+    best_cf_ord = cfs_ord.iloc[0]
+    best_cf_org = cfs_org.iloc[0]
+    best_cf_eval = cfs_eval.iloc[0]
+
     # returning the results
     output = {'cfs_ord': cfs_ord,
-                'cfs_org': cfs_org,
-                'cfs_eval': cfs_eval,
-                'x_cfs_ord': x_cfs_ord,
-                'x_cfs_eval': x_cfs_eval,
-                'x_cfs_org': x_cfs_org,
-                'x_cfs_highlight': x_cfs_highlight,
-                'toolbox': toolbox,
-                'featureScaler': featureScaler,
-                'objective_names': objective_names,
-                }
+              'cfs_org': cfs_org,
+              'cfs_eval': cfs_eval,
+              'best_cf_ord': best_cf_ord,
+              'best_cf_org': best_cf_org,
+              'best_cf_eval': best_cf_eval,
+              'x_cfs_ord': x_cfs_ord,
+              'x_cfs_eval': x_cfs_eval,
+              'x_cfs_org': x_cfs_org,
+              'x_cfs_highlight': x_cfs_highlight,
+              'toolbox': toolbox,
+              'featureScaler': featureScaler,
+              'objective_names': objective_names,
+              }
 
     return output

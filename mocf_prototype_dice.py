@@ -49,44 +49,43 @@ def main():
             predict_proba_fn = lambda x: np.asarray([1-blackbox.predict(x).ravel(), blackbox.predict(x).ravel()]).transpose()
 
             # instance to explain
-            ind = 0
+            ind = 1
             x_ord = X_test[ind]
+            n_cf = 5
 
             # set user preferences
             user_preferences = userPreferences(dataset, x_ord)
 
             # explain instance x_ord using MOCF
             MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                        soundCF=False, feasibleAR=False, hof_final=True,
-                                        user_preferences=user_preferences, cf_class='opposite', probability_thresh=0.5)
+                                        soundCF=False, feasibleAR=False, user_preferences=user_preferences,
+                                        cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
 
             # explain instance x_ord using CFPrototype
             CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, task,
-                                                      MOCF_output, target_class=None)
+                                                      MOCF_output, target_class=None, n_cf=n_cf)
 
             # explain instance x_ord using DiCE
             DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset,
                                         task, MOCF_output, feasibleAR=False, user_preferences=user_preferences,
-                                        n_cf=10, desired_class="opposite", probability_thresh=0.5,
+                                        n_cf=n_cf, desired_class="opposite", probability_thresh=0.5,
                                         proximity_weight=1.0, diversity_weight=1.0)
 
             # print n best counter-factuals and their corresponding objective values
-            n = 10
-
             print('\n')
             print('MOCF counter-factuals')
-            print(MOCF_output['x_cfs_highlight'].head(n= n + 1))
-            print(MOCF_output['x_cfs_eval'].head(n= n + 1))
+            print(MOCF_output['x_cfs_highlight'].head(n= n_cf + 1))
+            print(MOCF_output['x_cfs_eval'].head(n= n_cf + 1))
 
             print('\n')
             print('CFPrototype counter-factuals')
-            print(CFPrototype_output['x_cfs_highlight'].head(n=n + 1))
-            print(CFPrototype_output['x_cfs_eval'].head(n=n + 1))
+            print(CFPrototype_output['x_cfs_highlight'].head(n=n_cf + 1))
+            print(CFPrototype_output['x_cfs_eval'].head(n=n_cf + 1))
 
             print('\n')
             print('DiCE counter-factuals')
-            print(DiCE_output['x_cfs_highlight'].head(n=n + 1))
-            print(DiCE_output['x_cfs_eval'].head(n=n + 1))
+            print(DiCE_output['x_cfs_highlight'].head(n=n_cf + 1))
+            print(DiCE_output['x_cfs_eval'].head(n=n_cf + 1))
 
             print('\n')
             print('Done!')

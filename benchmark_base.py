@@ -52,13 +52,13 @@ def main():
             ################################### Explaining test samples #########################################
             # setting the size of the experiment
             N = 10  # number of instances to explain
-            n_diversity = 5  # number of counter-factuals for measuring diversity
+            n_cf = 5  # number of counter-factuals for measuring diversity
 
             # creating/opening a csv file for storing results
-            exists = os.path.isfile(experiment_path + 'benchmark_base_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_diversity))
+            exists = os.path.isfile(experiment_path + 'benchmark_base_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf))
             if exists:
-                os.remove(experiment_path + 'benchmark_base_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_diversity))
-            cfs_results_csv = open(experiment_path + 'benchmark_base_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_diversity), 'a')
+                os.remove(experiment_path + 'benchmark_base_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf))
+            cfs_results_csv = open(experiment_path + 'benchmark_base_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf), 'a')
 
             feature_space = ['' for _ in range(X_train.shape[1]-1 + 5)]
             header = ['','MOCF']
@@ -71,10 +71,10 @@ def main():
             cfs_results_csv.flush()
 
             # creating/opening a csv file for storing results
-            exists = os.path.isfile(experiment_path + 'benchmark_base_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity))
+            exists = os.path.isfile(experiment_path + 'benchmark_base_%s_eval_%s_%s.csv'%(dataset['name'], N, n_cf))
             if exists:
-                os.remove(experiment_path + 'benchmark_base_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity))
-            eval_results_csv = open(experiment_path + 'benchmark_base_%s_eval_%s_%s.csv'%(dataset['name'], N, n_diversity), 'a')
+                os.remove(experiment_path + 'benchmark_base_%s_eval_%s_%s.csv'%(dataset['name'], N, n_cf))
+            eval_results_csv = open(experiment_path + 'benchmark_base_%s_eval_%s_%s.csv'%(dataset['name'], N, n_cf), 'a')
 
             header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                       ('MOCF', '', '', '', '',
@@ -120,9 +120,8 @@ def main():
 
                 # explain instance x_ord using MOCF
                 MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                            soundCF=False, feasibleAR=False, hof_final=True,
-                                            user_preferences=None, cf_class='opposite',
-                                            probability_thresh=0.5)
+                                            soundCF=False, feasibleAR=False, user_preferences=None,
+                                            cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
 
                 mocf_x_cfs_highlight = MOCF_output['x_cfs_highlight']
                 mocf_cfs_eval = MOCF_output['cfs_eval']
@@ -130,7 +129,7 @@ def main():
 
                 # explain instance x_ord using CFPrototype
                 CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, task,
-                                                          MOCF_output, target_class=None)
+                                                          MOCF_output, target_class=None, n_cf=n_cf)
 
                 cfprototype_x_cfs_highlight = CFPrototype_output['x_cfs_highlight']
                 cfprototype_cfs_eval = CFPrototype_output['cfs_eval']
@@ -139,7 +138,7 @@ def main():
                 # explain instance x_ord using DiCE
                 DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset,
                                             task, MOCF_output, feasibleAR=False, user_preferences=None,
-                                            n_cf=n_diversity, desired_class="opposite", probability_thresh=0.5,
+                                            n_cf=n_cf, desired_class="opposite", probability_thresh=0.5,
                                             proximity_weight=1.0, diversity_weight=1.0)
 
                 dice_x_cfs_highlight = DiCE_output['x_cfs_highlight']
@@ -155,22 +154,22 @@ def main():
                 cfs_results_csv.flush()
 
                 # measuring the diversity of counter-factuals using Jaccard metric
-                n_diversity_mocf = min(n_diversity, mocf_cfs_eval.shape[0] - 1)
-                n_diversity_cfprototype = min(n_diversity, cfprototype_cfs_eval.shape[0] - 1)
-                n_diversity_dice= min(n_diversity, dice_cfs_eval.shape[0] - 1)
+                n_cf_mocf = min(n_cf, mocf_cfs_eval.shape[0])
+                n_cf_cfprototype = min(n_cf, cfprototype_cfs_eval.shape[0])
+                n_cf_dice= min(n_cf, dice_cfs_eval.shape[0])
 
                 mocf_feature_names = []
-                for i in range(n_diversity_mocf):
+                for i in range(n_cf_mocf):
                     mocf_feature_names.append([dataset['feature_names'][ii] for ii in np.where(mocf_x_cfs_highlight.iloc[i+1] != '_')[0]])
                 mocf_feature_names = list(filter(None, mocf_feature_names))
 
                 cfprototype_feature_names = []
-                for i in range(n_diversity_cfprototype):
+                for i in range(n_cf_cfprototype):
                     cfprototype_feature_names.append([dataset['feature_names'][ii] for ii in np.where(cfprototype_x_cfs_highlight.iloc[i + 1] != '_')[0]])
                 cfprototype_feature_names = list(filter(None, cfprototype_feature_names))
 
                 dice_feature_names = []
-                for i in range(n_diversity_dice):
+                for i in range(n_cf_dice):
                     dice_feature_names.append([dataset['feature_names'][ii] for ii in np.where(dice_x_cfs_highlight.iloc[i + 1] != '_')[0]])
                 dice_feature_names = list(filter(None, dice_feature_names))
 

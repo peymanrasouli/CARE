@@ -5,7 +5,8 @@ from alibi.utils.mapping import ord_to_ohe
 from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 
-def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, task, MOCF_output, target_class=None):
+def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, task, MOCF_output,
+                         target_class=None, n_cf=5):
     # preparing parameters
     cat_vars_ord = {}
     for i,d in enumerate(dataset['discrete_indices']):
@@ -35,16 +36,21 @@ def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, 
     explanations = cfprototype_explainer.explain(x_ohe,target_class=target_class)
 
     # extracting solutions
+    cfs_iter = []
+    for iter, res in explanations.all.items():
+       cfs_iter.append(res)
+
     cfs = []
     cfs.append(explanations.cf['X'].ravel())
-    for iter, res in explanations.all.items():
-        for cf in res:
+    for item in reversed(cfs_iter):
+        for cf in item:
             cfs.append(cf.ravel())
-    feature_names = dataset['feature_names']
 
     cfs_ohe = np.asarray(cfs)
+    n_cf_ = min(n_cf, cfs_ohe.shape[0])
+    cfs_ohe = cfs_ohe[:n_cf_,:]
     cfs_ord = ohe2ord(cfs_ohe, dataset)
-    cfs_ord = pd.DataFrame(data=cfs_ord, columns=feature_names)
+    cfs_ord = pd.DataFrame(data=cfs_ord, columns=dataset['feature_names'])
 
     # evaluating counter-factuals
     toolbox = MOCF_output['toolbox']
@@ -58,21 +64,28 @@ def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, 
     x_cfs_eval = evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn, predict_proba_fn, task,
                                          toolbox, objective_names, featureScaler, feature_names)
 
-
     # recovering counter-factuals in original format
     x_org, \
     cfs_org, \
     x_cfs_org, \
     x_cfs_highlight = recoverOriginals(x_ord, cfs_ord, dataset, feature_names)
 
+    # best counter-factual
+    best_cf_ord = cfs_ord.iloc[0]
+    best_cf_org = cfs_org.iloc[0]
+    best_cf_eval = cfs_eval.iloc[0]
+
     # returning the results
     output = {'cfs_ord': cfs_ord,
-                'cfs_org': cfs_org,
-                'cfs_eval': cfs_eval,
-                'x_cfs_ord': x_cfs_ord,
-                'x_cfs_eval': x_cfs_eval,
-                'x_cfs_org': x_cfs_org,
-                'x_cfs_highlight': x_cfs_highlight,
-                }
+              'cfs_org': cfs_org,
+              'cfs_eval': cfs_eval,
+              'best_cf_ord': best_cf_ord,
+              'best_cf_org': best_cf_org,
+              'best_cf_eval': best_cf_eval,
+              'x_cfs_ord': x_cfs_ord,
+              'x_cfs_eval': x_cfs_eval,
+              'x_cfs_org': x_cfs_org,
+              'x_cfs_highlight': x_cfs_highlight,
+              }
 
     return output
