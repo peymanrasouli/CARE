@@ -48,9 +48,6 @@ def main():
                 predict_fn = lambda x: blackbox.predict(x).ravel()
                 predict_proba_fn = lambda x: blackbox.predict_proba(x)
 
-            # setting size of the experiment
-            N = 10  # number of instances to explain
-
             # creating an instance of MOCF explainer for  soundCF=False and feasibleAR=False
             explainer_base = MOCF(dataset, task=task, predict_fn=predict_fn,
                                   predict_proba_fn=predict_proba_fn,
@@ -67,8 +64,9 @@ def main():
             pca.fit(X_train)
             X_2d = pca.transform(X_train)
 
-
             ################################### Explaining test samples #########################################
+            # setting size of the experiment
+            N = 10  # number of instances to explain
 
             # selecting instances to explain from test set
             np.random.seed(42)
