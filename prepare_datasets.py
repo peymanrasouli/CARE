@@ -281,7 +281,6 @@ def PrepareHeartDisease(dataset_path, dataset_name):
 
     ## Reading data from a csv file
     df = pd.read_csv(dataset_path + dataset_name, delimiter=',', na_values='?')
-    df['num'][(df['num'] != 0)] = 1
 
     ## Handling missing values
     df = df.dropna().reset_index(drop=True)
