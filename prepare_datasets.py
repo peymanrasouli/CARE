@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, LabelEncoder, StandardScaler
+from sklearn.datasets import load_iris
 
 ## Preparing Adult dataset
 def PrepareAdult(dataset_path, dataset_name):
@@ -538,3 +539,138 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
 
     return dataset
 
+## Preparing Heart Disease dataset
+def PrepareIris(dataset_path, dataset_name):
+
+    ## Reading data from a csv file
+    data = load_iris()
+    df = pd.DataFrame(data=np.c_[data.data,data.target], columns=data.feature_names+['class'])
+    df['sepal width (cm)'] = pd.cut(df['sepal width (cm)'],bins=4)
+
+    ## Recognizing inputs
+    class_name = 'class'
+    df_X_org = df.loc[:, df.columns!=class_name]
+    df_y = df.loc[:, class_name]
+
+    continuous_features = ['sepal length (cm)', 'petal length (cm)', 'petal width (cm)']
+    discrete_features = ['sepal width (cm)']
+
+    df_X_org = pd.concat([df_X_org[continuous_features], df_X_org[discrete_features]], axis=1)
+
+    continuous_indices = [df_X_org.columns.get_loc(f) for f in continuous_features]
+    discrete_indices = [df_X_org.columns.get_loc(f) for f in discrete_features]
+
+    feature_values = []
+    for c in continuous_features:
+        feature_values.append({c:[min(df_X_org[c]),max(df_X_org[c])]})
+    for d in discrete_features:
+        feature_values.append({d: set(df_X_org[d].unique())})
+
+    ## Extracting decimal points of continuous features
+    types = df_X_org[continuous_features].dtypes
+    continuous_decimals = []
+    for c in continuous_features:
+        if types[c] == float:
+            len_dec = []
+            for val in df_X_org[c]:
+                len_dec.append(len(str(val).split('.')[1]))
+            len_dec = max(set(len_dec), key=len_dec.count)
+            continuous_decimals.append(len_dec)
+        else:
+            continuous_decimals.append(0)
+
+    decimals = pd.Series(continuous_decimals, index=continuous_features)
+    df_X_org = df_X_org.round(decimals)
+
+    ## Scaling continuous features
+    num_feature_scaler =StandardScaler()
+    scaled_data = num_feature_scaler.fit_transform(df_X_org.iloc[:, continuous_indices].to_numpy())
+    scaled_data = pd.DataFrame(data=scaled_data, columns=continuous_features)
+
+    ## Encoding discrete features
+    # Ordinal feature transformation
+    ord_feature_encoder = OrdinalEncoder()
+    ord_encoded_data = ord_feature_encoder.fit_transform(df_X_org.iloc[:, discrete_indices].to_numpy())
+    ord_encoded_data = pd.DataFrame(data=ord_encoded_data, columns=discrete_features)
+
+    # One-hot feature transformation
+    ohe_feature_encoder = OneHotEncoder(sparse=False)
+    ohe_encoded_data = ohe_feature_encoder.fit_transform(ord_encoded_data.to_numpy())
+    ohe_encoded_data = pd.DataFrame(data=ohe_encoded_data)
+
+    # Creating ordinal and one-hot data frames
+    df_X_ord = pd.concat([scaled_data, ord_encoded_data], axis=1)
+    df_X_ohe = pd.concat([scaled_data, ohe_encoded_data], axis=1)
+
+    ## Encoding labels
+    df_y_le = df_y.copy(deep=True)
+    label_encoder = {}
+    le = LabelEncoder()
+    df_y_le = le.fit_transform(df_y_le)
+    label_encoder[class_name] = le
+
+    ## Extracting raw data and labels
+    X_org = df_X_org.values
+    X_ord = df_X_ord.values
+    X_ohe = df_X_ohe.values
+    y = df_y_le
+
+    ## Indexing labels
+    labels = {i: label for i, label in enumerate(list(label_encoder[class_name].classes_))}
+
+    ## Indexing features
+    feature_names = list(df_X_org.columns)
+    feature_indices = {i: feature for i, feature in enumerate(feature_names)}
+    feature_ranges = {feature_names[i]: [min(X_ord[:, i]), max(X_ord[:, i])] for i in range(X_ord.shape[1])}
+    feature_width = np.max(X_ord, axis=0) - np.min(X_ord, axis=0)
+
+    n_cat_discrete = ord_encoded_data.nunique().to_list()
+
+    len_continuous_org = [0, df_X_org.iloc[:, continuous_indices].shape[1]]
+    len_discrete_org = [df_X_org.iloc[:, continuous_indices].shape[1], df_X_org.shape[1]]
+
+    len_continuous_ord = [0, scaled_data.shape[1]]
+    len_discrete_ord = [scaled_data.shape[1], df_X_ord.shape[1]]
+
+    len_continuous_ohe = [0, scaled_data.shape[1]]
+    len_discrete_ohe = [scaled_data.shape[1], df_X_ohe.shape[1]]
+
+    ## Returning dataset information
+    dataset = {
+        'name': 'iris',
+        'df': df,
+        'df_y': df_y,
+        'df_X_org': df_X_org,
+        'df_X_ord': df_X_ord,
+        'df_X_ohe': df_X_ohe,
+        'df_y_le': df_y_le,
+        'class_name': class_name,
+        'label_encoder': label_encoder,
+        'labels': labels,
+        'ord_feature_encoder': ord_feature_encoder,
+        'ohe_feature_encoder': ohe_feature_encoder,
+        'num_feature_scaler': num_feature_scaler,
+        'feature_names': feature_names,
+        'feature_values': feature_values,
+        'feature_indices': feature_indices,
+        'feature_ranges': feature_ranges,
+        'feature_width': feature_width,
+        'discrete_features': discrete_features,
+        'discrete_indices': discrete_indices,
+        'continuous_features': continuous_features,
+        'continuous_indices': continuous_indices,
+        'continuous_decimals': continuous_decimals,
+        'n_cat_discrete': n_cat_discrete,
+        'len_discrete_ord': len_discrete_ord,
+        'len_continuous_ord': len_continuous_ord,
+        'len_discrete_ohe': len_discrete_ohe,
+        'len_continuous_ohe': len_continuous_ohe,
+        'len_discrete_org': len_discrete_org,
+        'len_continuous_org': len_continuous_org,
+        'X_org': X_org,
+        'X_ord': X_ord,
+        'X_ohe': X_ohe,
+        'y': y
+    }
+
+    return dataset

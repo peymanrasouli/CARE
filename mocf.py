@@ -492,6 +492,10 @@ class MOCF():
                 x_proba = self.predict_proba_fn(x_ohe.reshape(1,-1))
                 cf_target = np.argsort(x_proba)[0][-2]
                 cf_class = cf_target
+            elif cf_class is 'strange':
+                x_proba = self.predict_proba_fn(x_ohe.reshape(1,-1))
+                cf_target = np.argsort(x_proba)[0][0]
+                cf_class = cf_target
             else:
                 cf_target = cf_class
 
