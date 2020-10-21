@@ -18,7 +18,7 @@ def main():
 
     # defining the list of data sets
     datsets_list = {
-        'iris': (None, PrepareIris, 'classification'),
+        'iris': ('iris-sklearn', PrepareIris, 'classification'),
     }
 
     # defining the list of black-boxes
@@ -63,17 +63,18 @@ def main():
             X_train_2d = pca.transform(X_train)
             X_test_2d = pca.transform(X_test)
 
-            bb = GradientBoostingClassifier()
-            bb.fit(X_train_2d, Y_train)
-            pred_test = bb.predict(X_test_2d)
-            bb_accuracy_score = accuracy_score(Y_test, pred_test)
-            print('bb' , 'blackbox accuracy=', bb_accuracy_score)
-            bb_f1_score = f1_score(Y_test, pred_test,average='macro')
-            print('bb' , 'blackbox F1-score=', bb_f1_score)
+            surrogate = GradientBoostingClassifier()
+            pred_train = predict_fn(ord2ohe(X_train, dataset))
+            surrogate.fit(X_train_2d, pred_train)
+            pred_test = surrogate.predict(X_test_2d)
+            surrogate_accuracy_score = accuracy_score(Y_test, pred_test)
+            print('surrogate' , 'blackbox accuracy=', surrogate_accuracy_score)
+            surrogate_f1_score = f1_score(Y_test, pred_test,average='macro')
+            print('surrogate' , 'blackbox F1-score=', surrogate_f1_score)
 
             ################################### Explaining test samples #########################################
             # setting size of the experiment
-            N = 20  # number of instances to explain
+            N = 10  # number of instances to explain
 
             # selecting instances to explain from test set
             np.random.seed(42)
@@ -83,8 +84,8 @@ def main():
             # explaining instances
             for i, x_ord in enumerate(X_explain):
 
-                explanation_base = explainer_base.explain(x_ord, cf_class='strange')
-                explanation_sound = explainer_sound.explain(x_ord, cf_class='strange')
+                explanation_base = explainer_base.explain(x_ord, cf_class='neighbor')
+                explanation_sound = explainer_sound.explain(x_ord, cf_class='neighbor')
 
                 # extracting results
                 cfs_ord_base = explanation_base['cfs_ord']
@@ -125,20 +126,20 @@ def main():
                           X_train_2d]
 
 
-                y = np.r_[x_class, cf_base_class, cf_sound_class, Y_train]
+                y = np.r_[x_class, cf_base_class, cf_sound_class, pred_train]
 
                 # setup marker generator and color map
-                markers = ('s', 'o', 'D', '^', 'v')
-                colors = ('red', 'blue', 'green', 'cyan', 'gray')
+                markers = ('s', 'o', 'D')
+                colors = ('limegreen', 'deeppink', 'dimgray')
 
                 plt.close('all')
                 f = plt.figure()
                 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
                 y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-                xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
-                                     np.arange(y_min, y_max, 0.1))
+                xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.02),
+                                     np.arange(y_min, y_max, 0.02))
                 plt.tight_layout(h_pad=0.5, w_pad=0.5, pad=2.5)
-                Z = bb.predict(np.c_[xx.ravel(), yy.ravel()])
+                Z = surrogate.predict(np.c_[xx.ravel(), yy.ravel()])
                 Z = Z.reshape(xx.shape)
                 plt.contourf(xx, yy, Z, cmap='Set2')
                 plt.xlabel('D1')
@@ -164,7 +165,7 @@ def main():
                             alpha=1.0,
                             linewidth=2,
                             marker='D',
-                            s=150,
+                            s=200,
                             label='x')
 
                 # highlight base counter-factual
@@ -176,7 +177,7 @@ def main():
                             alpha=1.0,
                             linewidth=2,
                             marker='o',
-                            s=150,
+                            s=200,
                             label='Base CF')
 
                 # highlight sound counter-factual
@@ -188,7 +189,7 @@ def main():
                             alpha=1.0,
                             linewidth=2,
                             marker='s',
-                            s=150,
+                            s=200,
                             label='Sound CF')
                 plt.legend(loc="upper left")
                 plt.title(('Base proximity= %.3f, connectedness= %.3f | Sound proximity= %.3f, connectedness= %.3f') %
