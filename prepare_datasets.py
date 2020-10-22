@@ -545,15 +545,17 @@ def PrepareIris(dataset_path, dataset_name):
     ## Reading data from a csv file
     data = load_iris()
     df = pd.DataFrame(data=np.c_[data.data,data.target], columns=data.feature_names+['class'])
-    df['sepal width (cm)'] = pd.cut(df['sepal width (cm)'],bins=4)
+    df.iloc[0:50, 3] = '0'
+    df.iloc[50:100, 3] = '1'
+    df.iloc[100:150, 3] = '2'
 
     ## Recognizing inputs
     class_name = 'class'
     df_X_org = df.loc[:, df.columns!=class_name]
     df_y = df.loc[:, class_name]
 
-    continuous_features = ['sepal length (cm)', 'petal length (cm)', 'petal width (cm)']
-    discrete_features = ['sepal width (cm)']
+    continuous_features = ['sepal width (cm)', 'sepal length (cm)', 'petal length (cm)']
+    discrete_features = ['petal width (cm)']
 
     df_X_org = pd.concat([df_X_org[continuous_features], df_X_org[discrete_features]], axis=1)
 

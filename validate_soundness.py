@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from create_model import CreateModel
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.ensemble import GradientBoostingClassifier
 from mocf import MOCF
 from evaluate_counterfactuals import evaluateCounterfactuals
-from sklearn.metrics import f1_score, accuracy_score
 
 def main():
     # defining path of data sets and experiment results
@@ -59,17 +59,7 @@ def main():
 
             pca = PCA(n_components=2)
             pca.fit(X_train)
-            X_train_2d = pca.transform(X_train)
-            X_test_2d = pca.transform(X_test)
 
-            surrogate = GradientBoostingClassifier()
-            pred_train = predict_fn(ord2ohe(X_train, dataset))
-            surrogate.fit(X_train_2d, pred_train)
-            pred_test = surrogate.predict(X_test_2d)
-            surrogate_accuracy_score = accuracy_score(Y_test, pred_test)
-            print('surrogate' , 'blackbox accuracy=', surrogate_accuracy_score)
-            surrogate_f1_score = f1_score(Y_test, pred_test,average='macro')
-            print('surrogate' , 'blackbox F1-score=', surrogate_f1_score)
 
             ################################### Explaining test samples #########################################
             # setting size of the experiment
@@ -111,21 +101,22 @@ def main():
                 cf_base_ord = explanation_base['best_cf_ord'].to_numpy()
                 cf_sound_ord = explanation_sound['best_cf_ord'].to_numpy()
 
-                x_ohe = ord2ohe(x_ord, dataset)
-                cf_base_ohe = ord2ohe(cf_base_ord,dataset)
-                cf_sound_ohe = ord2ohe(cf_sound_ord, dataset)
-
-                x_class = predict_fn(x_ohe.reshape(1,-1))
-                cf_base_class = predict_fn(cf_base_ohe.reshape(1,-1))
-                cf_sound_class = predict_fn(cf_sound_ohe.reshape(1, -1))
 
                 X = np.r_[pca.transform(x_ord.reshape(1,-1)),
                           pca.transform(cf_base_ord.reshape(1,-1)),
                           pca.transform(cf_sound_ord.reshape(1,-1)),
-                          X_train_2d]
+                          pca.transform(X_train)]
 
+                x_ohe = ord2ohe(x_ord, dataset)
+                cf_base_ohe = ord2ohe(cf_base_ord,dataset)
+                cf_sound_ohe = ord2ohe(cf_sound_ord, dataset)
+                X_train_ohe = ord2ohe(X_train, dataset)
+                x_class = predict_fn(x_ohe.reshape(1,-1))
+                cf_base_class = predict_fn(cf_base_ohe.reshape(1,-1))
+                cf_sound_class = predict_fn(cf_sound_ohe.reshape(1, -1))
+                X_train_class = predict_fn(X_train_ohe)
 
-                y = np.r_[x_class, cf_base_class, cf_sound_class, pred_train]
+                y = np.r_[x_class, cf_base_class, cf_sound_class, X_train_class]
 
                 # setup marker generator and color map
                 markers = ('s', 'o', 'D')
@@ -133,12 +124,19 @@ def main():
 
                 plt.close('all')
                 f = plt.figure()
-                x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-                y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-                xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.02),
-                                     np.arange(y_min, y_max, 0.02))
+                h = 0.1
+                x_min, x_max = X[:, 0].min() - h , X[:, 0].max() + h
+                y_min, y_max = X[:, 1].min() - h , X[:, 1].max() + h
+                xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                                     np.arange(y_min, y_max, h))
                 plt.tight_layout(h_pad=0.5, w_pad=0.5, pad=2.5)
-                Z = surrogate.predict(np.c_[xx.ravel(), yy.ravel()])
+
+                X_bb = pca.inverse_transform(np.c_[xx.ravel(), yy.ravel()])
+                X_bb[:,3] = KBinsDiscretizer(n_bins=3, encode='ordinal').\
+                    fit_transform(X_bb[:,3].reshape(-1,1)).ravel().astype(int)
+
+                X_bb_ohe = ord2ohe(X_bb, dataset)
+                Z = predict_fn(X_bb_ohe)
                 Z = Z.reshape(xx.shape)
                 plt.contourf(xx, yy, Z, cmap='Set2')
                 plt.xlabel('D1')
@@ -164,7 +162,7 @@ def main():
                             alpha=1.0,
                             linewidth=2,
                             marker='D',
-                            s=200,
+                            s=150,
                             label='x')
 
                 # highlight base counter-factual
@@ -176,8 +174,17 @@ def main():
                             alpha=1.0,
                             linewidth=2,
                             marker='o',
-                            s=200,
-                            label='Base CF')
+                            s=150,
+                            label='Base cf')
+
+                plt.annotate(('proximity= %.2f \nconnectedness= %.2f') %
+                             (x_cfs_eval_base.iloc[1, 1], x_cfs_eval_base.iloc[1, 2]),
+                             xy=X_cf_base, xycoords='data',
+                             xytext=(-30, -60), textcoords='offset points',
+                             bbox=dict(boxstyle="round", fc="0.8"),
+                             arrowprops=dict(arrowstyle="->",
+                                             shrinkA=0, shrinkB=10,
+                                             connectionstyle="angle,angleA=0,angleB=90,rad=10"))
 
                 # highlight sound counter-factual
                 X_cf_sound, y_cf_sound = X[2, :], y[2]
@@ -188,17 +195,25 @@ def main():
                             alpha=1.0,
                             linewidth=2,
                             marker='s',
-                            s=200,
-                            label='Sound CF')
-                plt.legend(loc="upper left")
-                plt.title(('Base proximity= %.3f, connectedness= %.3f | Sound proximity= %.3f, connectedness= %.3f') %
-                          (x_cfs_eval_base.iloc[1, 1], x_cfs_eval_base.iloc[1, 2] ,x_cfs_eval_sound.iloc[1, 1],
-                           x_cfs_eval_sound.iloc[1, 2]), fontsize=9)
+                            s=150,
+                            label='Sound cf')
+
+                plt.annotate(('proximity= %.2f \nconnectedness= %.2f') %
+                            (x_cfs_eval_sound.iloc[1, 1], x_cfs_eval_sound.iloc[1, 2]),
+                            xy=X_cf_sound, xycoords='data',
+                            xytext=(-60, 30), textcoords='offset points',
+                            bbox=dict(boxstyle="round", fc="0.8"),
+                            arrowprops=dict(arrowstyle="->",
+                                            shrinkA=0, shrinkB=10,
+                                            connectionstyle="angle,angleA=0,angleB=90,rad=10"))
+
+                plt.legend(bbox_to_anchor=(0, 1.02, 1, 0.2), loc="lower left",
+                                mode="expand", borderaxespad=0, ncol=6)
                 plt.show()
                 f.savefig(experiment_path+str(ind_explain[i])+'.pdf')
                 plt.close()
 
-                print('Done!')
+            print('Done!')
 
 if __name__ == '__main__':
     main()
