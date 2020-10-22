@@ -8,7 +8,6 @@ from sklearn.ensemble import GradientBoostingClassifier
 from mocf import MOCF
 from evaluate_counterfactuals import evaluateCounterfactuals
 from sklearn.metrics import f1_score, accuracy_score
-from matplotlib.colors import ListedColormap
 
 def main():
     # defining path of data sets and experiment results
