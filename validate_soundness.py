@@ -1,10 +1,8 @@
 from utils import *
 from prepare_datasets import *
 import matplotlib.pyplot as plt
-from sklearn.decomposition import PCA
 from create_model import CreateModel
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.ensemble import GradientBoostingClassifier
 from mocf import MOCF
 from evaluate_counterfactuals import evaluateCounterfactuals
@@ -17,7 +15,8 @@ def main():
 
     # defining the list of data sets
     datsets_list = {
-        'iris': ('iris-sklearn', PrepareIris, 'classification'),
+        # 'iris': ('iris-sklearn', PrepareIris, 'classification'),
+        'moon': ('moon-sklearn', PrepareMoon, 'classification'),
     }
 
     # defining the list of black-boxes
@@ -57,10 +56,6 @@ def main():
                                    soundCF=True, feasibleAR=False)
             explainer_sound.fit(X_train, Y_train)
 
-            pca = PCA(n_components=2)
-            pca.fit(X_train)
-
-
             ################################### Explaining test samples #########################################
             # setting size of the experiment
             N = 10  # number of instances to explain
@@ -73,8 +68,8 @@ def main():
             # explaining instances
             for i, x_ord in enumerate(X_explain):
 
-                explanation_base = explainer_base.explain(x_ord, cf_class='neighbor')
-                explanation_sound = explainer_sound.explain(x_ord, cf_class='neighbor')
+                explanation_base = explainer_base.explain(x_ord, cf_class='strange')
+                explanation_sound = explainer_sound.explain(x_ord, cf_class='strange')
 
                 # extracting results
                 cfs_ord_base = explanation_base['cfs_ord']
@@ -102,10 +97,10 @@ def main():
                 cf_sound_ord = explanation_sound['best_cf_ord'].to_numpy()
 
 
-                X = np.r_[pca.transform(x_ord.reshape(1,-1)),
-                          pca.transform(cf_base_ord.reshape(1,-1)),
-                          pca.transform(cf_sound_ord.reshape(1,-1)),
-                          pca.transform(X_train)]
+                X = np.r_[(x_ord.reshape(1,-1)),
+                          (cf_base_ord.reshape(1,-1)),
+                          (cf_sound_ord.reshape(1,-1)),
+                          (X_train)]
 
                 x_ohe = ord2ohe(x_ord, dataset)
                 cf_base_ohe = ord2ohe(cf_base_ord,dataset)
@@ -122,22 +117,20 @@ def main():
                 markers = ('s', 'o', 'D')
                 colors = ('limegreen', 'deeppink', 'dimgray')
 
-                plt.close('all')
-                f = plt.figure()
-                h = 0.1
-                x_min, x_max = X[:, 0].min() - h , X[:, 0].max() + h
-                y_min, y_max = X[:, 1].min() - h , X[:, 1].max() + h
+
+                x_min, x_max = X[:, 0].min() - 1 , X[:, 0].max() + 1
+                y_min, y_max = X[:, 1].min() - 1 , X[:, 1].max() + 1
+                h = 0.02
                 xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
                                      np.arange(y_min, y_max, h))
-                plt.tight_layout(h_pad=0.5, w_pad=0.5, pad=2.5)
 
-                X_bb = pca.inverse_transform(np.c_[xx.ravel(), yy.ravel()])
-                X_bb[:,3] = KBinsDiscretizer(n_bins=3, encode='ordinal').\
-                    fit_transform(X_bb[:,3].reshape(-1,1)).ravel().astype(int)
-
-                X_bb_ohe = ord2ohe(X_bb, dataset)
-                Z = predict_fn(X_bb_ohe)
+                X_surface_ohe = ord2ohe(np.c_[xx.ravel(), yy.ravel()], dataset)
+                Z = predict_fn(X_surface_ohe)
                 Z = Z.reshape(xx.shape)
+
+                plt.close('all')
+                f = plt.figure()
+                plt.tight_layout(h_pad=0.5, w_pad=0.5, pad=2.5)
                 plt.contourf(xx, yy, Z, cmap='Set2')
                 plt.xlabel('D1')
                 plt.ylabel('D2')
