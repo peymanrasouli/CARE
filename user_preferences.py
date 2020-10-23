@@ -52,9 +52,7 @@ def userPreferences(dataset, x_ord):
 
         print('\n')
         print('----- user-specified actions -----')
-        actions = {'age':('ge',1),
-                   'sex':('fix',1),
-                   'race':('fix',1)}
+        actions = {}
 
         action_operation = [None] * len(x_ord)
         action_importance = [None] * len(x_ord)
