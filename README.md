@@ -35,23 +35,27 @@ python main.py
 ```
 python mocf_cfprototype_dice.py
 ```
-1- To reproduce the base comparison results run:
+3- To reproduce the MOCF performance results run:
+```
+python mocf_performance.py
+```
+4- To reproduce the base comparison results run:
 ```
 python benchmark_base.py
 ```
-2- To reproduce the sound comparison results run:
+5- To reproduce the sound comparison results run:
 ```
 python benchmark_sound.py
 ```
-3- To reproduce the feasible comparison results run:
+6- To reproduce the feasible comparison results run:
 ```
 python benchmark_feasible.py
 ```
-4- To reproduce the sound & feasible comparison results run:
+7- To reproduce the sound & feasible comparison results run:
 ```
 python benchmark_sound_feasible.py
 ```
-5- To reproduce the soundness validation results run:
+8- To reproduce the soundness validation results run:
 ```
 python validate_soundness.py
 ```
