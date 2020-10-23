@@ -49,7 +49,7 @@ def main():
             predict_proba_fn = lambda x: np.asarray([1-blackbox.predict(x).ravel(), blackbox.predict(x).ravel()]).transpose()
 
             # instance to explain
-            ind = 1
+            ind = 0
             x_ord = X_test[ind]
             n_cf = 5
 
