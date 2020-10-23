@@ -8,7 +8,7 @@ from prepare_datasets import *
 from sklearn.model_selection import train_test_split
 from create_model import CreateModel, KerasNeuralNetwork
 from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.neural_network import MLPRegressor
 from user_preferences import userPreferences
 from mocf import MOCF
 from evaluate_counterfactuals import evaluateCounterfactuals
@@ -32,8 +32,8 @@ def main():
     blackbox_list = {
         'nn-c': KerasNeuralNetwork,
         # 'gb-c': GradientBoostingClassifier,
+        # 'nn-r': MLPRegressor,
         # 'gb-r': GradientBoostingRegressor
-        # 'dt-r': DecisionTreeRegressor,
     }
 
     for dataset_kw in datsets_list:
@@ -61,7 +61,7 @@ def main():
                 predict_proba_fn = lambda x: blackbox.predict_proba(x)
 
             # setting size of the experiment
-            N = 10  # number of instances to explain
+            N = 500  # number of instances to explain
             n_cf = 5  # number of counter-factuals for measuring diversity
 
             # creating an instance of MOCF explainer for  soundCF=False and feasibleAR=False

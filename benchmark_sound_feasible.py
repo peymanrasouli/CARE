@@ -21,7 +21,7 @@ def main():
     # defining the list of data sets
     datsets_list = {
         'adult': ('adult.csv', PrepareAdult, 'classification'),
-        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
     }
 
     # defining the list of black-boxes
@@ -51,7 +51,7 @@ def main():
 
             ################################### Explaining test samples #########################################
             # setting the size of the experiment
-            N = 10  # number of instances to explain
+            N = 500  # number of instances to explain
             n_cf = 5  # number of counter-factuals for measuring diversity
 
             # creating/opening a csv file for storing results

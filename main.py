@@ -7,7 +7,7 @@ from prepare_datasets import *
 from sklearn.model_selection import train_test_split
 from create_model import CreateModel, KerasNeuralNetwork
 from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.neural_network import MLPRegressor
 from user_preferences import userPreferences
 from mocf_explainer import MOCFExplainer
 
@@ -29,8 +29,8 @@ def main():
     blackbox_list = {
         'nn-c': KerasNeuralNetwork,
         # 'gb-c': GradientBoostingClassifier,
+        # 'nn-r': MLPRegressor,
         # 'gb-r': GradientBoostingRegressor
-        # 'dt-r': DecisionTreeRegressor,
     }
 
     for dataset_kw in datsets_list:
