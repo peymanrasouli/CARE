@@ -31,7 +31,7 @@ pip install -r requirements.txt
 ```
 python main.py
 ```
-2- To explain a particular instance using MOCF, CFPrototype, and DiCE methods run:
+2- To explain a particular instance using MOCF, CFPrototype, and DiCE run:
 ```
 python mocf_cfprototype_dice.py
 ```
