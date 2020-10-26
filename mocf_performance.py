@@ -21,17 +21,17 @@ def main():
 
     # defining the list of data sets
     datsets_list = {
-        'adult': ('adult.csv', PrepareAdult, 'classification'),
-        'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
-        'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
-        # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
+        # 'adult': ('adult.csv', PrepareAdult, 'classification'),
+        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        # 'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
+        'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
     }
 
     # defining the list of black-boxes
     blackbox_list = {
-        'nn-c': MLPClassifier,
-        'gb-c': GradientBoostingClassifier,
-        # 'nn-r': MLPRegressor,
+        # 'nn-c': MLPClassifier,
+        # 'gb-c': GradientBoostingClassifier,
+        'nn-r': MLPRegressor,
         # 'gb-r': GradientBoostingRegressor
     }
 

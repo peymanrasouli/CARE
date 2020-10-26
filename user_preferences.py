@@ -52,7 +52,9 @@ def userPreferences(dataset, x_ord):
 
         print('\n')
         print('----- user-specified actions -----')
-        actions = {}
+        actions = {'age': ('ge',1),
+                   'sex': ('fix', 2),
+                   'race': ('fix', 3)}
 
         action_operation = [None] * len(x_ord)
         action_importance = [None] * len(x_ord)
@@ -93,7 +95,8 @@ def userPreferences(dataset, x_ord):
 
         print('\n')
         print('----- user-specified actions -----')
-        actions = {}
+        actions = {'AGE': ('ge', 1),
+                   'SEX': ('fix', 2)}
 
         action_operation = [None] * len(x_ord)
         action_importance = [None] * len(x_ord)
@@ -124,7 +127,8 @@ def userPreferences(dataset, x_ord):
 
         print('\n')
         print('---- user-specified actions -----')
-        actions = {}
+        actions = {'age': ('ge', 1),
+                   'sex': ('fix', 2)}
 
         action_operation = [None] * len(x_ord)
         action_importance = [None] * len(x_ord)
@@ -155,7 +159,8 @@ def userPreferences(dataset, x_ord):
 
         print('\n')
         print('----- user-specified actions -----')
-        actions = {}
+        actions = {'AGE': ('ge', 1),
+                   'RAD': ('fix', 2)}
 
         action_operation = [None] * len(x_ord)
         action_importance = [None] * len(x_ord)
