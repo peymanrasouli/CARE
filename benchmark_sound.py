@@ -7,7 +7,7 @@ pd.set_option('display.width', 1000)
 from prepare_datasets import *
 from utils import *
 from sklearn.model_selection import train_test_split
-from create_model import CreateModel, KerasNeuralNetwork
+from create_model import CreateModel, MLPClassifier
 from mocf_explainer import MOCFExplainer
 from cfprototype_explainer import CFPrototypeExplainer
 from dice_explainer import DiCEExplainer
@@ -22,11 +22,18 @@ def main():
     datsets_list = {
         'adult': ('adult.csv', PrepareAdult, 'classification'),
         'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
     }
 
     # defining the list of black-boxes
     blackbox_list = {
-        'nn-c': KerasNeuralNetwork
+        'nn-c': MLPClassifier,
+    }
+
+    experiment_size = {
+        'adult': (500, 5),
+        'credit-card_default': (500, 5),
+        'heart-disease': (50, 5),
     }
 
     for dataset_kw in datsets_list:
@@ -50,9 +57,8 @@ def main():
             predict_proba_fn = lambda x: np.asarray([1-blackbox.predict(x).ravel(), blackbox.predict(x).ravel()]).transpose()
 
             ################################### Explaining test samples #########################################
-            # setting the size of the experiment
-            N = 500  # number of instances to explain
-            n_cf = 5  # number of counter-factuals for measuring diversity
+            # setting experiment size for the data set
+            N, n_cf = experiment_size[dataset_kw]
 
             # creating/opening a csv file for storing results
             exists = os.path.isfile(experiment_path + 'benchmark_sound_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf))
@@ -117,98 +123,103 @@ def main():
             eval_results_csv.write(header)
             eval_results_csv.flush()
 
-            # selecting instances to explain from test set
-            np.random.seed(42)
-            X_explain = X_test[np.random.choice(range(X_test.shape[0]), size=N, replace=False)]
+            # explaining instances from test set
+            explained = 0
+            for x_ord in X_test:
 
-            # explaining instances
-            for x_ord in X_explain:
+                try:
+                    # explain instance x_ord using MOCF
+                    MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
+                                                soundCF=True, feasibleAR=False, user_preferences=None,
+                                                cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
 
-                # explain instance x_ord using MOCF
-                MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                            soundCF=True, feasibleAR=False, user_preferences=None,
-                                            cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
+                    mocf_x_cfs_highlight = MOCF_output['x_cfs_highlight']
+                    mocf_cfs_eval = MOCF_output['cfs_eval']
+                    mocf_x_cfs_eval = MOCF_output['x_cfs_eval']
 
-                mocf_x_cfs_highlight = MOCF_output['x_cfs_highlight']
-                mocf_cfs_eval = MOCF_output['cfs_eval']
-                mocf_x_cfs_eval = MOCF_output['x_cfs_eval']
+                    # explain instance x_ord using CFPrototype
+                    CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, task,
+                                                              MOCF_output, target_class=None, n_cf=n_cf)
 
-                # explain instance x_ord using CFPrototype
-                CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, task,
-                                                          MOCF_output, target_class=None, n_cf=n_cf)
+                    cfprototype_x_cfs_highlight = CFPrototype_output['x_cfs_highlight']
+                    cfprototype_cfs_eval = CFPrototype_output['cfs_eval']
+                    cfprototype_x_cfs_eval = CFPrototype_output['x_cfs_eval']
 
-                cfprototype_x_cfs_highlight = CFPrototype_output['x_cfs_highlight']
-                cfprototype_cfs_eval = CFPrototype_output['cfs_eval']
-                cfprototype_x_cfs_eval = CFPrototype_output['x_cfs_eval']
+                    # explain instance x_ord using DiCE
+                    DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset,
+                                                task, MOCF_output, feasibleAR=False, user_preferences=None,
+                                                n_cf=n_cf, desired_class="opposite", probability_thresh=0.5,
+                                                proximity_weight=1.0, diversity_weight=1.0)
 
-                # explain instance x_ord using DiCE
-                DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset,
-                                            task, MOCF_output, feasibleAR=False, user_preferences=None,
-                                            n_cf=n_cf, desired_class="opposite", probability_thresh=0.5,
-                                            proximity_weight=1.0, diversity_weight=1.0)
-
-                dice_x_cfs_highlight = DiCE_output['x_cfs_highlight']
-                dice_cfs_eval = DiCE_output['cfs_eval']
-                dice_x_cfs_eval = DiCE_output['x_cfs_eval']
+                    dice_x_cfs_highlight = DiCE_output['x_cfs_highlight']
+                    dice_cfs_eval = DiCE_output['cfs_eval']
+                    dice_x_cfs_eval = DiCE_output['x_cfs_eval']
 
 
-                # storing the best counter-factual found by methods
-                cfs_results = pd.concat([mocf_x_cfs_highlight.iloc[:2], mocf_x_cfs_eval.iloc[:2],
-                                         cfprototype_x_cfs_highlight.iloc[:2], cfprototype_x_cfs_eval.iloc[:2],
-                                         dice_x_cfs_highlight.iloc[:2], dice_x_cfs_eval.iloc[:2]], axis=1)
-                cfs_results.to_csv(cfs_results_csv)
-                cfs_results_csv.write('\n')
-                cfs_results_csv.flush()
+                    # storing the best counter-factual found by methods
+                    cfs_results = pd.concat([mocf_x_cfs_highlight.iloc[:2], mocf_x_cfs_eval.iloc[:2],
+                                             cfprototype_x_cfs_highlight.iloc[:2], cfprototype_x_cfs_eval.iloc[:2],
+                                             dice_x_cfs_highlight.iloc[:2], dice_x_cfs_eval.iloc[:2]], axis=1)
+                    cfs_results.to_csv(cfs_results_csv)
+                    cfs_results_csv.write('\n')
+                    cfs_results_csv.flush()
 
-                # measuring the diversity of counter-factuals using Jaccard metric
-                n_cf_mocf = min(n_cf, mocf_cfs_eval.shape[0])
-                n_cf_cfprototype = min(n_cf, cfprototype_cfs_eval.shape[0])
-                n_cf_dice= min(n_cf, dice_cfs_eval.shape[0])
+                    # measuring the diversity of counter-factuals using Jaccard metric
+                    n_cf_mocf = min(n_cf, mocf_cfs_eval.shape[0])
+                    n_cf_cfprototype = min(n_cf, cfprototype_cfs_eval.shape[0])
+                    n_cf_dice= min(n_cf, dice_cfs_eval.shape[0])
 
-                mocf_feature_names = []
-                for i in range(n_cf_mocf):
-                    mocf_feature_names.append([dataset['feature_names'][ii] for ii in np.where(mocf_x_cfs_highlight.iloc[i+1] != '_')[0]])
-                mocf_feature_names = list(filter(None, mocf_feature_names))
+                    mocf_feature_names = []
+                    for i in range(n_cf_mocf):
+                        mocf_feature_names.append([dataset['feature_names'][ii] for ii in np.where(mocf_x_cfs_highlight.iloc[i+1] != '_')[0]])
+                    mocf_feature_names = list(filter(None, mocf_feature_names))
 
-                cfprototype_feature_names = []
-                for i in range(n_cf_cfprototype):
-                    cfprototype_feature_names.append([dataset['feature_names'][ii] for ii in np.where(cfprototype_x_cfs_highlight.iloc[i + 1] != '_')[0]])
-                cfprototype_feature_names = list(filter(None, cfprototype_feature_names))
+                    cfprototype_feature_names = []
+                    for i in range(n_cf_cfprototype):
+                        cfprototype_feature_names.append([dataset['feature_names'][ii] for ii in np.where(cfprototype_x_cfs_highlight.iloc[i + 1] != '_')[0]])
+                    cfprototype_feature_names = list(filter(None, cfprototype_feature_names))
 
-                dice_feature_names = []
-                for i in range(n_cf_dice):
-                    dice_feature_names.append([dataset['feature_names'][ii] for ii in np.where(dice_x_cfs_highlight.iloc[i + 1] != '_')[0]])
-                dice_feature_names = list(filter(None, dice_feature_names))
+                    dice_feature_names = []
+                    for i in range(n_cf_dice):
+                        dice_feature_names.append([dataset['feature_names'][ii] for ii in np.where(dice_x_cfs_highlight.iloc[i + 1] != '_')[0]])
+                    dice_feature_names = list(filter(None, dice_feature_names))
 
-                mocf_jaccard = []
-                for i in range(0, len(mocf_feature_names)):
-                    for ii in range(i, len(mocf_feature_names)):
-                        jaccard = len(set(mocf_feature_names[i]) & set(mocf_feature_names[ii])) / \
-                                  len(set(mocf_feature_names[i]) | set(mocf_feature_names[ii]))
-                        mocf_jaccard.append(jaccard)
+                    mocf_jaccard = []
+                    for i in range(0, len(mocf_feature_names)):
+                        for ii in range(i, len(mocf_feature_names)):
+                            jaccard = len(set(mocf_feature_names[i]) & set(mocf_feature_names[ii])) / \
+                                      len(set(mocf_feature_names[i]) | set(mocf_feature_names[ii]))
+                            mocf_jaccard.append(jaccard)
 
-                cfprototype_jaccard = []
-                for i in range(0, len(cfprototype_feature_names)):
-                    for ii in range(i, len(cfprototype_feature_names)):
-                        jaccard = len(set(cfprototype_feature_names[i]) & set(cfprototype_feature_names[ii])) / \
-                                  len(set(cfprototype_feature_names[i]) | set(cfprototype_feature_names[ii]))
-                        cfprototype_jaccard.append(jaccard)
+                    cfprototype_jaccard = []
+                    for i in range(0, len(cfprototype_feature_names)):
+                        for ii in range(i, len(cfprototype_feature_names)):
+                            jaccard = len(set(cfprototype_feature_names[i]) & set(cfprototype_feature_names[ii])) / \
+                                      len(set(cfprototype_feature_names[i]) | set(cfprototype_feature_names[ii]))
+                            cfprototype_jaccard.append(jaccard)
 
-                dice_jaccard = []
-                for i in range(0, len(dice_feature_names)):
-                    for ii in range(i, len(dice_feature_names)):
-                        jaccard = len(set(dice_feature_names[i]) & set(dice_feature_names[ii])) / \
-                                  len(set(dice_feature_names[i]) | set(dice_feature_names[ii]))
-                        dice_jaccard.append(jaccard)
+                    dice_jaccard = []
+                    for i in range(0, len(dice_feature_names)):
+                        for ii in range(i, len(dice_feature_names)):
+                            jaccard = len(set(dice_feature_names[i]) & set(dice_feature_names[ii])) / \
+                                      len(set(dice_feature_names[i]) | set(dice_feature_names[ii]))
+                            dice_jaccard.append(jaccard)
 
-                eval_results = np.r_[mocf_cfs_eval.iloc[0, :-2], 1.0 - np.mean(mocf_jaccard), int(mocf_cfs_eval.iloc[0, 0] == 0),
-                                     cfprototype_cfs_eval.iloc[0, :-2], 1.0 - np.mean(cfprototype_jaccard), int(cfprototype_cfs_eval.iloc[0, 0] == 0),
-                                     dice_cfs_eval.iloc[0, :-2], 1.0 - np.mean(dice_jaccard), int(dice_cfs_eval.iloc[0, 0] == 0)]
+                    eval_results = np.r_[mocf_cfs_eval.iloc[0, :-2], 1.0 - np.mean(mocf_jaccard), int(mocf_cfs_eval.iloc[0, 0] == 0),
+                                         cfprototype_cfs_eval.iloc[0, :-2], 1.0 - np.mean(cfprototype_jaccard), int(cfprototype_cfs_eval.iloc[0, 0] == 0),
+                                         dice_cfs_eval.iloc[0, :-2], 1.0 - np.mean(dice_jaccard), int(dice_cfs_eval.iloc[0, 0] == 0)]
 
-                eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
-                eval_results = ','.join(eval_results)
-                eval_results_csv.write('%s\n' % (eval_results))
-                eval_results_csv.flush()
+                    eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
+                    eval_results = ','.join(eval_results)
+                    eval_results_csv.write('%s\n' % (eval_results))
+                    eval_results_csv.flush()
+                    explained += 1
+
+                except Exception:
+                    pass
+
+                if explained == N:
+                    break
 
             cfs_results_csv.close()
             eval_results_csv.close()

@@ -5,7 +5,7 @@ pd.set_option('max_columns', None)
 pd.set_option('display.width', 1000)
 from prepare_datasets import *
 from sklearn.model_selection import train_test_split
-from create_model import CreateModel, KerasNeuralNetwork
+from create_model import CreateModel, MLPClassifier
 from user_preferences import userPreferences
 from mocf_explainer import MOCFExplainer
 from cfprototype_explainer import CFPrototypeExplainer
@@ -20,12 +20,13 @@ def main():
     # defining the list of data sets
     datsets_list = {
         'adult': ('adult.csv', PrepareAdult, 'classification'),
-        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
     }
 
     # defining the list of black-boxes
     blackbox_list = {
-        'nn-c': KerasNeuralNetwork
+        'nn-c': MLPClassifier,
     }
 
     for dataset_kw in datsets_list:

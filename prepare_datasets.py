@@ -298,6 +298,7 @@ def PrepareHeartDisease(dataset_path, dataset_name):
 
     ## Recognizing inputs
     class_name = 'num'
+    df.loc[df['num'] != 0, 'num'] = 1
     df_X_org = df.loc[:, df.columns!=class_name]
     df_y = df.loc[:, class_name]
 
