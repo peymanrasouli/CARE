@@ -16,6 +16,7 @@ from dython import nominal
 import hdbscan
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
 from sklearn.preprocessing import MinMaxScaler
+import matplotlib.pyplot as plt
 
 class MOCF():
     def __init__(self,
@@ -319,6 +320,7 @@ class MOCF():
         # Correlation Ratio for categorical-continuous cases
         # Cramer's V for categorical-categorical cases
         corr = nominal.associations(self.X_train, nominal_columns=self.discrete_indices, plot=False)['corr']
+        plt.close('all')
 
         # only consider the features that have correlation above the threshold
         corr = corr.to_numpy()
