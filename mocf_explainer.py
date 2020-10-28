@@ -58,8 +58,4 @@ def MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_pr
               'objective_names': objective_names,
               }
 
-    # deleting created objects to free-up memory
-    del mocf_explainer
-    del explanations
-
     return output
