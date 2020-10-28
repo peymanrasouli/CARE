@@ -235,5 +235,5 @@ def main():
             cfs_results_csv.close()
             eval_results_csv.close()
 
-        if __name__ == '__main__':
-            main()
+if __name__ == '__main__':
+    main()
