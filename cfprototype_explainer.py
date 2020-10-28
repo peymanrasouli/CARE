@@ -88,6 +88,7 @@ def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, 
               'x_cfs_highlight': x_cfs_highlight,
               }
 
+    # deleting created objects to free-up memory
     del cfprototype_explainer
     del explanations
 

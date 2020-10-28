@@ -7,21 +7,21 @@ def MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_pr
                   cf_class='opposite', probability_thresh=0.5, cf_quantile='neighbor', n_cf=5):
 
     # creating an instance of MOCF explainer
-    explainer = MOCF(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
+    mocf_explainer = MOCF(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                      soundCF=soundCF, feasibleAR=feasibleAR, n_cf=n_cf)
 
     # fitting the explainer on the training data
-    explainer.fit(X_train, Y_train)
+    mocf_explainer.fit(X_train, Y_train)
 
     # generating counter-factuals
-    explanation = explainer.explain(x_ord, cf_class=cf_class, cf_quantile=cf_quantile,
+    explanations = mocf_explainer.explain(x_ord, cf_class=cf_class, cf_quantile=cf_quantile,
                                     probability_thresh=probability_thresh, user_preferences=user_preferences)
 
     # extracting results
-    cfs_ord = explanation['cfs_ord']
-    toolbox = explanation['toolbox']
-    objective_names = explanation['objective_names']
-    featureScaler = explanation['featureScaler']
+    cfs_ord = explanations['cfs_ord']
+    toolbox = explanations['toolbox']
+    objective_names = explanations['objective_names']
+    featureScaler = explanations['featureScaler']
     feature_names = dataset['feature_names']
 
     # evaluating counter-factuals
@@ -58,7 +58,8 @@ def MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_pr
               'objective_names': objective_names,
               }
 
-    del explainer
-    del explanation
+    # deleting created objects to free-up memory
+    del mocf_explainer
+    del explanations
 
     return output
