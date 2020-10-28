@@ -148,4 +148,9 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
               'x_cfs_highlight': x_cfs_highlight,
               }
 
+    del data
+    del model
+    del dice_explainer
+    del explanations
+
     return output

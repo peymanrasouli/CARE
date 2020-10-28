@@ -58,4 +58,7 @@ def MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_pr
               'objective_names': objective_names,
               }
 
+    del explainer
+    del explanation
+
     return output
