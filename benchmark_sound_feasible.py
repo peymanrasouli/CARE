@@ -10,6 +10,7 @@ from sklearn.model_selection import train_test_split
 from create_model import CreateModel, MLPClassifier
 from user_preferences import userPreferences
 from mocf_explainer import MOCFExplainer
+from cfprototype_explainer import CFPrototypeExplainer
 from dice_explainer import DiCEExplainer
 
 def main():
@@ -66,8 +67,10 @@ def main():
                 os.remove(experiment_path + 'benchmark_sound_feasible_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf))
             cfs_results_csv = open(experiment_path + 'benchmark_sound_feasible_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf), 'a')
 
-            feature_space = ['' for _ in range(X_train.shape[1]-1 + 9)]
+            feature_space = ['' for _ in range(X_train.shape[1]-1 + 7)]
             header = ['','MOCF']
+            header += feature_space
+            header += ['CFPrototype']
             header += feature_space
             header += ['DiCE']
             header = ','.join(header)
@@ -80,17 +83,19 @@ def main():
                 os.remove(experiment_path + 'benchmark_sound_feasible_%s_eval_%s_%s.csv'%(dataset['name'], N, n_cf))
             eval_results_csv = open(experiment_path + 'benchmark_sound_feasible_%s_eval_%s_%s.csv'%(dataset['name'], N, n_cf), 'a')
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                       ('MOCF', '', '', '', '', '', '', '', '',
+                       'CFPrototype', '', '', '', '', '', '', '', '',
                        'DiCE', '', '', '', '', '', '', '', '')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                       ('prediction', 'proximity', 'connectedness', 'actionable', 'correlation', 'distance', 'sparsity', 'diversity', 'validity',
+                       'prediction', 'proximity', 'connectedness', 'actionable', 'correlation', 'distance', 'sparsity', 'diversity', 'validity',
                        'prediction', 'proximity', 'connectedness', 'actionable', 'correlation', 'distance', 'sparsity', 'diversity', 'validity')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                       ('=average(A5:A1000)', '=average(B5:B1000)',
                        '=average(C5:C1000)', '=average(D5:D1000)',
                        '=average(E5:E1000)', '=average(F5:F1000)',
@@ -99,10 +104,15 @@ def main():
                        '=average(K5:K1000)', '=average(L5:L1000)',
                        '=average(M5:M1000)', '=average(N5:N1000)',
                        '=average(O5:O1000)', '=average(P5:P1000)',
-                       '=average(Q5:Q1000)', '=average(R5:R1000)')
+                       '=average(Q5:Q1000)', '=average(R5:R1000)',
+                       '=average(S5:S1000)', '=average(T5:T1000)',
+                       '=average(U5:U1000)', '=average(V5:V1000)',
+                       '=average(W5:W1000)', '=average(X5:X1000)',
+                       '=average(Y5:Y1000)', '=average(Z5:Z1000)',
+                       '=average(AA5:AA1000)')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                       ('=stdev(A5:A1000)', '=stdev(B5:B1000)',
                        '=stdev(C5:C1000)', '=stdev(D5:D1000)',
                        '=stdev(E5:E1000)', '=stdev(F5:F1000)',
@@ -111,7 +121,12 @@ def main():
                        '=stdev(K5:K1000)', '=stdev(L5:L1000)',
                        '=stdev(M5:M1000)', '=stdev(N5:N1000)',
                        '=stdev(O5:O1000)', '=stdev(P5:P1000)',
-                       '=stdev(Q5:Q1000)', '=stdev(R5:R1000)')
+                       '=stdev(Q5:Q1000)', '=stdev(R5:R1000)',
+                       '=stdev(S5:S1000)', '=stdev(T5:T1000)',
+                       '=stdev(U5:U1000)', '=stdev(V5:V1000)',
+                       '=stdev(W5:W1000)', '=stdev(X5:X1000)',
+                       '=stdev(Y5:Y1000)', '=stdev(Z5:Z1000)',
+                       '=stdev(AA5:AA1000)')
             eval_results_csv.write(header)
             eval_results_csv.flush()
 
@@ -131,6 +146,14 @@ def main():
                     mocf_cfs_eval = MOCF_output['cfs_eval']
                     mocf_x_cfs_eval = MOCF_output['x_cfs_eval']
 
+                    # explain instance x_ord using CFPrototype
+                    CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset,
+                                                              task, MOCF_output, target_class=None, n_cf=n_cf)
+
+                    cfprototype_x_cfs_highlight = CFPrototype_output['x_cfs_highlight']
+                    cfprototype_cfs_eval = CFPrototype_output['cfs_eval']
+                    cfprototype_x_cfs_eval = CFPrototype_output['x_cfs_eval']
+
                     # explain instance x_ord using DiCE
                     DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset,
                                                 task, MOCF_output, feasibleAR=True, user_preferences=user_preferences,
@@ -143,23 +166,33 @@ def main():
 
                     # storing the best counter-factual found by methods
                     cfs_results = pd.concat([mocf_x_cfs_highlight.iloc[:2], mocf_x_cfs_eval.iloc[:2],
+                                             cfprototype_x_cfs_highlight.iloc[:2], cfprototype_x_cfs_eval.iloc[:2],
                                              dice_x_cfs_highlight.iloc[:2], dice_x_cfs_eval.iloc[:2]], axis=1)
                     cfs_results.to_csv(cfs_results_csv)
                     cfs_results_csv.write('\n')
                     cfs_results_csv.flush()
 
                     # measuring the diversity of counter-factuals using Jaccard metric
-                    n_cf_mocf = min(n_cf,mocf_cfs_eval.shape[0])
-                    n_cf_dice= min(n_cf, dice_cfs_eval.shape[0])
+                    n_cf_mocf = min(n_cf, mocf_cfs_eval.shape[0])
+                    n_cf_cfprototype = min(n_cf, cfprototype_cfs_eval.shape[0])
+                    n_cf_dice = min(n_cf, dice_cfs_eval.shape[0])
 
                     mocf_feature_names = []
                     for i in range(n_cf_mocf):
-                        mocf_feature_names.append([dataset['feature_names'][ii] for ii in np.where(mocf_x_cfs_highlight.iloc[i+1] != '_')[0]])
+                        mocf_feature_names.append([dataset['feature_names'][ii] for ii in
+                                                   np.where(mocf_x_cfs_highlight.iloc[i + 1] != '_')[0]])
                     mocf_feature_names = list(filter(None, mocf_feature_names))
+
+                    cfprototype_feature_names = []
+                    for i in range(n_cf_cfprototype):
+                        cfprototype_feature_names.append([dataset['feature_names'][ii] for ii in
+                                                          np.where(cfprototype_x_cfs_highlight.iloc[i + 1] != '_')[0]])
+                    cfprototype_feature_names = list(filter(None, cfprototype_feature_names))
 
                     dice_feature_names = []
                     for i in range(n_cf_dice):
-                        dice_feature_names.append([dataset['feature_names'][ii] for ii in np.where(dice_x_cfs_highlight.iloc[i + 1] != '_')[0]])
+                        dice_feature_names.append([dataset['feature_names'][ii] for ii in
+                                                   np.where(dice_x_cfs_highlight.iloc[i + 1] != '_')[0]])
                     dice_feature_names = list(filter(None, dice_feature_names))
 
                     mocf_jaccard = []
@@ -169,6 +202,13 @@ def main():
                                       len(set(mocf_feature_names[i]) | set(mocf_feature_names[ii]))
                             mocf_jaccard.append(jaccard)
 
+                    cfprototype_jaccard = []
+                    for i in range(0, len(cfprototype_feature_names)):
+                        for ii in range(i, len(cfprototype_feature_names)):
+                            jaccard = len(set(cfprototype_feature_names[i]) & set(cfprototype_feature_names[ii])) / \
+                                      len(set(cfprototype_feature_names[i]) | set(cfprototype_feature_names[ii]))
+                            cfprototype_jaccard.append(jaccard)
+
                     dice_jaccard = []
                     for i in range(0, len(dice_feature_names)):
                         for ii in range(i, len(dice_feature_names)):
@@ -177,6 +217,7 @@ def main():
                             dice_jaccard.append(jaccard)
 
                     eval_results = np.r_[mocf_cfs_eval.iloc[0, :-2], 1.0 - np.mean(mocf_jaccard), int(mocf_cfs_eval.iloc[0, 0] == 0),
+                                         cfprototype_cfs_eval.iloc[0, :-2], 1.0 - np.mean(cfprototype_jaccard), int(cfprototype_cfs_eval.iloc[0, 0] == 0),
                                          dice_cfs_eval.iloc[0, :-2], 1.0 - np.mean(dice_jaccard), int(dice_cfs_eval.iloc[0, 0] == 0)]
 
                     eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
@@ -194,5 +235,5 @@ def main():
             cfs_results_csv.close()
             eval_results_csv.close()
 
-if __name__ == '__main__':
-    main()
+        if __name__ == '__main__':
+            main()

@@ -171,17 +171,20 @@ def main():
 
                     mocf_feature_names = []
                     for i in range(n_cf_mocf):
-                        mocf_feature_names.append([dataset['feature_names'][ii] for ii in np.where(mocf_x_cfs_highlight.iloc[i+1] != '_')[0]])
+                        mocf_feature_names.append([dataset['feature_names'][ii] for ii in
+                                                   np.where(mocf_x_cfs_highlight.iloc[i+1] != '_')[0]])
                     mocf_feature_names = list(filter(None, mocf_feature_names))
 
                     cfprototype_feature_names = []
                     for i in range(n_cf_cfprototype):
-                        cfprototype_feature_names.append([dataset['feature_names'][ii] for ii in np.where(cfprototype_x_cfs_highlight.iloc[i + 1] != '_')[0]])
+                        cfprototype_feature_names.append([dataset['feature_names'][ii] for ii in
+                                                          np.where(cfprototype_x_cfs_highlight.iloc[i + 1] != '_')[0]])
                     cfprototype_feature_names = list(filter(None, cfprototype_feature_names))
 
                     dice_feature_names = []
                     for i in range(n_cf_dice):
-                        dice_feature_names.append([dataset['feature_names'][ii] for ii in np.where(dice_x_cfs_highlight.iloc[i + 1] != '_')[0]])
+                        dice_feature_names.append([dataset['feature_names'][ii] for ii in
+                                                   np.where(dice_x_cfs_highlight.iloc[i + 1] != '_')[0]])
                     dice_feature_names = list(filter(None, dice_feature_names))
 
                     mocf_jaccard = []
