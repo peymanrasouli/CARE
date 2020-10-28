@@ -24,16 +24,16 @@ def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, 
                      (np.ones(rng_shape) * rng[1]).astype(np.float32))
 
     # creating prototype counter-factual explainer
-    cfprototype_explainer = CounterFactualProto(predict=predict_proba_fn, shape=shape, feature_range=feature_range,
-                                                cat_vars=cat_vars_ohe, ohe=True, beta=0.1, theta=10,
-                                                use_kdtree=True, max_iterations=500, c_init=1.0, c_steps=5)
+    explainer = CounterFactualProto(predict=predict_proba_fn, shape=shape, feature_range=feature_range,
+                                    cat_vars=cat_vars_ohe, ohe=True, beta=0.1, theta=10,
+                                    use_kdtree=True, max_iterations=500, c_init=1.0, c_steps=5)
 
     # Fitting the explainer on the training data
     X_train_ohe = ord2ohe(X_train, dataset)
-    cfprototype_explainer.fit(X_train_ohe, d_type='abdm', disc_perc=[25, 50, 75])
+    explainer.fit(X_train_ohe, d_type='abdm', disc_perc=[25, 50, 75])
 
     # generating counter-factuals
-    explanations = cfprototype_explainer.explain(x_ohe,target_class=target_class)
+    explanations = explainer.explain(x_ohe,target_class=target_class)
 
     # extracting solutions
     cfs_iter = []

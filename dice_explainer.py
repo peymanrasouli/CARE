@@ -53,7 +53,7 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
         model = dice_ml.Model(model=blackbox, backend=backend)
 
         # creating a DiCE explainer instance
-        dice_explainer = dice_ml.Dice(data, model)
+        explainer = dice_ml.Dice(data, model)
 
         ## generating counter-factuals
         x_ord_dice = {}
@@ -69,13 +69,13 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
         # proximity_weight=0.5,
         # diversity_weight=1.0
         # stopping_threshold=0.5
-        explanations = dice_explainer.generate_counterfactuals(x_ord_dice, total_CFs=n_cf,
-                                                               desired_class=desired_class,
-                                                               stopping_threshold=probability_thresh,
-                                                               posthoc_sparsity_algorithm="binary",
-                                                               features_to_vary=features_to_vary,
-                                                               proximity_weight=proximity_weight,
-                                                               diversity_weight=diversity_weight)
+        explanations = explainer.generate_counterfactuals(x_ord_dice, total_CFs=n_cf,
+                                                           desired_class=desired_class,
+                                                           stopping_threshold=probability_thresh,
+                                                           posthoc_sparsity_algorithm="binary",
+                                                           features_to_vary=features_to_vary,
+                                                           proximity_weight=proximity_weight,
+                                                           diversity_weight=diversity_weight)
     else:
         # creating data a instance
         data = dice_ml.Data(dataframe=data_frame,
@@ -87,7 +87,7 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
         model = dice_ml.Model(model=blackbox, backend=backend)
 
         # creating a DiCE explainer instance
-        dice_explainer = dice_ml.Dice(data, model)
+        explainer = dice_ml.Dice(data, model)
 
         # generating counter-factuals
         x_ord_dice = {}
@@ -103,10 +103,10 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
         # proximity_weight=0.5,
         # diversity_weight=1.0
         # stopping_threshold=0.5
-        explanations = dice_explainer.generate_counterfactuals(x_ord_dice, total_CFs=n_cf,
-                                                               desired_class=desired_class,
-                                                               stopping_threshold=probability_thresh,
-                                                               posthoc_sparsity_algorithm="binary")
+        explanations = explainer.generate_counterfactuals(x_ord_dice, total_CFs=n_cf,
+                                                           desired_class=desired_class,
+                                                           stopping_threshold=probability_thresh,
+                                                           posthoc_sparsity_algorithm="binary")
 
     # extracting solutions
     cfs_ord = explanations.final_cfs_df.iloc[:,:-1]
