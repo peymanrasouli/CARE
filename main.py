@@ -69,7 +69,7 @@ def main():
                                    soundCF=False, feasibleAR=False, user_preferences=user_preferences,
                                    cf_class='opposite', probability_thresh=0.5, cf_quantile='neighbor', n_cf=n_cf)
 
-            # print n best counter-factuals and their corresponding objective values
+            # print n best counterfactuals and their corresponding objective values
             print('\n')
             print(output['x_cfs_highlight'].head(n= n_cf + 1))
             print(output['x_cfs_eval'].head(n= n_cf + 1))
