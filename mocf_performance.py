@@ -201,35 +201,33 @@ def main():
                     featureScaler = explanation_sound_feasible['featureScaler']
                     feature_names = dataset['feature_names']
 
-                    # evaluating counterfactuals of base method
+                    # evaluating and recovering counterfactuals of base method
                     cfs_ord_base, \
                     cfs_eval_base, \
                     x_cfs_ord_base, \
                     x_cfs_eval_base = evaluateCounterfactuals(x_ord, explanation_base['cfs_ord'], dataset,
                                                               predict_fn, predict_proba_fn, task, toolbox,
                                                               objective_names, featureScaler, feature_names)
-                    # recovering counterfactuals in original format of base method
                     x_org_base, \
                     cfs_org_base, \
                     x_cfs_org_base, \
                     x_cfs_highlight_base = recoverOriginals(x_ord, cfs_ord_base, dataset, feature_names)
 
 
-                    # evaluating counterfactuals of sound method
+                    # evaluating and recovering counterfactuals of sound method
                     cfs_ord_sound, \
                     cfs_eval_sound, \
                     x_cfs_ord_sound, \
                     x_cfs_eval_sound = evaluateCounterfactuals(x_ord, explanation_sound['cfs_ord'], dataset,
                                                                predict_fn, predict_proba_fn, task, toolbox,
                                                                objective_names, featureScaler, feature_names)
-                    # recovering counterfactuals in original format of sound method
                     x_org_sound, \
                     cfs_org_sound, \
                     x_cfs_org_sound, \
                     x_cfs_highlight_sound = recoverOriginals(x_ord, cfs_ord_sound, dataset, feature_names)
 
 
-                    # evaluating counterfactuals of feasible method
+                    # evaluating and recovering counterfactuals of feasible method
                     cfs_ord_feasible, \
                     cfs_eval_feasible, \
                     x_cfs_ord_feasible, \
@@ -237,14 +235,13 @@ def main():
                                                                         dataset, predict_fn, predict_proba_fn, task,
                                                                         toolbox, objective_names, featureScaler,
                                                                         feature_names)
-                    # recovering counterfactuals in original format of feasible method
                     x_org_feasible, \
                     cfs_org_feasible, \
                     x_cfs_org_feasible, \
                     x_cfs_highlight_feasible = recoverOriginals(x_ord, cfs_ord_feasible, dataset, feature_names)
 
 
-                    # evaluating counterfactuals of sound and feasible method
+                    # evaluating and recovering counterfactuals of sound and feasible method
                     cfs_ord_sound_feasible, \
                     cfs_eval_sound_feasible, \
                     x_cfs_ord_sound_feasible, \
@@ -252,13 +249,12 @@ def main():
                                                                         dataset, predict_fn, predict_proba_fn, task,
                                                                         toolbox, objective_names, featureScaler,
                                                                         feature_names)
-                    # recovering counterfactuals in original format of sound and feasible method
                     x_org_sound_feasible, \
                     cfs_org_sound_feasible, \
                     x_cfs_org_sound_feasible, \
                     x_cfs_highlight_sound_feasible = recoverOriginals(x_ord, cfs_ord_sound_feasible, dataset, feature_names)
 
-                    # finding the index of the best counterfactual in the output of each method
+                    # finding the index of the best counterfactual in the output of every method
                     idx_best_base = (np.where((x_cfs_ord_base ==
                                                explanation_base['best_cf_ord']).all(axis=1)==True))[0][0]
                     idx_best_sound = (np.where((x_cfs_ord_sound ==
