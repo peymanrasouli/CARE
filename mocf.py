@@ -84,7 +84,7 @@ class MOCF():
                              user_preferences, dataset, predict_fn, predict_proba_fn, feature_width, continuous_indices,
                              discrete_indices, featureScaler, correlationModel, cf_theta):
 
-                # constructing counter-factual from the EA decision variables
+                # constructing counterfactual from the EA decision variables
                 cf_theta = np.asarray(cf_theta)
                 cf_org = theta2org(cf_theta, featureScaler, dataset)
                 cf_ord = org2ord(cf_org, dataset)
@@ -116,7 +116,7 @@ class MOCF():
                              user_preferences, dataset, predict_fn, predict_proba_fn, feature_width, continuous_indices,
                              discrete_indices, featureScaler, correlationModel, cf_theta):
 
-                # constructing counter-factual from the EA decision variables
+                # constructing counterfactual from the EA decision variables
                 cf_theta = np.asarray(cf_theta)
                 cf_org = theta2org(cf_theta, featureScaler, dataset)
                 cf_ord = org2ord(cf_org, dataset)
@@ -154,7 +154,7 @@ class MOCF():
                              user_preferences, dataset, predict_fn, predict_proba_fn, feature_width, continuous_indices,
                              discrete_indices, featureScaler, correlationModel, cf_theta):
 
-                # constructing counter-factual from the EA decision variables
+                # constructing counterfactual from the EA decision variables
                 cf_theta = np.asarray(cf_theta)
                 cf_org = theta2org(cf_theta, featureScaler, dataset)
                 cf_ord = org2ord(cf_org, dataset)
@@ -195,7 +195,7 @@ class MOCF():
                              user_preferences, dataset, predict_fn, predict_proba_fn, feature_width, continuous_indices,
                              discrete_indices, featureScaler, correlationModel, cf_theta):
 
-                # constructing counter-factual from the EA decision variables
+                # constructing counterfactual from the EA decision variables
                 cf_theta = np.asarray(cf_theta)
                 cf_org = theta2org(cf_theta, featureScaler, dataset)
                 cf_ord = org2ord(cf_org, dataset)
@@ -467,7 +467,7 @@ class MOCF():
 
         return fronts, pop, hof, record, logbook
 
-    # explain instance using multi-objective counter-factuals
+    # explain instance using multi-objective counterfactuals
     def explain(self,
                 x,
                 cf_class='opposite',
@@ -476,7 +476,7 @@ class MOCF():
                 user_preferences=None
                 ):
 
-        print('Generating counter-factual explanations ...')
+        print('Generating counterfactual explanations ...')
 
         x_ord = x
         x_ohe = ord2ohe(x, self.dataset)
@@ -485,7 +485,7 @@ class MOCF():
 
         if self.task is 'classification':
             cf_range = None
-            # finding the label of counter-factual instance
+            # finding the label of counterfactual instance
             if cf_class is 'opposite':
                 x_class = self.predict_fn(x_ohe.reshape(1,-1))
                 cf_target = 1 - x_class[0]
@@ -503,7 +503,7 @@ class MOCF():
 
         elif self.task is 'regression':
             cf_class = None
-            # finding the response range of counter-factual instance
+            # finding the response range of counterfactual instance
             if cf_quantile is 'neighbor':
                 x_response = self.predict_fn(x_ohe.reshape(1, -1))
                 for i in range(len(self.response_ranges)):
@@ -523,24 +523,24 @@ class MOCF():
                 cf_target = cf_quantile
                 cf_range = self.response_ranges[cf_target]
 
-        # finding the neighborhood data of the counter-factual instance
+        # finding the neighborhood data of the counterfactual instance
         distances, indices = self.groundtruthNeighborhoodModel[cf_target].kneighbors(x_theta.reshape(1, -1))
         neighbor_data = self.groundtruth_data[cf_target][indices[0]].copy()
         neighbor_theta = self.featureScaler.transform(neighbor_data)
 
-        # creating toolbox for the counter-factual instance
+        # creating toolbox for the counterfactual instance
         proximity_model = self.proximityModel[cf_target]
         connectedness_model = self.connectednessModel[cf_target]
         self.toolbox = self.setupToolbox(x_ord, x_org, x_theta, cf_class, cf_range, probability_thresh,
                                          user_preferences, neighbor_theta, proximity_model, connectedness_model)
 
-        # running optimization algorithm for finding counter-factual instances
+        # running optimization algorithm for finding counterfactual instances
         n_reference_points = factorial(self.n_objectives + self.division_factor - 1) / \
                              (factorial(self.division_factor) * factorial(self.n_objectives - 1))
         self.n_population = int(n_reference_points + (4 - n_reference_points % 4))
         fronts, pop, hof, record, logbook = self.runEA()
 
-        ## constructing counter-factuals
+        ## constructing counterfactuals
         cfs_theta = np.asarray([i for i in hof.items])
         cfs_org = theta2org(cfs_theta, self.featureScaler, self.dataset)
         cfs_ord = org2ord(cfs_org, self.dataset)

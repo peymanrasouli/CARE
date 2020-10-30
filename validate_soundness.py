@@ -79,14 +79,14 @@ def main():
                 featureScaler = explanation_sound['featureScaler']
                 feature_names = dataset['feature_names']
 
-                # evaluating counter-factuals base
+                # evaluating counterfactuals base
                 cfs_ord_base, \
                 cfs_eval_base, \
                 x_cfs_ord_base, \
                 x_cfs_eval_base = evaluateCounterfactuals(x_ord, cfs_ord_base, dataset, predict_fn, predict_proba_fn,
                                                           task, toolbox, objective_names, featureScaler, feature_names)
 
-                # evaluating counter-factuals sound
+                # evaluating counterfactuals sound
                 cfs_ord_sound, \
                 cfs_eval_sound, \
                 x_cfs_ord_sound, \
@@ -158,7 +158,7 @@ def main():
                             s=150,
                             label='x')
 
-                # highlight base counter-factual
+                # highlight base counterfactual
                 X_cf_base, y_cf_base = X[1, :], y[1]
                 plt.scatter(X_cf_base[0],
                             X_cf_base[1],
@@ -179,7 +179,7 @@ def main():
                                              shrinkA=0, shrinkB=10,
                                              connectionstyle="angle,angleA=0,angleB=90,rad=10"))
 
-                # highlight sound counter-factual
+                # highlight sound counterfactual
                 X_cf_sound, y_cf_sound = X[2, :], y[2]
                 plt.scatter(X_cf_sound[0],
                             X_cf_sound[1],

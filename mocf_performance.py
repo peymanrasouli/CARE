@@ -132,13 +132,13 @@ def main():
 
             header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                      ('prediction', 'proximity', 'connectedness', 'actionable', 'correlation', 'distance',
-                      'sparsity', 'diversity', 'validity',
+                      'sparsity', 'validity', 'diversity',
                       'prediction', 'proximity', 'connectedness', 'actionable', 'correlation', 'distance',
-                      'sparsity', 'diversity', 'validity',
+                      'sparsity', 'validity', 'diversity',
                       'prediction', 'proximity', 'connectedness', 'actionable', 'correlation', 'distance',
-                      'sparsity', 'diversity', 'validity',
+                      'sparsity', 'validity', 'diversity',
                       'prediction', 'proximity', 'connectedness', 'actionable', 'correlation', 'distance',
-                      'sparsity', 'diversity', 'validity')
+                      'sparsity', 'validity', 'diversity')
             eval_results_csv.write(header)
 
             header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
@@ -195,43 +195,41 @@ def main():
                     explanation_feasible = explainer_feasible.explain(x_ord, user_preferences=user_preferences)
                     explanation_sound_feasible= explainer_sound_feasible.explain(x_ord, user_preferences=user_preferences)
 
-                    # evaluating counter-factuals based on all objectives results
+                    # evaluating counterfactuals based on all objectives results
                     toolbox = explanation_sound_feasible['toolbox']
                     objective_names = explanation_sound_feasible['objective_names']
                     featureScaler = explanation_sound_feasible['featureScaler']
                     feature_names = dataset['feature_names']
 
-                    # evaluating counter-factuals of base method
+                    # evaluating counterfactuals of base method
                     cfs_ord_base, \
                     cfs_eval_base, \
                     x_cfs_ord_base, \
                     x_cfs_eval_base = evaluateCounterfactuals(x_ord, explanation_base['cfs_ord'], dataset,
                                                               predict_fn, predict_proba_fn, task, toolbox,
                                                               objective_names, featureScaler, feature_names)
-
-                    # recovering counter-factuals in original format of base method
+                    # recovering counterfactuals in original format of base method
                     x_org_base, \
                     cfs_org_base, \
                     x_cfs_org_base, \
                     x_cfs_highlight_base = recoverOriginals(x_ord, cfs_ord_base, dataset, feature_names)
 
 
-                    # evaluating counter-factuals of sound method
+                    # evaluating counterfactuals of sound method
                     cfs_ord_sound, \
                     cfs_eval_sound, \
                     x_cfs_ord_sound, \
                     x_cfs_eval_sound = evaluateCounterfactuals(x_ord, explanation_sound['cfs_ord'], dataset,
                                                                predict_fn, predict_proba_fn, task, toolbox,
                                                                objective_names, featureScaler, feature_names)
-
-                    # recovering counter-factuals in original format of sound method
+                    # recovering counterfactuals in original format of sound method
                     x_org_sound, \
                     cfs_org_sound, \
                     x_cfs_org_sound, \
                     x_cfs_highlight_sound = recoverOriginals(x_ord, cfs_ord_sound, dataset, feature_names)
 
 
-                    # evaluating counter-factuals of feasible method
+                    # evaluating counterfactuals of feasible method
                     cfs_ord_feasible, \
                     cfs_eval_feasible, \
                     x_cfs_ord_feasible, \
@@ -239,106 +237,61 @@ def main():
                                                                         dataset, predict_fn, predict_proba_fn, task,
                                                                         toolbox, objective_names, featureScaler,
                                                                         feature_names)
-
-                    # recovering counter-factuals in original format of feasible method
+                    # recovering counterfactuals in original format of feasible method
                     x_org_feasible, \
                     cfs_org_feasible, \
                     x_cfs_org_feasible, \
                     x_cfs_highlight_feasible = recoverOriginals(x_ord, cfs_ord_feasible, dataset, feature_names)
 
 
-                    # evaluating counter-factuals of sound and feasible method
+                    # evaluating counterfactuals of sound and feasible method
                     cfs_ord_sound_feasible, \
                     cfs_eval_sound_feasible, \
                     x_cfs_ord_sound_feasible, \
                     x_cfs_eval_sound_feasible = evaluateCounterfactuals(x_ord, explanation_sound_feasible['cfs_ord'],
                                                                         dataset, predict_fn, predict_proba_fn, task,
-                                                                        toolbox, objective_names, featureScaler, feature_names)
-
-                    # recovering counter-factuals in original format of sound and feasible method
+                                                                        toolbox, objective_names, featureScaler,
+                                                                        feature_names)
+                    # recovering counterfactuals in original format of sound and feasible method
                     x_org_sound_feasible, \
                     cfs_org_sound_feasible, \
                     x_cfs_org_sound_feasible, \
                     x_cfs_highlight_sound_feasible = recoverOriginals(x_ord, cfs_ord_sound_feasible, dataset, feature_names)
 
-                    idx_best_base = (np.where((x_cfs_ord_base == explanation_base['best_cf_ord']).all(axis=1)==True))[0][0]
-                    idx_best_sound = (np.where((x_cfs_ord_sound == explanation_sound['best_cf_ord']).all(axis=1)==True))[0][0]
-                    idx_best_feasible = (np.where((x_cfs_ord_feasible == explanation_feasible['best_cf_ord']).all(axis=1)==True))[0][0]
-                    idx_best_sound_feasible = (np.where((x_cfs_ord_sound_feasible == explanation_sound_feasible['best_cf_ord']).all(axis=1)==True))[0][0]
+                    # finding the index of the best counterfactual in the output of each method
+                    idx_best_base = (np.where((x_cfs_ord_base ==
+                                               explanation_base['best_cf_ord']).all(axis=1)==True))[0][0]
+                    idx_best_sound = (np.where((x_cfs_ord_sound ==
+                                                explanation_sound['best_cf_ord']).all(axis=1)==True))[0][0]
+                    idx_best_feasible = (np.where((x_cfs_ord_feasible ==
+                                                   explanation_feasible['best_cf_ord']).all(axis=1)==True))[0][0]
+                    idx_best_sound_feasible = (np.where((x_cfs_ord_sound_feasible ==
+                                                         explanation_sound_feasible['best_cf_ord']).all(axis=1)==True))[0][0]
 
-                    # storing the best counter-factual found by methods
-                    cfs_results = pd.concat([x_cfs_highlight_base.iloc[[0,idx_best_base]], x_cfs_eval_base.iloc[[0,idx_best_base]],
-                                             x_cfs_highlight_sound.iloc[[0,idx_best_sound]], x_cfs_eval_sound.iloc[[0,idx_best_sound]],
-                                             x_cfs_highlight_feasible.iloc[[0,idx_best_feasible]], x_cfs_eval_feasible.iloc[[0,idx_best_feasible]],
-                                             x_cfs_highlight_sound_feasible.iloc[[0,idx_best_sound_feasible]], x_cfs_eval_sound_feasible.iloc[[0,idx_best_sound_feasible]]], axis=1)
+                    # storing the best counterfactual found by methods
+                    cfs_results = pd.concat([x_cfs_highlight_base.iloc[[0,idx_best_base]],
+                                             x_cfs_eval_base.iloc[[0,idx_best_base]],
+                                             x_cfs_highlight_sound.iloc[[0,idx_best_sound]],
+                                             x_cfs_eval_sound.iloc[[0,idx_best_sound]],
+                                             x_cfs_highlight_feasible.iloc[[0,idx_best_feasible]],
+                                             x_cfs_eval_feasible.iloc[[0,idx_best_feasible]],
+                                             x_cfs_highlight_sound_feasible.iloc[[0,idx_best_sound_feasible]],
+                                             x_cfs_eval_sound_feasible.iloc[[0,idx_best_sound_feasible]]], axis=1)
                     cfs_results.to_csv(cfs_results_csv)
                     cfs_results_csv.write('\n')
                     cfs_results_csv.flush()
 
-                    # measuring the diversity of counter-factuals using Jaccard metric
-                    feature_names_base = []
-                    for i in range(n_cf):
-                        feature_names_base.append([dataset['feature_names'][ii] for ii in
-                                                   np.where(x_cfs_highlight_base.iloc[i + 1] != '_')[0]])
-                    feature_names_base = list(filter(None, feature_names_base))
-
-                    feature_names_sound = []
-                    for i in range(n_cf):
-                        feature_names_sound.append([dataset['feature_names'][ii] for ii in
-                                                   np.where(x_cfs_highlight_sound.iloc[i + 1] != '_')[0]])
-                    feature_names_sound = list(filter(None, feature_names_sound))
-
-                    feature_names_feasible = []
-                    for i in range(n_cf):
-                        feature_names_feasible.append([dataset['feature_names'][ii] for ii in
-                                                      np.where(x_cfs_highlight_feasible.iloc[i + 1] != '_')[0]])
-                    feature_names_feasible = list(filter(None, feature_names_feasible))
-
-                    feature_names_sound_feasible = []
-                    for i in range(n_cf):
-                        feature_names_sound_feasible.append([dataset['feature_names'][ii] for ii in
-                                                   np.where(x_cfs_highlight_sound_feasible.iloc[i + 1] != '_')[0]])
-                    feature_names_sound_feasible = list(filter(None, feature_names_sound_feasible))
-
-                    jaccard_base = []
-                    for i in range(0, len(feature_names_base)):
-                        for ii in range(i, len(feature_names_base)):
-                            jaccard = len(set(feature_names_base[i]) & set(feature_names_base[ii])) / \
-                                      len(set(feature_names_base[i]) | set(feature_names_base[ii]))
-                            jaccard_base.append(jaccard)
-
-                    jaccard_sound = []
-                    for i in range(0, len(feature_names_sound)):
-                        for ii in range(i, len(feature_names_sound)):
-                            jaccard = len(set(feature_names_sound[i]) & set(feature_names_sound[ii])) / \
-                                      len(set(feature_names_sound[i]) | set(feature_names_sound[ii]))
-                            jaccard_sound.append(jaccard)
-
-                    jaccard_feasible = []
-                    for i in range(0, len(feature_names_feasible)):
-                        for ii in range(i, len(feature_names_feasible)):
-                            jaccard = len(set(feature_names_feasible[i]) & set(feature_names_feasible[ii])) / \
-                                      len(set(feature_names_feasible[i]) | set(feature_names_feasible[ii]))
-                            jaccard_feasible.append(jaccard)
-
-                    jaccard_sound_feasible = []
-                    for i in range(0, len(feature_names_sound_feasible)):
-                        for ii in range(i, len(feature_names_sound_feasible)):
-                            jaccard = len(set(feature_names_sound_feasible[i]) & set(feature_names_sound_feasible[ii])) / \
-                                      len(set(feature_names_sound_feasible[i]) | set(feature_names_sound_feasible[ii]))
-                            jaccard_sound_feasible.append(jaccard)
-
+                    # storing the evaluation of the best counterfactual found by methods
                     ind = 1 if task == 'regression' else 2
-                    eval_results = np.r_[x_cfs_eval_base.iloc[idx_best_base, :-ind], 1.0 - np.mean(jaccard_base), int(x_cfs_eval_base.iloc[idx_best_base, 0] == 0.0),
-                                         x_cfs_eval_sound.iloc[idx_best_sound, :-ind], 1.0 - np.mean(jaccard_sound), int(x_cfs_eval_sound.iloc[idx_best_sound, 0] == 0.0),
-                                         x_cfs_eval_feasible.iloc[idx_best_feasible, :-ind], 1.0 - np.mean(jaccard_feasible), int(x_cfs_eval_feasible.iloc[idx_best_feasible, 0] == 0.0),
-                                         x_cfs_eval_sound_feasible.iloc[idx_best_sound_feasible, :-ind], 1.0 - np.mean(jaccard_sound_feasible), int(x_cfs_eval_sound_feasible.iloc[idx_best_sound_feasible, 0] == 0.0)]
-
-
+                    eval_results = np.r_[x_cfs_eval_base.iloc[idx_best_base, :-ind],
+                                         x_cfs_eval_sound.iloc[idx_best_sound, :-ind],
+                                         x_cfs_eval_feasible.iloc[idx_best_feasible, :-ind],
+                                         x_cfs_eval_sound_feasible.iloc[idx_best_sound_feasible, :-ind]]
                     eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
                     eval_results = ','.join(eval_results)
                     eval_results_csv.write('%s\n' % (eval_results))
                     eval_results_csv.flush()
+
                     explained += 1
 
                 except Exception:

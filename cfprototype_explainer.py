@@ -23,7 +23,7 @@ def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, 
     feature_range = ((np.ones(rng_shape) * rng[0]).astype(np.float32),
                      (np.ones(rng_shape) * rng[1]).astype(np.float32))
 
-    # creating prototype counter-factual explainer
+    # creating prototype counterfactual explainer
     explainer = CounterFactualProto(predict=predict_proba_fn, shape=shape, feature_range=feature_range,
                                     cat_vars=cat_vars_ohe, ohe=True, beta=0.1, theta=10,
                                     use_kdtree=True, max_iterations=500, c_init=1.0, c_steps=5)
@@ -32,7 +32,7 @@ def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, 
     X_train_ohe = ord2ohe(X_train, dataset)
     explainer.fit(X_train_ohe, d_type='abdm', disc_perc=[25, 50, 75])
 
-    # generating counter-factuals
+    # generating counterfactuals
     explanations = explainer.explain(x_ohe,target_class=target_class)
 
     # extracting solutions
@@ -52,7 +52,7 @@ def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, 
     cfs_ord = ohe2ord(cfs_ohe, dataset)
     cfs_ord = pd.DataFrame(data=cfs_ord, columns=dataset['feature_names'])
 
-    # evaluating counter-factuals
+    # evaluating counterfactuals
     toolbox = MOCF_output['toolbox']
     objective_names = MOCF_output['objective_names']
     featureScaler = MOCF_output['featureScaler']
@@ -64,13 +64,13 @@ def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, 
     x_cfs_eval = evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn, predict_proba_fn, task,
                                          toolbox, objective_names, featureScaler, feature_names)
 
-    # recovering counter-factuals in original format
+    # recovering counterfactuals in original format
     x_org, \
     cfs_org, \
     x_cfs_org, \
     x_cfs_highlight = recoverOriginals(x_ord, cfs_ord, dataset, feature_names)
 
-    # best counter-factual
+    # best counterfactual
     best_cf_ord = cfs_ord.iloc[0]
     best_cf_org = cfs_org.iloc[0]
     best_cf_eval = cfs_eval.iloc[0]

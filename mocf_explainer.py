@@ -13,7 +13,7 @@ def MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_pr
     # fitting the explainer on the training data
     explainer.fit(X_train, Y_train)
 
-    # generating counter-factuals
+    # generating counterfactuals
     explanations = explainer.explain(x_ord, cf_class=cf_class, cf_quantile=cf_quantile,
                                     probability_thresh=probability_thresh, user_preferences=user_preferences)
 
@@ -24,20 +24,20 @@ def MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_pr
     featureScaler = explanations['featureScaler']
     feature_names = dataset['feature_names']
 
-    # evaluating counter-factuals
+    # evaluating counterfactuals
     cfs_ord, \
     cfs_eval, \
     x_cfs_ord, \
     x_cfs_eval = evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn, predict_proba_fn, task,
                                          toolbox, objective_names, featureScaler, feature_names)
 
-    # recovering counter-factuals in original format
+    # recovering counterfactuals in original format
     x_org, \
     cfs_org, \
     x_cfs_org, \
     x_cfs_highlight = recoverOriginals(x_ord, cfs_ord, dataset, feature_names)
 
-    # best counter-factual
+    # best counterfactual
     best_cf_ord = cfs_ord.iloc[0]
     best_cf_org = cfs_org.iloc[0]
     best_cf_eval = cfs_eval.iloc[0]

@@ -10,7 +10,7 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
                   feasibleAR=False, user_preferences=None, n_cf=5, desired_class="opposite", probability_thresh=0.5,
                   proximity_weight=0.5, diversity_weight=1.0):
 
-    # preparing ataset for DiCE model
+    # preparing dataset for DiCE model
     feature_names = dataset['feature_names']
     continuous_features = dataset['continuous_features']
     discrete_features = dataset['discrete_features']
@@ -55,7 +55,7 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
         # creating a DiCE explainer instance
         explainer = dice_ml.Dice(data, model)
 
-        ## generating counter-factuals
+        ## generating counterfactuals
         x_ord_dice = {}
         for key, value in zip(feature_names, list(x_ord)):
             x_ord_dice[key] = value
@@ -89,7 +89,7 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
         # creating a DiCE explainer instance
         explainer = dice_ml.Dice(data, model)
 
-        # generating counter-factuals
+        # generating counterfactuals
         x_ord_dice = {}
         for key, value in zip(feature_names, list(x_ord)):
             x_ord_dice[key] = value
@@ -112,7 +112,7 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
     cfs_ord = explanations.final_cfs_df.iloc[:,:-1]
     cfs_ord[discrete_features] = cfs_ord[discrete_features].astype(int)
 
-    # evaluating counter-factuals
+    # evaluating counterfactuals
     toolbox = MOCF_output['toolbox']
     objective_names = MOCF_output['objective_names']
     featureScaler = MOCF_output['featureScaler']
@@ -124,13 +124,13 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
     x_cfs_eval = evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn, predict_proba_fn, task,
                                          toolbox, objective_names, featureScaler, feature_names)
 
-    # recovering counter-factuals in original format
+    # recovering counterfactuals in original format
     x_org, \
     cfs_org, \
     x_cfs_org, \
     x_cfs_highlight = recoverOriginals(x_ord, cfs_ord, dataset, feature_names)
 
-    # best counter-factual
+    # best counterfactual
     best_cf_ord = cfs_ord.iloc[0]
     best_cf_org = cfs_org.iloc[0]
     best_cf_eval = cfs_eval.iloc[0]
