@@ -59,3 +59,7 @@ python benchmark_sound_feasible.py
 ```
 python validate_soundness.py
 ```
+9- To reproduce the action series results run:
+```
+python mocf_action_series.py
+```
