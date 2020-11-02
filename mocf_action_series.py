@@ -121,7 +121,7 @@ def main():
                 worst_series  = [None] * n_cf
                 for i, d in enumerate(cfs_action_series):
                     best_val = np.inf
-                    worst_val = 0
+                    worst_val = -np.inf
                     for key, val in d.items():
                         if val < best_val:
                             best_series[i] = {key: val}
@@ -143,11 +143,8 @@ def main():
                 print('\n')
                 print('Worst action series:')
                 for i, ws in enumerate(worst_series):
-                    if ws == None:
-                        print('cf_'+str(i)+':', 'not available!')
-                    else:
-                        for key, val in ws.items():
-                            print('cf_'+str(i)+':', [dataset['feature_names'][f] for f in key], '| cost:', val)
+                    for key, val in ws.items():
+                        print('cf_'+str(i)+':', [dataset['feature_names'][f] for f in key], '| cost:', val)
 
             print('\n')
             print('Done!')
