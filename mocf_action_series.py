@@ -137,16 +137,16 @@ def main():
                 print(x_cfs_eval.head(n= n_cf + 1))
                 print('\n')
                 print('Best action series:')
-                for i, bo in enumerate(best_series):
-                    for key, val in bo.items():
+                for i, bs in enumerate(best_series):
+                    for key, val in bs.items():
                         print('cf_'+str(i)+':', [dataset['feature_names'][f] for f in key], '| cost:', val)
                 print('\n')
                 print('Worst action series:')
-                for i, wo in enumerate(worst_series):
-                    if wo == None:
+                for i, ws in enumerate(worst_series):
+                    if ws == None:
                         print('cf_'+str(i)+':', 'not available!')
                     else:
-                        for key, val in wo.items():
+                        for key, val in ws.items():
                             print('cf_'+str(i)+':', [dataset['feature_names'][f] for f in key], '| cost:', val)
 
             print('\n')
