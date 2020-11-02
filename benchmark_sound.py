@@ -171,6 +171,10 @@ def main():
 
                     explained += 1
 
+                    print('-----------------------------------------------------------------------')
+                    print("%s|%s: %d/%d explained" % (dataset['name'], blackbox_name, explained, N))
+                    print('-----------------------------------------------------------------------')
+
                 except Exception:
                     pass
 

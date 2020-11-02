@@ -278,7 +278,7 @@ def main():
                     cfs_results_csv.flush()
 
                     # storing the evaluation of the best counterfactual found by methods
-                    ind = 1 if task == 'regression' else 2
+                    ind = int(task == 'classification') + 1
                     eval_results = np.r_[x_cfs_eval_base.iloc[idx_best_base, :-ind],
                                          x_cfs_eval_sound.iloc[idx_best_sound, :-ind],
                                          x_cfs_eval_feasible.iloc[idx_best_feasible, :-ind],
@@ -289,6 +289,10 @@ def main():
                     eval_results_csv.flush()
 
                     explained += 1
+
+                    print('-----------------------------------------------------------------------')
+                    print("%s|%s: %d/%d explained" % (dataset['name'], blackbox_name, explained, N))
+                    print('-----------------------------------------------------------------------')
 
                 except Exception:
                     pass
