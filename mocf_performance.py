@@ -126,8 +126,8 @@ def main():
             header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                      ('Base', '', '', '', '', '', '', '', '',
                       'Sound', '', '', '', '', '', '', '', '',
-                      'Sound & Causality', '', '', '', '', '', '', '', '',
-                      'Sound & Causality & Actionable', '', '', '', '', '', '', '', '')
+                      'Sound+Causality', '', '', '', '', '', '', '', '',
+                      'Sound+Causality+Actionable', '', '', '', '', '', '', '', '')
             eval_results_csv.write(header)
 
             header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
