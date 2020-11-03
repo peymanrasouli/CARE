@@ -47,11 +47,11 @@ python benchmark_base.py
 ```
 python benchmark_sound.py
 ```
-6- To reproduce the sound and causality comparison results run:
+6- To reproduce the sound+causality comparison results run:
 ```
 python benchmark_sound_causality.py
 ```
-7- To reproduce the sound, causality, and actionable  comparison results run:
+7- To reproduce the sound+causality+actionable  comparison results run:
 ```
 python benchmark_sound_causality_actionable.py
 ```
