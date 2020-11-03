@@ -32,7 +32,7 @@ class MOCF():
                  corr_thresh=0.2,
                  corr_model_train_perc=0.7,
                  corr_model_acc_thresh=0.7,
-                 n_generation=20,
+                 n_generation=10,
                  hof_size=100,
                  x_init=0.3,
                  neighbor_init=0.6,
