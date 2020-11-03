@@ -108,9 +108,9 @@ def main():
             header += feature_space
             header += ['Sound']
             header += feature_space
-            header += ['Sound & Causality']
+            header += ['Sound+Causality']
             header += feature_space
-            header += ['Sound & Causality & Actionable']
+            header += ['Sound+Causality+Actionable']
             header = ','.join(header)
             cfs_results_csv.write('%s\n' % (header))
             cfs_results_csv.flush()
