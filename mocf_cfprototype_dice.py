@@ -59,8 +59,9 @@ def main():
 
             # explain instance x_ord using MOCF
             MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                        soundCF=False, feasibleAR=False, user_preferences=user_preferences,
-                                        cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
+                                        sound=False, causality=False, actionable=False,
+                                        user_preferences=user_preferences, cf_class='opposite',
+                                        probability_thresh=0.5, n_cf=n_cf)
 
             # explain instance x_ord using CFPrototype
             CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, task,
@@ -68,7 +69,7 @@ def main():
 
             # explain instance x_ord using DiCE
             DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset,
-                                        task, MOCF_output, feasibleAR=False, user_preferences=user_preferences,
+                                        task, MOCF_output, actionable=False, user_preferences=user_preferences,
                                         n_cf=n_cf, desired_class="opposite", probability_thresh=0.5,
                                         proximity_weight=1.0, diversity_weight=1.0)
 

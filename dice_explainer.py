@@ -7,7 +7,7 @@ from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 
 def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset, task, MOCF_output,
-                  feasibleAR=False, user_preferences=None, n_cf=5, desired_class="opposite", probability_thresh=0.5,
+                  actionable=False, user_preferences=None, n_cf=5, desired_class="opposite", probability_thresh=0.5,
                   proximity_weight=0.5, diversity_weight=1.0):
 
     # preparing dataset for DiCE model
@@ -19,7 +19,7 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
     data_frame[continuous_features] = (data_frame[continuous_features]).astype(float)
     data_frame[discrete_features] = (data_frame[discrete_features]).astype(int)
 
-    if feasibleAR is True:
+    if actionable is True:
 
         # preparing actionable recourse
         action_operation = user_preferences['action_operation']

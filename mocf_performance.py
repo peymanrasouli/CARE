@@ -69,29 +69,29 @@ def main():
             # setting experiment size for the data set
             N, n_cf = experiment_size[dataset_kw]
 
-            # creating an instance of MOCF explainer for  soundCF=False and feasibleAR=False
+            # creating an instance of MOCF explainer for sound=False, causality=False, actionable=False
             explainer_base = MOCF(dataset, task=task, predict_fn=predict_fn,
                                   predict_proba_fn=predict_proba_fn,
-                                  soundCF=False, feasibleAR=False, n_cf=n_cf)
+                                  sound=False, causality=False, actionable=False, n_cf=n_cf)
             explainer_base.fit(X_train, Y_train)
 
-            # creating an instance of MOCF explainer for  soundCF=True and feasibleAR=False
+            # creating an instance of MOCF explainer for sound=True, causality=False, actionable=False
             explainer_sound = MOCF(dataset, task=task, predict_fn=predict_fn,
                                    predict_proba_fn=predict_proba_fn,
-                                   soundCF=True, feasibleAR=False, n_cf=n_cf)
+                                   sound=True, causality=False, actionable=False, n_cf=n_cf)
             explainer_sound.fit(X_train, Y_train)
 
-            # creating an instance of MOCF explainer for  soundCF=False and feasibleAR=True
-            explainer_feasible = MOCF(dataset, task=task, predict_fn=predict_fn,
+            # creating an instance of MOCF explainer for sound=True, causality=True, actionable=False
+            explainer_sound_causality = MOCF(dataset, task=task, predict_fn=predict_fn,
                                    predict_proba_fn=predict_proba_fn,
-                                   soundCF=False, feasibleAR=True, n_cf=n_cf)
-            explainer_feasible.fit(X_train, Y_train)
+                                   sound=True, causality=True, actionable=False, n_cf=n_cf)
+            explainer_sound_causality.fit(X_train, Y_train)
 
-            # creating an instance of MOCF explainer for  soundCF=True and feasibleAR=True
-            explainer_sound_feasible = MOCF(dataset, task=task, predict_fn=predict_fn,
+            # creating an instance of MOCF explainer for sound=True, causality=True, actionable=True
+            explainer_sound_causality_actionable = MOCF(dataset, task=task, predict_fn=predict_fn,
                                             predict_proba_fn=predict_proba_fn,
-                                            soundCF=True, feasibleAR=True, n_cf=n_cf)
-            explainer_sound_feasible.fit(X_train, Y_train)
+                                            sound=True, causality=True, actionable=True, n_cf=n_cf)
+            explainer_sound_causality_actionable.fit(X_train, Y_train)
 
             ################################### Explaining test samples #########################################
 
@@ -108,9 +108,9 @@ def main():
             header += feature_space
             header += ['Sound']
             header += feature_space
-            header += ['Feasible']
+            header += ['Sound & Causality']
             header += feature_space
-            header += ['Sound & Feasible']
+            header += ['Sound & Causality & Actionable']
             header = ','.join(header)
             cfs_results_csv.write('%s\n' % (header))
             cfs_results_csv.flush()
@@ -126,18 +126,18 @@ def main():
             header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                      ('Base', '', '', '', '', '', '', '', '',
                       'Sound', '', '', '', '', '', '', '', '',
-                      'Feasible', '', '', '', '', '', '', '', '',
-                      'Sound & Feasible', '', '', '', '', '', '', '', '')
+                      'Sound & Causality', '', '', '', '', '', '', '', '',
+                      'Sound & Causality & Actionable', '', '', '', '', '', '', '', '')
             eval_results_csv.write(header)
 
             header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                     ('prediction', 'proximity', 'connectedness', 'actionable', 'correlation', 'distance',
+                     ('prediction', 'proximity', 'connectedness', 'causality', 'actionable', 'distance',
                       'sparsity', 'validity', 'diversity',
-                      'prediction', 'proximity', 'connectedness', 'actionable', 'correlation', 'distance',
+                      'prediction', 'proximity', 'connectedness', 'causality', 'actionable', 'distance',
                       'sparsity', 'validity', 'diversity',
-                      'prediction', 'proximity', 'connectedness', 'actionable', 'correlation', 'distance',
+                      'prediction', 'proximity', 'connectedness', 'causality', 'actionable', 'distance',
                       'sparsity', 'validity', 'diversity',
-                      'prediction', 'proximity', 'connectedness', 'actionable', 'correlation', 'distance',
+                      'prediction', 'proximity', 'connectedness', 'causality', 'actionable', 'distance',
                       'sparsity', 'validity', 'diversity')
             eval_results_csv.write(header)
 
@@ -191,14 +191,14 @@ def main():
                 try:
                     explanation_base = explainer_base.explain(x_ord)
                     explanation_sound = explainer_sound.explain(x_ord)
+                    explanation_sound_causality = explainer_sound_causality.explain(x_ord)
                     user_preferences = userPreferences(dataset, x_ord)
-                    explanation_feasible = explainer_feasible.explain(x_ord, user_preferences=user_preferences)
-                    explanation_sound_feasible= explainer_sound_feasible.explain(x_ord, user_preferences=user_preferences)
+                    explanation_sound_causality_actionable= explainer_sound_causality_actionable.explain(x_ord, user_preferences=user_preferences)
 
                     # evaluating counterfactuals based on all objectives results
-                    toolbox = explanation_sound_feasible['toolbox']
-                    objective_names = explanation_sound_feasible['objective_names']
-                    featureScaler = explanation_sound_feasible['featureScaler']
+                    toolbox = explanation_sound_causality_actionable['toolbox']
+                    objective_names = explanation_sound_causality_actionable['objective_names']
+                    featureScaler = explanation_sound_causality_actionable['featureScaler']
                     feature_names = dataset['feature_names']
 
                     # evaluating and recovering counterfactuals of base method
@@ -227,52 +227,52 @@ def main():
                     x_cfs_highlight_sound = recoverOriginals(x_ord, cfs_ord_sound, dataset, feature_names)
 
 
-                    # evaluating and recovering counterfactuals of feasible method
-                    cfs_ord_feasible, \
-                    cfs_eval_feasible, \
-                    x_cfs_ord_feasible, \
-                    x_cfs_eval_feasible = evaluateCounterfactuals(x_ord, explanation_feasible['cfs_ord'],
+                    # evaluating and recovering counterfactuals of sound and causality method
+                    cfs_ord_sound_causality, \
+                    cfs_eval_sound_causality, \
+                    x_cfs_ord_sound_causality, \
+                    x_cfs_eval_sound_causality = evaluateCounterfactuals(x_ord, explanation_sound_causality['cfs_ord'],
                                                                         dataset, predict_fn, predict_proba_fn, task,
                                                                         toolbox, objective_names, featureScaler,
                                                                         feature_names)
-                    x_org_feasible, \
-                    cfs_org_feasible, \
-                    x_cfs_org_feasible, \
-                    x_cfs_highlight_feasible = recoverOriginals(x_ord, cfs_ord_feasible, dataset, feature_names)
+                    x_org_sound_causality, \
+                    cfs_org_sound_causality, \
+                    x_cfs_org_sound_causality, \
+                    x_cfs_highlight_sound_causality = recoverOriginals(x_ord, cfs_ord_sound_causality, dataset, feature_names)
 
 
-                    # evaluating and recovering counterfactuals of sound and feasible method
-                    cfs_ord_sound_feasible, \
-                    cfs_eval_sound_feasible, \
-                    x_cfs_ord_sound_feasible, \
-                    x_cfs_eval_sound_feasible = evaluateCounterfactuals(x_ord, explanation_sound_feasible['cfs_ord'],
-                                                                        dataset, predict_fn, predict_proba_fn, task,
-                                                                        toolbox, objective_names, featureScaler,
-                                                                        feature_names)
-                    x_org_sound_feasible, \
-                    cfs_org_sound_feasible, \
-                    x_cfs_org_sound_feasible, \
-                    x_cfs_highlight_sound_feasible = recoverOriginals(x_ord, cfs_ord_sound_feasible, dataset, feature_names)
+                    # evaluating and recovering counterfactuals of sound, causality, and actionable method
+                    cfs_ord_sound_causality_actionable, \
+                    cfs_eval_sound_causality_actionable, \
+                    x_cfs_ord_sound_causality_actionable, \
+                    x_cfs_eval_sound_causality_actionable = evaluateCounterfactuals(x_ord, explanation_sound_causality_actionable['cfs_ord'],
+                                                                                    dataset, predict_fn, predict_proba_fn, task,
+                                                                                    toolbox, objective_names, featureScaler,
+                                                                                    feature_names)
+                    x_org_sound_causality_actionable, \
+                    cfs_org_sound_causality_actionable, \
+                    x_cfs_org_sound_causality_actionable, \
+                    x_cfs_highlight_sound_causality_actionable = recoverOriginals(x_ord, cfs_ord_sound_causality_actionable, dataset, feature_names)
 
                     # finding the index of the best counterfactual in the output of every method
                     idx_best_base = (np.where((x_cfs_ord_base ==
                                                explanation_base['best_cf_ord']).all(axis=1)==True))[0][0]
                     idx_best_sound = (np.where((x_cfs_ord_sound ==
                                                 explanation_sound['best_cf_ord']).all(axis=1)==True))[0][0]
-                    idx_best_feasible = (np.where((x_cfs_ord_feasible ==
-                                                   explanation_feasible['best_cf_ord']).all(axis=1)==True))[0][0]
-                    idx_best_sound_feasible = (np.where((x_cfs_ord_sound_feasible ==
-                                                         explanation_sound_feasible['best_cf_ord']).all(axis=1)==True))[0][0]
+                    idx_best_sound_causality = (np.where((x_cfs_ord_sound_causality ==
+                                                   explanation_sound_causality['best_cf_ord']).all(axis=1)==True))[0][0]
+                    idx_best_sound_causality_actionable = (np.where((x_cfs_ord_sound_causality_actionable ==
+                                                         explanation_sound_causality_actionable['best_cf_ord']).all(axis=1)==True))[0][0]
 
                     # storing the best counterfactual found by methods
                     cfs_results = pd.concat([x_cfs_highlight_base.iloc[[0,idx_best_base]],
                                              x_cfs_eval_base.iloc[[0,idx_best_base]],
                                              x_cfs_highlight_sound.iloc[[0,idx_best_sound]],
                                              x_cfs_eval_sound.iloc[[0,idx_best_sound]],
-                                             x_cfs_highlight_feasible.iloc[[0,idx_best_feasible]],
-                                             x_cfs_eval_feasible.iloc[[0,idx_best_feasible]],
-                                             x_cfs_highlight_sound_feasible.iloc[[0,idx_best_sound_feasible]],
-                                             x_cfs_eval_sound_feasible.iloc[[0,idx_best_sound_feasible]]], axis=1)
+                                             x_cfs_highlight_sound_causality.iloc[[0,idx_best_sound_causality]],
+                                             x_cfs_eval_sound_causality.iloc[[0,idx_best_sound_causality]],
+                                             x_cfs_highlight_sound_causality_actionable.iloc[[0,idx_best_sound_causality_actionable]],
+                                             x_cfs_eval_sound_causality_actionable.iloc[[0,idx_best_sound_causality_actionable]]], axis=1)
                     cfs_results.to_csv(cfs_results_csv)
                     cfs_results_csv.write('\n')
                     cfs_results_csv.flush()
@@ -281,8 +281,8 @@ def main():
                     ind = int(task == 'classification') + 1
                     eval_results = np.r_[x_cfs_eval_base.iloc[idx_best_base, :-ind],
                                          x_cfs_eval_sound.iloc[idx_best_sound, :-ind],
-                                         x_cfs_eval_feasible.iloc[idx_best_feasible, :-ind],
-                                         x_cfs_eval_sound_feasible.iloc[idx_best_sound_feasible, :-ind]]
+                                         x_cfs_eval_sound_causality.iloc[idx_best_sound_causality, :-ind],
+                                         x_cfs_eval_sound_causality_actionable.iloc[idx_best_sound_causality_actionable, :-ind]]
                     eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
                     eval_results = ','.join(eval_results)
                     eval_results_csv.write('%s\n' % (eval_results))

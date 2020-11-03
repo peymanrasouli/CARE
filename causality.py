@@ -1,6 +1,6 @@
 import numpy as np
 
-def correlation(x_ord, cf_ord, cf_theta, feature_width, continuous_indices, discrete_indices, correlationModel):
+def causality(x_ord, cf_ord, cf_theta, feature_width, continuous_indices, discrete_indices, correlationModel):
     distance = []
     cf_ord_ = cf_ord.copy()
     delta = np.nonzero(x_ord-cf_ord)[0]

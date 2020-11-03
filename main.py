@@ -66,7 +66,7 @@ def main():
 
             # explain instance x_ord using MOCF
             output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                   soundCF=False, feasibleAR=False, user_preferences=user_preferences,
+                                   sound=False, causality=False, actionable=False, user_preferences=user_preferences,
                                    cf_class='opposite', probability_thresh=0.5, cf_quantile='neighbor', n_cf=n_cf)
 
             # print n best counterfactuals and their corresponding objective values

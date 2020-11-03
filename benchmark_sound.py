@@ -130,7 +130,7 @@ def main():
                 try:
                     # explain instance x_ord using MOCF
                     MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                                soundCF=True, feasibleAR=False, user_preferences=None,
+                                                sound=True, causality=False, actionable=False, user_preferences=None,
                                                 cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
                     mocf_x_cfs_highlight = MOCF_output['x_cfs_highlight']
                     mocf_cfs_eval = MOCF_output['cfs_eval']
@@ -145,7 +145,7 @@ def main():
 
                     # explain instance x_ord using DiCE
                     DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset,
-                                                task, MOCF_output, feasibleAR=False, user_preferences=None,
+                                                task, MOCF_output, actionable=False, user_preferences=None,
                                                 n_cf=n_cf, desired_class="opposite", probability_thresh=0.5,
                                                 proximity_weight=1.0, diversity_weight=1.0)
                     dice_x_cfs_highlight = DiCE_output['x_cfs_highlight']

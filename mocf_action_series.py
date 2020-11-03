@@ -64,7 +64,7 @@ def main():
             # creating an instance of MOCF explainer
             n_cf = 10
             explainer = MOCF(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                             soundCF=True, feasibleAR=False, n_cf=n_cf)
+                             sound=True, causality=True, actionable=True, n_cf=n_cf)
 
             # fitting the explainer on the training data
             explainer.fit(X_train, Y_train)

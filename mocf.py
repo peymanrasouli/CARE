@@ -9,7 +9,7 @@ from sparsity import sparsity
 from proximity import proximity
 from connectedness import connectedness
 from actionable_recourse import actionableRecourse
-from correlation import correlation
+from causality import causality
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import f1_score, r2_score
 from dython import nominal
@@ -24,8 +24,9 @@ class MOCF():
                  task='classification',
                  predict_fn=None,
                  predict_proba_fn=None,
-                 soundCF=False,
-                 feasibleAR=False,
+                 sound=False,
+                 causality=False,
+                 actionable=False,
                  n_cf=5,
                  response_quantile=4,
                  K_nbrs=500,
@@ -51,8 +52,9 @@ class MOCF():
         self.task = task
         self.predict_fn = predict_fn
         self.predict_proba_fn = predict_proba_fn
-        self.soundCF = soundCF
-        self.feasibleAR = feasibleAR
+        self.sound = sound
+        self.causality = causality
+        self.actionable = actionable
         self.n_cf = n_cf
         self.response_quantile = response_quantile
         self.K_nbrs = K_nbrs
@@ -69,9 +71,9 @@ class MOCF():
 
     def constructObjectiveFunction(self):
 
-        print('Constructing objective function according to soundCF and feasibleAR hyper-parameters ...')
+        print('Constructing objective function according to SOUND, CAUSALITY, and ACTIONABLE hyper-parameters ...')
 
-        if self.feasibleAR == False and self.soundCF == False:
+        if self.sound == False and self.causality == False and self.actionable == False:
             # objective names
             self.objective_names = ['prediction', 'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
@@ -103,7 +105,122 @@ class MOCF():
 
             return objectiveFunction
 
-        elif self.feasibleAR == False and self.soundCF == True:
+        elif self.sound == False and self.causality == False and self.actionable == True:
+            # objective names
+            self.objective_names = ['prediction', 'actionable', 'distance', 'sparsity']
+            # objective weights, -1.0: cost function, 1.0: fitness function
+            self.objective_weights = (-1.0, -1.0, -1.0, -1.0)
+            # number of objectives
+            self.n_objectives = 4
+
+            # defining objective function
+            def objectiveFunction(x_ord, x_org, cf_class, cf_range, probability_thresh, proximity_model,
+                                  connectedness_model,
+                                  user_preferences, dataset, predict_fn, predict_proba_fn, feature_width,
+                                  continuous_indices,
+                                  discrete_indices, featureScaler, correlationModel, cf_theta):
+
+                # constructing counterfactual from the EA decision variables
+                cf_theta = np.asarray(cf_theta)
+                cf_org = theta2org(cf_theta, featureScaler, dataset)
+                cf_ord = org2ord(cf_org, dataset)
+                cf_ohe = ord2ohe(cf_ord, dataset)
+
+                # objective 1: prediction distance
+                prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
+                                                     probability_thresh, cf_class, cf_range)
+
+                # objective 2: actionable recourse
+                actionable_cost = actionableRecourse(x_org, cf_org, user_preferences)
+
+                # objective 3: feature distance
+                distance_cost = featureDistance(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
+
+                # objective 4: Sparsity
+                sparsity_cost = sparsity(x_org, cf_org)
+
+                return prediction_cost, actionable_cost, distance_cost, sparsity_cost
+
+            return objectiveFunction
+
+        elif self.sound == False and self.causality == True and self.actionable == False:
+            # objective names
+            self.objective_names = ['prediction', 'causality', 'distance', 'sparsity']
+            # objective weights, -1.0: cost function, 1.0: fitness function
+            self.objective_weights = (-1.0, -1.0, -1.0, -1.0)
+            # number of objectives
+            self.n_objectives = 4
+
+            # defining objective function
+            def objectiveFunction(x_ord, x_org, cf_class, cf_range, probability_thresh, proximity_model, connectedness_model,
+                             user_preferences, dataset, predict_fn, predict_proba_fn, feature_width, continuous_indices,
+                             discrete_indices, featureScaler, correlationModel, cf_theta):
+
+                # constructing counterfactual from the EA decision variables
+                cf_theta = np.asarray(cf_theta)
+                cf_org = theta2org(cf_theta, featureScaler, dataset)
+                cf_ord = org2ord(cf_org, dataset)
+                cf_ohe = ord2ohe(cf_ord, dataset)
+
+                # objective 1: prediction distance
+                prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
+                                                     probability_thresh, cf_class, cf_range)
+
+                # objective 2: causality
+                causality_cost = causality(x_ord, cf_ord, cf_theta, feature_width,
+                                               continuous_indices, discrete_indices, correlationModel)
+
+                # objective 3: feature distance
+                distance_cost = featureDistance(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
+
+                # objective 4: Sparsity
+                sparsity_cost = sparsity(x_org, cf_org)
+
+                return prediction_cost, causality_cost, distance_cost, sparsity_cost
+
+            return objectiveFunction
+
+        elif self.sound == False and self.causality == True and self.actionable == True:
+            # objective names
+            self.objective_names = ['prediction', 'causality', 'actionable', 'distance', 'sparsity']
+            # objective weights, -1.0: cost function, 1.0: fitness function
+            self.objective_weights = (-1.0, -1.0, -1.0, -1.0, -1.0)
+            # number of objectives
+            self.n_objectives = 5
+
+            # defining objective function
+            def objectiveFunction(x_ord, x_org, cf_class, cf_range, probability_thresh, proximity_model, connectedness_model,
+                             user_preferences, dataset, predict_fn, predict_proba_fn, feature_width, continuous_indices,
+                             discrete_indices, featureScaler, correlationModel, cf_theta):
+
+                # constructing counterfactual from the EA decision variables
+                cf_theta = np.asarray(cf_theta)
+                cf_org = theta2org(cf_theta, featureScaler, dataset)
+                cf_ord = org2ord(cf_org, dataset)
+                cf_ohe = ord2ohe(cf_ord, dataset)
+
+                # objective 1: prediction distance
+                prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
+                                                     probability_thresh, cf_class, cf_range)
+
+                # objective 2: causality
+                causality_cost = causality(x_ord, cf_ord, cf_theta, feature_width,
+                                               continuous_indices, discrete_indices, correlationModel)
+
+                # objective 3: actionable recourse
+                actionable_cost = actionableRecourse(x_org, cf_org, user_preferences)
+
+                # objective 4: feature distance
+                distance_cost = featureDistance(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
+
+                # objective 5: Sparsity
+                sparsity_cost = sparsity(x_org, cf_org)
+
+                return prediction_cost, causality_cost, actionable_cost, distance_cost, sparsity_cost
+
+            return objectiveFunction
+
+        elif self.sound == True and self.causality == False and self.actionable == False:
             # objective names
             self.objective_names = ['prediction', 'proximity', 'connectedness', 'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
@@ -141,13 +258,13 @@ class MOCF():
 
             return objectiveFunction
 
-        elif self.feasibleAR == True and self.soundCF == False:
+        elif self.sound == True and self.causality == False and self.actionable == True:
             # objective names
-            self.objective_names = ['prediction', 'actionable', 'correlation', 'distance', 'sparsity']
+            self.objective_names = ['prediction', 'proximity', 'connectedness', 'actionable', 'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
-            self.objective_weights = (-1.0, -1.0, -1.0, -1.0, -1.0)
+            self.objective_weights = (-1.0, 1.0, 1.0, -1.0, -1.0, -1.0)
             # number of objectives
-            self.n_objectives = 5
+            self.n_objectives = 6
 
             # defining objective function
             def objectiveFunction(x_ord, x_org, cf_class, cf_range, probability_thresh, proximity_model, connectedness_model,
@@ -163,47 +280,6 @@ class MOCF():
                 # objective 1: prediction distance
                 prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
                                                      probability_thresh, cf_class, cf_range)
-
-                # objective 2: actionable recourse
-                actionable_cost = actionableRecourse(x_org, cf_org, user_preferences)
-
-                # objective 3: correlation
-                correlation_cost = correlation(x_ord, cf_ord, cf_theta, feature_width,
-                                               continuous_indices, discrete_indices, correlationModel)
-
-                # objective 4: feature distance
-                distance_cost = featureDistance(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
-
-                # objective 5: Sparsity
-                sparsity_cost = sparsity(x_org, cf_org)
-
-                return prediction_cost, actionable_cost, correlation_cost, distance_cost, sparsity_cost
-
-            return objectiveFunction
-
-        elif self.feasibleAR == True and self.soundCF == True:
-            # objective names
-            self.objective_names = ['prediction', 'proximity', 'connectedness', 'actionable', 'correlation',
-                                    'distance', 'sparsity']
-            # objective weights, -1.0: cost function, 1.0: fitness function
-            self.objective_weights = (-1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0)
-            # number of objectives
-            self.n_objectives = 7
-
-            # defining objective function
-            def objectiveFunction(x_ord, x_org, cf_class, cf_range, probability_thresh, proximity_model, connectedness_model,
-                             user_preferences, dataset, predict_fn, predict_proba_fn, feature_width, continuous_indices,
-                             discrete_indices, featureScaler, correlationModel, cf_theta):
-
-                # constructing counterfactual from the EA decision variables
-                cf_theta = np.asarray(cf_theta)
-                cf_org = theta2org(cf_theta, featureScaler, dataset)
-                cf_ord = org2ord(cf_org, dataset)
-                cf_ohe = ord2ohe(cf_ord, dataset)
-
-                # objective 1: prediction distance
-                prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
-                                                probability_thresh, cf_class, cf_range)
                 # objective 2: proximity
                 proximity_fitness = proximity(cf_theta, proximity_model)
 
@@ -213,9 +289,96 @@ class MOCF():
                 # objective 4: actionable recourse
                 actionable_cost = actionableRecourse(x_org, cf_org, user_preferences)
 
-                ## objective 5: correlation
-                correlation_cost = correlation(x_ord, cf_ord, cf_theta, feature_width,
-                                               continuous_indices, discrete_indices, correlationModel)
+                # objective 5: feature distance
+                distance_cost = featureDistance(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
+
+                # objective 6: Sparsity
+                sparsity_cost = sparsity(x_org, cf_org)
+
+                return prediction_cost, proximity_fitness, connectedness_fitness, actionable_cost, distance_cost, sparsity_cost
+
+            return objectiveFunction
+
+        elif self.sound == True and self.causality == True and self.actionable == False:
+            # objective names
+            self.objective_names = ['prediction', 'proximity', 'connectedness', 'causality', 'distance', 'sparsity']
+            # objective weights, -1.0: cost function, 1.0: fitness function
+            self.objective_weights = (-1.0, 1.0, 1.0, -1.0, -1.0, -1.0)
+            # number of objectives
+            self.n_objectives = 6
+
+            # defining objective function
+            def objectiveFunction(x_ord, x_org, cf_class, cf_range, probability_thresh, proximity_model,
+                                  connectedness_model,
+                                  user_preferences, dataset, predict_fn, predict_proba_fn, feature_width,
+                                  continuous_indices,
+                                  discrete_indices, featureScaler, correlationModel, cf_theta):
+
+                # constructing counterfactual from the EA decision variables
+                cf_theta = np.asarray(cf_theta)
+                cf_org = theta2org(cf_theta, featureScaler, dataset)
+                cf_ord = org2ord(cf_org, dataset)
+                cf_ohe = ord2ohe(cf_ord, dataset)
+
+                # objective 1: prediction distance
+                prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
+                                                     probability_thresh, cf_class, cf_range)
+                # objective 2: proximity
+                proximity_fitness = proximity(cf_theta, proximity_model)
+
+                # objective 3: connectedness
+                connectedness_fitness = connectedness(cf_theta, connectedness_model)
+
+                # objective 4: causality
+                causality_cost = causality(x_ord, cf_ord, cf_theta, feature_width,
+                                           continuous_indices, discrete_indices, correlationModel)
+
+                # objective 5: feature distance
+                distance_cost = featureDistance(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
+
+                # objective 6: Sparsity
+                sparsity_cost = sparsity(x_org, cf_org)
+
+                return prediction_cost, proximity_fitness, connectedness_fitness, causality_cost, distance_cost, sparsity_cost
+
+            return objectiveFunction
+
+        elif self.sound == True and self.causality == True and self.actionable == True:
+            # objective names
+            self.objective_names = ['prediction', 'proximity', 'connectedness', 'causality', 'actionable', 'distance', 'sparsity']
+            # objective weights, -1.0: cost function, 1.0: fitness function
+            self.objective_weights = (-1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0)
+            # number of objectives
+            self.n_objectives = 7
+
+            # defining objective function
+            def objectiveFunction(x_ord, x_org, cf_class, cf_range, probability_thresh, proximity_model,
+                                  connectedness_model,
+                                  user_preferences, dataset, predict_fn, predict_proba_fn, feature_width,
+                                  continuous_indices,
+                                  discrete_indices, featureScaler, correlationModel, cf_theta):
+
+                # constructing counterfactual from the EA decision variables
+                cf_theta = np.asarray(cf_theta)
+                cf_org = theta2org(cf_theta, featureScaler, dataset)
+                cf_ord = org2ord(cf_org, dataset)
+                cf_ohe = ord2ohe(cf_ord, dataset)
+
+                # objective 1: prediction distance
+                prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
+                                                     probability_thresh, cf_class, cf_range)
+                # objective 2: proximity
+                proximity_fitness = proximity(cf_theta, proximity_model)
+
+                # objective 3: connectedness
+                connectedness_fitness = connectedness(cf_theta, connectedness_model)
+
+                # objective 4: causality
+                causality_cost = causality(x_ord, cf_ord, cf_theta, feature_width,
+                                           continuous_indices, discrete_indices, correlationModel)
+
+                # objective 5: actionable recourse
+                actionable_cost = actionableRecourse(x_org, cf_org, user_preferences)
 
                 # objective 6: feature distance
                 distance_cost = featureDistance(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
@@ -223,10 +386,10 @@ class MOCF():
                 # objective 7: Sparsity
                 sparsity_cost = sparsity(x_org, cf_org)
 
-                return prediction_cost, proximity_fitness, connectedness_fitness, actionable_cost, correlation_cost, \
-                       distance_cost, sparsity_cost
+                return prediction_cost, proximity_fitness, connectedness_fitness, causality_cost, actionable_cost, distance_cost, sparsity_cost
 
             return objectiveFunction
+
 
     def groundtruthData(self):
 

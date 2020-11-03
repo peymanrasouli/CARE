@@ -44,16 +44,16 @@ def main():
             predict_fn = lambda x: blackbox.predict(x).ravel()
             predict_proba_fn = lambda x: blackbox.predict_proba(x)
 
-            # creating an instance of MOCF explainer for  soundCF=False and feasibleAR=False
+            # creating an instance of MOCF explainer for sound=False, causality=False, actionable=False
             explainer_base = MOCF(dataset, task=task, predict_fn=predict_fn,
                                   predict_proba_fn=predict_proba_fn,
-                                  soundCF=False, feasibleAR=False)
+                                  sound=False, causality=False, actionable=False)
             explainer_base.fit(X_train, Y_train)
 
-            # creating an instance of MOCF explainer for  soundCF=True and feasibleAR=False
+            # creating an instance of MOCF explainer for sound=True, causality=False, actionable=False
             explainer_sound = MOCF(dataset, task=task, predict_fn=predict_fn,
                                    predict_proba_fn=predict_proba_fn,
-                                   soundCF=True, feasibleAR=False)
+                                   sound=True, causality=False, actionable=False)
             explainer_sound.fit(X_train, Y_train)
 
             ################################### Explaining test samples #########################################
