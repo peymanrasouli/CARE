@@ -2,7 +2,7 @@
 
 This repository contains the implementation source code of the following paper:
 
-Feasible Actionable Recourse through Sound Multi-objective Counter-factual Explanations
+Causality-preserved Actionable Recourse based on Sound Counterfactual Explanations
 
 # Setup
 1- Install the following package that contains GCC/g++ compilers and libraries:
@@ -47,13 +47,13 @@ python benchmark_base.py
 ```
 python benchmark_sound.py
 ```
-6- To reproduce the feasible comparison results run:
+6- To reproduce the sound and causality comparison results run:
 ```
-python benchmark_feasible.py
+python benchmark_sound_causality.py
 ```
-7- To reproduce the sound & feasible comparison results run:
+7- To reproduce the sound, causality, and actionable  comparison results run:
 ```
-python benchmark_sound_feasible.py
+python benchmark_sound_causality_actionable.py
 ```
 8- To reproduce the soundness validation results run:
 ```
