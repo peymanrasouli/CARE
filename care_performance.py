@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 from create_model import CreateModel, MLPClassifier, MLPRegressor
 from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
 from user_preferences import userPreferences
-from mocf import MOCF
+from care import CARE
 from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 
@@ -69,26 +69,26 @@ def main():
             # setting experiment size for the data set
             N, n_cf = experiment_size[dataset_kw]
 
-            # creating an instance of MOCF explainer for sound=False, causality=False, actionable=False
-            explainer_base = MOCF(dataset, task=task, predict_fn=predict_fn,
+            # creating an instance of CARE explainer for sound=False, causality=False, actionable=False
+            explainer_base = CARE(dataset, task=task, predict_fn=predict_fn,
                                   predict_proba_fn=predict_proba_fn,
                                   sound=False, causality=False, actionable=False, n_cf=n_cf)
             explainer_base.fit(X_train, Y_train)
 
-            # creating an instance of MOCF explainer for sound=True, causality=False, actionable=False
-            explainer_sound = MOCF(dataset, task=task, predict_fn=predict_fn,
+            # creating an instance of CARE explainer for sound=True, causality=False, actionable=False
+            explainer_sound = CARE(dataset, task=task, predict_fn=predict_fn,
                                    predict_proba_fn=predict_proba_fn,
                                    sound=True, causality=False, actionable=False, n_cf=n_cf)
             explainer_sound.fit(X_train, Y_train)
 
-            # creating an instance of MOCF explainer for sound=True, causality=True, actionable=False
-            explainer_sound_causality = MOCF(dataset, task=task, predict_fn=predict_fn,
+            # creating an instance of CARE explainer for sound=True, causality=True, actionable=False
+            explainer_sound_causality = CARE(dataset, task=task, predict_fn=predict_fn,
                                    predict_proba_fn=predict_proba_fn,
                                    sound=True, causality=True, actionable=False, n_cf=n_cf)
             explainer_sound_causality.fit(X_train, Y_train)
 
-            # creating an instance of MOCF explainer for sound=True, causality=True, actionable=True
-            explainer_sound_causality_actionable = MOCF(dataset, task=task, predict_fn=predict_fn,
+            # creating an instance of CARE explainer for sound=True, causality=True, actionable=True
+            explainer_sound_causality_actionable = CARE(dataset, task=task, predict_fn=predict_fn,
                                             predict_proba_fn=predict_proba_fn,
                                             sound=True, causality=True, actionable=True, n_cf=n_cf)
             explainer_sound_causality_actionable.fit(X_train, Y_train)
@@ -97,11 +97,11 @@ def main():
 
             # creating/opening a csv file for storing results
             exists = os.path.isfile(
-                experiment_path + 'mocf_performance_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
+                experiment_path + 'care_performance_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
             if exists:
-                os.remove(experiment_path + 'mocf_performance_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
+                os.remove(experiment_path + 'care_performance_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
             cfs_results_csv = open(
-                experiment_path + 'mocf_performance_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
+                experiment_path + 'care_performance_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
 
             feature_space = ['' for _ in range(X_train.shape[1] - 1 + 9)]
             header = ['', 'Base']
@@ -117,11 +117,11 @@ def main():
 
             # creating/opening a csv file for storing results
             exists = os.path.isfile(
-                experiment_path + 'mocf_performance_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
+                experiment_path + 'care_performance_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
             if exists:
-                os.remove(experiment_path + 'mocf_performance_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
+                os.remove(experiment_path + 'care_performance_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
             eval_results_csv = open(
-                experiment_path + 'mocf_performance_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
+                experiment_path + 'care_performance_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
 
             header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                      ('Base', '', '', '', '', '', '', '', '',

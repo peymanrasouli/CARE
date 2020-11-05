@@ -7,7 +7,7 @@ from prepare_datasets import *
 from sklearn.model_selection import train_test_split
 from create_model import CreateModel, MLPClassifier
 from user_preferences import userPreferences
-from mocf_explainer import MOCFExplainer
+from care_explainer import CAREExplainer
 from cfprototype_explainer import CFPrototypeExplainer
 from dice_explainer import DiCEExplainer
 
@@ -57,27 +57,27 @@ def main():
             # set user preferences
             user_preferences = userPreferences(dataset, x_ord)
 
-            # explain instance x_ord using MOCF
-            MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
+            # explain instance x_ord using CARE
+            CARE_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
                                         sound=False, causality=False, actionable=False,
                                         user_preferences=user_preferences, cf_class='opposite',
                                         probability_thresh=0.5, n_cf=n_cf)
 
             # explain instance x_ord using CFPrototype
             CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, task,
-                                                      MOCF_output, target_class=None, n_cf=n_cf)
+                                                      CARE_output, target_class=None, n_cf=n_cf)
 
             # explain instance x_ord using DiCE
             DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset,
-                                        task, MOCF_output, actionable=False, user_preferences=user_preferences,
+                                        task, CARE_output, actionable=False, user_preferences=user_preferences,
                                         n_cf=n_cf, desired_class="opposite", probability_thresh=0.5,
                                         proximity_weight=1.0, diversity_weight=1.0)
 
             # print n best counterfactuals and their corresponding objective values
             print('\n')
-            print('MOCF counterfactuals')
-            print(MOCF_output['x_cfs_highlight'].head(n= n_cf + 1))
-            print(MOCF_output['x_cfs_eval'].head(n= n_cf + 1))
+            print('CARE counterfactuals')
+            print(CARE_output['x_cfs_highlight'].head(n= n_cf + 1))
+            print(CARE_output['x_cfs_eval'].head(n= n_cf + 1))
 
             print('\n')
             print('CFPrototype counterfactuals')

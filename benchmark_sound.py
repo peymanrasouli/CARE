@@ -8,7 +8,7 @@ from prepare_datasets import *
 from utils import *
 from sklearn.model_selection import train_test_split
 from create_model import CreateModel, MLPClassifier
-from mocf_explainer import MOCFExplainer
+from care_explainer import CAREExplainer
 from cfprototype_explainer import CFPrototypeExplainer
 from dice_explainer import DiCEExplainer
 
@@ -67,7 +67,7 @@ def main():
             cfs_results_csv = open(experiment_path + 'benchmark_sound_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf), 'a')
 
             feature_space = ['' for _ in range(X_train.shape[1]-1 + 7)]
-            header = ['','MOCF']
+            header = ['','CARE']
             header += feature_space
             header += ['CFPrototype']
             header += feature_space
@@ -83,7 +83,7 @@ def main():
             eval_results_csv = open(experiment_path + 'benchmark_sound_%s_eval_%s_%s.csv'%(dataset['name'], N, n_cf), 'a')
 
             header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                      ('MOCF', '', '', '', '', '', '',
+                      ('CARE', '', '', '', '', '', '',
                        'CFPrototype', '', '', '', '', '', '',
                        'DiCE', '', '', '', '', '', '')
             eval_results_csv.write(header)
@@ -128,24 +128,24 @@ def main():
             for x_ord in X_test:
 
                 try:
-                    # explain instance x_ord using MOCF
-                    MOCF_output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
+                    # explain instance x_ord using CARE
+                    CARE_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
                                                 sound=True, causality=False, actionable=False, user_preferences=None,
                                                 cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
-                    mocf_x_cfs_highlight = MOCF_output['x_cfs_highlight']
-                    mocf_cfs_eval = MOCF_output['cfs_eval']
-                    mocf_x_cfs_eval = MOCF_output['x_cfs_eval']
+                    care_x_cfs_highlight = CARE_output['x_cfs_highlight']
+                    care_cfs_eval = CARE_output['cfs_eval']
+                    care_x_cfs_eval = CARE_output['x_cfs_eval']
 
                     # explain instance x_ord using CFPrototype
                     CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, task,
-                                                              MOCF_output, target_class=None, n_cf=n_cf)
+                                                              CARE_output, target_class=None, n_cf=n_cf)
                     cfprototype_x_cfs_highlight = CFPrototype_output['x_cfs_highlight']
                     cfprototype_cfs_eval = CFPrototype_output['cfs_eval']
                     cfprototype_x_cfs_eval = CFPrototype_output['x_cfs_eval']
 
                     # explain instance x_ord using DiCE
                     DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset,
-                                                task, MOCF_output, actionable=False, user_preferences=None,
+                                                task, CARE_output, actionable=False, user_preferences=None,
                                                 n_cf=n_cf, desired_class="opposite", probability_thresh=0.5,
                                                 proximity_weight=1.0, diversity_weight=1.0)
                     dice_x_cfs_highlight = DiCE_output['x_cfs_highlight']
@@ -153,7 +153,7 @@ def main():
                     dice_x_cfs_eval = DiCE_output['x_cfs_eval']
 
                     # storing the best counterfactual found by methods
-                    cfs_results = pd.concat([mocf_x_cfs_highlight.iloc[:2], mocf_x_cfs_eval.iloc[:2],
+                    cfs_results = pd.concat([care_x_cfs_highlight.iloc[:2], care_x_cfs_eval.iloc[:2],
                                              cfprototype_x_cfs_highlight.iloc[:2], cfprototype_x_cfs_eval.iloc[:2],
                                              dice_x_cfs_highlight.iloc[:2], dice_x_cfs_eval.iloc[:2]], axis=1)
                     cfs_results.to_csv(cfs_results_csv)
@@ -161,7 +161,7 @@ def main():
                     cfs_results_csv.flush()
 
                     # storing the evaluation of the best counterfactual found by methods
-                    eval_results = np.r_[mocf_cfs_eval.iloc[0, :-2],
+                    eval_results = np.r_[care_cfs_eval.iloc[0, :-2],
                                          cfprototype_cfs_eval.iloc[0, :-2],
                                          dice_cfs_eval.iloc[0, :-2]]
                     eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]

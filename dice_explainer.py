@@ -6,7 +6,7 @@ tf.InteractiveSession()
 from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 
-def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset, task, MOCF_output,
+def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset, task, CARE_output,
                   actionable=False, user_preferences=None, n_cf=5, desired_class="opposite", probability_thresh=0.5,
                   proximity_weight=0.5, diversity_weight=1.0):
 
@@ -113,10 +113,9 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
     cfs_ord[discrete_features] = cfs_ord[discrete_features].astype(int)
 
     # evaluating counterfactuals
-    toolbox = MOCF_output['toolbox']
-    objective_names = MOCF_output['objective_names']
-    featureScaler = MOCF_output['featureScaler']
-    feature_names = dataset['feature_names']
+    toolbox = CARE_output['toolbox']
+    objective_names = CARE_output['objective_names']
+    featureScaler = CARE_output['featureScaler']
 
     cfs_ord, \
     cfs_eval, \

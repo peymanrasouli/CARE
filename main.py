@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from create_model import CreateModel, MLPClassifier, MLPRegressor
 from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
 from user_preferences import userPreferences
-from mocf_explainer import MOCFExplainer
+from care_explainer import CAREExplainer
 
 def main():
     # defining path of data sets and experiment results
@@ -64,8 +64,8 @@ def main():
             # set user preferences
             user_preferences = userPreferences(dataset, x_ord)
 
-            # explain instance x_ord using MOCF
-            output = MOCFExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
+            # explain instance x_ord using CARE
+            output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
                                    sound=False, causality=False, actionable=False, user_preferences=user_preferences,
                                    cf_class='opposite', probability_thresh=0.5, cf_quantile='neighbor', n_cf=n_cf)
 

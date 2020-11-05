@@ -5,7 +5,7 @@ from alibi.utils.mapping import ord_to_ohe
 from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 
-def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, task, MOCF_output,
+def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, task, CARE_output,
                          target_class=None, n_cf=5):
     # preparing parameters
     cat_vars_ord = {}
@@ -53,9 +53,9 @@ def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, 
     cfs_ord = pd.DataFrame(data=cfs_ord, columns=dataset['feature_names'])
 
     # evaluating counterfactuals
-    toolbox = MOCF_output['toolbox']
-    objective_names = MOCF_output['objective_names']
-    featureScaler = MOCF_output['featureScaler']
+    toolbox = CARE_output['toolbox']
+    objective_names = CARE_output['objective_names']
+    featureScaler = CARE_output['featureScaler']
     feature_names = dataset['feature_names']
 
     cfs_ord, \

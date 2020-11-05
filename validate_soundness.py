@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from create_model import CreateModel
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingClassifier
-from mocf import MOCF
+from care import CARE
 from evaluate_counterfactuals import evaluateCounterfactuals
 
 def main():
@@ -44,14 +44,14 @@ def main():
             predict_fn = lambda x: blackbox.predict(x).ravel()
             predict_proba_fn = lambda x: blackbox.predict_proba(x)
 
-            # creating an instance of MOCF explainer for sound=False, causality=False, actionable=False
-            explainer_base = MOCF(dataset, task=task, predict_fn=predict_fn,
+            # creating an instance of CARE explainer for sound=False, causality=False, actionable=False
+            explainer_base = CARE(dataset, task=task, predict_fn=predict_fn,
                                   predict_proba_fn=predict_proba_fn,
                                   sound=False, causality=False, actionable=False)
             explainer_base.fit(X_train, Y_train)
 
-            # creating an instance of MOCF explainer for sound=True, causality=False, actionable=False
-            explainer_sound = MOCF(dataset, task=task, predict_fn=predict_fn,
+            # creating an instance of CARE explainer for sound=True, causality=False, actionable=False
+            explainer_sound = CARE(dataset, task=task, predict_fn=predict_fn,
                                    predict_proba_fn=predict_proba_fn,
                                    sound=True, causality=False, actionable=False)
             explainer_sound.fit(X_train, Y_train)

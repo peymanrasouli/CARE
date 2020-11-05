@@ -18,7 +18,7 @@ from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
 
-class MOCF():
+class CARE():
     def __init__(self,
                  dataset,
                  task='classification',
@@ -438,7 +438,7 @@ class MOCF():
             return groundtruth_data
 
         else:
-            raise TypeError("The task is not supported! MOCF works on 'classification' and 'regression' tasks.")
+            raise TypeError("The task is not supported! CARE works on 'classification' and 'regression' tasks.")
 
     def featureScaler(self):
         # creating a scaler for mapping features in equal range
@@ -474,7 +474,7 @@ class MOCF():
 
     def correlationModel(self):
 
-        print('Creating correlation models for highly correlated features ...')
+        print('Creating correlation models for causality-preservation ...')
 
         ## Feature correlation modeling
         # Calculate the correlation/strength-of-association of features in data-set

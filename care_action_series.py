@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from create_model import CreateModel, MLPClassifier, MLPRegressor
 from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
 from user_preferences import userPreferences
-from mocf import MOCF
+from care import CARE
 from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 from causality import causality
@@ -61,9 +61,9 @@ def main():
                 predict_fn = lambda x: blackbox.predict(x).ravel()
                 predict_proba_fn = lambda x: blackbox.predict_proba(x)
 
-            # creating an instance of MOCF explainer
+            # creating an instance of CARE explainer
             n_cf = 10
-            explainer = MOCF(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
+            explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                              sound=True, causality=True, actionable=True, n_cf=n_cf)
 
             # fitting the explainer on the training data
