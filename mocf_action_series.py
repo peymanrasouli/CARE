@@ -11,7 +11,7 @@ from user_preferences import userPreferences
 from mocf import MOCF
 from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
-from correlation import correlation
+from causality import causality
 from utils import ord2theta
 from itertools import permutations
 
@@ -110,9 +110,9 @@ def main():
                         for f in list(o):
                             cf_ord[f] = cfs_ord.iloc[i, f]
                             cf_theta = ord2theta(cf_ord, explainer.featureScaler)
-                            corr = correlation(x_ord, cf_ord, cf_theta, dataset['feature_width'],
-                                               dataset['continuous_indices'],
-                                               dataset['discrete_indices'], explainer.correlationModel)
+                            corr = causality(x_ord, cf_ord, cf_theta, dataset['feature_width'],
+                                             dataset['continuous_indices'], dataset['discrete_indices'],
+                                             explainer.correlationModel)
                             corr_cost.append(corr)
                         order_cost[o] = np.mean(corr_cost)
                     cfs_action_series.append(order_cost)
