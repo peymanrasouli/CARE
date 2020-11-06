@@ -15,8 +15,8 @@ def main():
 
     # defining the list of data sets
     datsets_list = {
-        # 'iris': ('iris-sklearn', PrepareIris, 'classification'),
         'moon': ('moon-sklearn', PrepareMoon, 'classification'),
+        # 'iris': ('iris-sklearn', PrepareIris, 'classification'),
     }
 
     # defining the list of black-boxes
