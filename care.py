@@ -16,6 +16,8 @@ from dython import nominal
 import hdbscan
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
 from sklearn.preprocessing import MinMaxScaler
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 class CARE():
@@ -31,8 +33,8 @@ class CARE():
                  response_quantile=4,
                  K_nbrs=500,
                  corr_thresh=0.1,
-                 corr_model_train_perc=0.8,
-                 corr_model_acc_thresh=0.7,
+                 corr_model_train_percent=0.8,
+                 corr_model_score_thresh=None,
                  n_generation=10,
                  hof_size=100,
                  x_init=0.3,
@@ -59,8 +61,8 @@ class CARE():
         self.response_quantile = response_quantile
         self.K_nbrs = K_nbrs
         self.corr_thresh = corr_thresh
-        self.corr_model_train_perc = corr_model_train_perc
-        self.corr_model_acc_thresh = corr_model_acc_thresh
+        self.corr_model_train_percent = corr_model_train_percent
+        self.corr_model_score_thresh = corr_model_score_thresh
         self.n_generation = n_generation
         self.hof_size = hof_size
         self.init_probability = [x_init, neighbor_init, random_init] / np.sum([x_init, neighbor_init, random_init])
@@ -493,8 +495,9 @@ class CARE():
         corr_[corr_features] = 1
 
         ## creating correlation models
-        val_point = int(self.corr_model_train_perc * len(self.X_train))
+        val_point = int(self.corr_model_train_percent * len(self.X_train))
         X_train_theta = self.featureScaler.transform(self.X_train)
+        scores = []
         correlation_models = []
         for f in range(len(corr_)):
             inputs = np.where(corr_[f, :] == 1)[0]
@@ -504,16 +507,24 @@ class CARE():
                     model.fit(X_train_theta[0:val_point, inputs], self.X_train[0:val_point, f])
                     score = f1_score(self.X_train[val_point:, f], model.predict(X_train_theta[val_point:, inputs]),
                                      average='weighted')
-                    # consider the prediction model has the score above threshold
-                    if score > self.corr_model_acc_thresh:
-                        correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
+                    scores.append(score)
+                    correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
                 elif f in self.continuous_indices:
                     model = DecisionTreeRegressor()
                     model.fit(X_train_theta[0:val_point, inputs], self.X_train[0:val_point, f])
                     score = r2_score(self.X_train[val_point:, f], model.predict(X_train_theta[val_point:, inputs]))
-                    # consider the prediction model has the score above threshold
-                    if score > self.corr_model_acc_thresh:
-                        correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
+                    scores.append(score)
+                    correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
+
+        # select models that have prediction score above a threshold/median value
+        if self.corr_model_score_thresh == None:
+            median = np.median(scores)
+            selected_models = np.where(scores >= median)[0]
+            correlation_models = [correlation_models[m] for m in selected_models]
+        else:
+            selected_models = np.where(scores >= self.corr_model_score_thresh )[0]
+            correlation_models = [correlation_models[m] for m in selected_models]
+
         return correlation_models
 
     def groundtruthNeighborhoodModel(self):
