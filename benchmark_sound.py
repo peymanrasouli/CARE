@@ -21,8 +21,8 @@ def main():
     # defining the list of data sets
     datsets_list = {
         'adult': ('adult.csv', PrepareAdult, 'classification'),
-        'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
-        'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
+        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        # 'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
     }
 
     # defining the list of black-boxes

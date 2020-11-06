@@ -15,7 +15,6 @@ def main():
     # defining path of data sets and experiment results
     path = './'
     dataset_path = path + 'datasets/'
-    experiment_path = path + 'experiments/'
 
     # defining the list of data sets
     datsets_list = {

@@ -30,8 +30,8 @@ class CARE():
                  n_cf=5,
                  response_quantile=4,
                  K_nbrs=500,
-                 corr_thresh=0.2,
-                 corr_model_train_perc=0.7,
+                 corr_thresh=0.1,
+                 corr_model_train_perc=0.8,
                  corr_model_acc_thresh=0.7,
                  n_generation=10,
                  hof_size=100,
@@ -503,7 +503,7 @@ class CARE():
                     model = DecisionTreeClassifier()
                     model.fit(X_train_theta[0:val_point, inputs], self.X_train[0:val_point, f])
                     score = f1_score(self.X_train[val_point:, f], model.predict(X_train_theta[val_point:, inputs]),
-                                     average='micro')
+                                     average='weighted')
                     # consider the prediction model has the score above threshold
                     if score > self.corr_model_acc_thresh:
                         correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})

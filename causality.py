@@ -15,6 +15,6 @@ def causality(x_ord, cf_ord, cf_theta, feature_width, continuous_indices, discre
                 distance.append(score * int(cf_ord[feature] != cf_ord_[feature]))
             elif feature in continuous_indices:
                 distance.append(score * (1 / feature_width[feature]) * abs(cf_ord[feature] - cf_ord_[feature]))
-    cost = 0 if distance == [] else np.mean(distance)
+    cost = 0 if distance == [] else np.sum(distance)
     return cost
 

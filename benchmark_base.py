@@ -7,7 +7,7 @@ pd.set_option('display.width', 1000)
 from prepare_datasets import *
 from utils import *
 from sklearn.model_selection import train_test_split
-from create_model import CreateModel, MLPClassifier, MLPRegressor
+from create_model import CreateModel, MLPClassifier
 from care_explainer import CAREExplainer
 from cfprototype_explainer import CFPrototypeExplainer
 from dice_explainer import DiCEExplainer
@@ -21,8 +21,8 @@ def main():
     # defining the list of data sets
     datsets_list = {
         'adult': ('adult.csv', PrepareAdult, 'classification'),
-        'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
-        'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
+        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        # 'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
     }
 
     # defining the list of black-boxes
