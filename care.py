@@ -419,6 +419,7 @@ class CARE():
                 groundtruth_data[c] = self.X_train[c_ind].copy()
             return groundtruth_data
 
+        # regression task
         elif self.task is 'regression':
             # divide the response values into quantiles
             q = np.quantile(self.Y_train, q=np.linspace(0, 1, self.response_quantile))
@@ -720,7 +721,10 @@ class CARE():
         cfs_ord = org2ord(cfs_org, self.dataset)
         cfs_ord = pd.DataFrame(data=cfs_ord, columns=self.feature_names)
 
+        # selecting best n_cf counterfactuals
         cfs_ord = cfs_ord.iloc[:self.n_cf,:]
+
+        # selecting the best counterfactual
         best_cf_ord = cfs_ord.iloc[0]
 
         ## returning the results
