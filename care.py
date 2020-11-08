@@ -721,7 +721,7 @@ class CARE():
         cfs_ord = org2ord(cfs_org, self.dataset)
         cfs_ord = pd.DataFrame(data=cfs_ord, columns=self.feature_names)
 
-        # selecting best n_cf counterfactuals
+        # selecting the top n_cf counterfactuals
         cfs_ord = cfs_ord.iloc[:self.n_cf,:]
 
         # selecting the best counterfactual
