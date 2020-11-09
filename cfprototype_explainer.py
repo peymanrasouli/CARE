@@ -5,32 +5,37 @@ from alibi.utils.mapping import ord_to_ohe
 from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 
-def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, task, CARE_output,
-                         target_class=None, n_cf=5):
-    # preparing parameters
-    cat_vars_ord = {}
-    for i,d in enumerate(dataset['discrete_indices']):
-        cat_vars_ord[d] = dataset['n_cat_discrete'][i]
-    cat_vars_ohe = ord_to_ohe(X_train, cat_vars_ord)[1]
+def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, task,
+                         CARE_output, explainer=None, target_class=None, n_cf=5):
 
+    # preparing instance to explain for CFPrototype
     x_ohe = ord2ohe(x_ord,dataset)
     x_ohe = x_ohe.reshape((1,) + x_ohe.shape)
-    shape = x_ohe.shape
-    rng_min = np.min(X_train, axis=0)
-    rng_max = np.max(X_train, axis=0)
-    rng = tuple([rng_min.reshape(1, -1), rng_max.reshape(1, -1)])
-    rng_shape = (1,) + X_train.shape[1:]
-    feature_range = ((np.ones(rng_shape) * rng[0]).astype(np.float32),
-                     (np.ones(rng_shape) * rng[1]).astype(np.float32))
 
-    # creating prototype counterfactual explainer
-    explainer = CounterFactualProto(predict=predict_proba_fn, shape=shape, feature_range=feature_range,
-                                    cat_vars=cat_vars_ohe, ohe=True, beta=0.1, theta=10,
-                                    use_kdtree=True, max_iterations=500, c_init=1.0, c_steps=5)
+    # creating an explainer instance in case it is not pre-created
+    if explainer is None:
 
-    # Fitting the explainer on the training data
-    X_train_ohe = ord2ohe(X_train, dataset)
-    explainer.fit(X_train_ohe, d_type='abdm', disc_perc=[25, 50, 75])
+        # preparing parameters
+        cat_vars_ord = {}
+        for i, d in enumerate(dataset['discrete_indices']):
+            cat_vars_ord[d] = dataset['n_cat_discrete'][i]
+        cat_vars_ohe = ord_to_ohe(X_train, cat_vars_ord)[1]
+        shape = x_ohe.shape
+        rng_min = np.min(X_train, axis=0)
+        rng_max = np.max(X_train, axis=0)
+        rng = tuple([rng_min.reshape(1, -1), rng_max.reshape(1, -1)])
+        rng_shape = (1,) + X_train.shape[1:]
+        feature_range = ((np.ones(rng_shape) * rng[0]).astype(np.float32),
+                         (np.ones(rng_shape) * rng[1]).astype(np.float32))
+
+        # creating prototype counterfactual explainer
+        explainer = CounterFactualProto(predict=predict_proba_fn, shape=shape, feature_range=feature_range,
+                                        cat_vars=cat_vars_ohe, ohe=True, beta=0.1, theta=10,
+                                        use_kdtree=True, max_iterations=500, c_init=1.0, c_steps=5)
+
+        # Fitting the explainer on the training data
+        X_train_ohe = ord2ohe(X_train, dataset)
+        explainer.fit(X_train_ohe, d_type='abdm', disc_perc=[25, 50, 75])
 
     # generating counterfactuals
     explanations = explainer.explain(x_ohe,target_class=target_class)

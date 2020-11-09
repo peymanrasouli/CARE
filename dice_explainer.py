@@ -7,106 +7,89 @@ from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 
 def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset, task, CARE_output,
-                  actionable=False, user_preferences=None, n_cf=5, desired_class="opposite", probability_thresh=0.5,
-                  proximity_weight=0.5, diversity_weight=1.0):
+                  explainer=None, actionable=False, user_preferences=None, n_cf=5, desired_class="opposite",
+                  probability_thresh=0.5, proximity_weight=0.5, diversity_weight=1.0, features_to_vary = 'all'):
 
-    # preparing dataset for DiCE model
+    # reading the data set information
     feature_names = dataset['feature_names']
     continuous_features = dataset['continuous_features']
     discrete_features = dataset['discrete_features']
 
-    data_frame = pd.DataFrame(data=np.c_[X_train, Y_train], columns=feature_names+['class'])
-    data_frame[continuous_features] = (data_frame[continuous_features]).astype(float)
-    data_frame[discrete_features] = (data_frame[discrete_features]).astype(int)
+    # creating an explainer instance in case it is not pre-created
+    if explainer is None:
 
-    if actionable is True:
+        # preparing dataset for DiCE model
+        data_frame = pd.DataFrame(data=np.c_[X_train, Y_train], columns=feature_names+['class'])
+        data_frame[continuous_features] = (data_frame[continuous_features]).astype(float)
+        data_frame[discrete_features] = (data_frame[discrete_features]).astype(int)
 
-        # preparing actionable recourse
-        action_operation = user_preferences['action_operation']
-        continuous_indices = dataset['continuous_indices']
-        features_to_vary = [feature_names[i] for i, op in enumerate(action_operation) if op is not 'fix']
-        permitted_range = {}
-        x_org = ord2org(x_ord, dataset)
-        for i, op in enumerate(action_operation):
-            if (i in continuous_indices) and (type(op) is list):
-                x_org_lb = x_org.copy()
-                x_org_ub = x_org.copy()
-                x_org_lb[i] = op[0]
-                x_org_ub[i] = op[1]
-                x_ord_lb = org2ord(x_org_lb, dataset)
-                x_ord_ub = org2ord(x_org_ub, dataset)
-                range_scaled = [x_ord_lb[i], x_ord_ub[i]]
-                permitted_range[feature_names[i]] = range_scaled
-            if (i in continuous_indices) and (op == 'ge'):
-                permitted_range[feature_names[i]] = [x_ord[i], dataset['feature_ranges'][feature_names[i]][1]]
-            if (i in continuous_indices) and (op == 'le'):
-                permitted_range[feature_names[i]] = [dataset['feature_ranges'][feature_names[i]][0], x_ord[i]]
+        # setting actions to explainer in case actionable recourse is applied
+        if actionable is True:
 
-        # creating data a instance
-        data = dice_ml.Data(dataframe=data_frame,
-                         continuous_features=continuous_features,
-                         outcome_name='class',
-                         permitted_range=permitted_range)
+            # preparing actions for DiCE
+            action_operation = user_preferences['action_operation']
+            continuous_indices = dataset['continuous_indices']
+            features_to_vary = [feature_names[i] for i, op in enumerate(action_operation) if op is not 'fix']
+            permitted_range = {}
+            x_org = ord2org(x_ord, dataset)
+            for i, op in enumerate(action_operation):
+                if (i in continuous_indices) and (type(op) is list):
+                    x_org_lb = x_org.copy()
+                    x_org_ub = x_org.copy()
+                    x_org_lb[i] = op[0]
+                    x_org_ub[i] = op[1]
+                    x_ord_lb = org2ord(x_org_lb, dataset)
+                    x_ord_ub = org2ord(x_org_ub, dataset)
+                    range_scaled = [x_ord_lb[i], x_ord_ub[i]]
+                    permitted_range[feature_names[i]] = range_scaled
+                if (i in continuous_indices) and (op == 'ge'):
+                    permitted_range[feature_names[i]] = [x_ord[i], dataset['feature_ranges'][feature_names[i]][1]]
+                if (i in continuous_indices) and (op == 'le'):
+                    permitted_range[feature_names[i]] = [dataset['feature_ranges'][feature_names[i]][0], x_ord[i]]
 
-        # setting the pre-trained ML model for explainer
-        backend = 'TF1'
-        model = dice_ml.Model(model=blackbox, backend=backend)
+            # creating data a instance
+            data = dice_ml.Data(dataframe=data_frame,
+                             continuous_features=continuous_features,
+                             outcome_name='class',
+                             permitted_range=permitted_range)
 
-        # creating a DiCE explainer instance
-        explainer = dice_ml.Dice(data, model)
+            # setting the pre-trained ML model for explainer
+            backend = 'TF1'
+            model = dice_ml.Model(model=blackbox, backend=backend)
 
-        ## generating counterfactuals
-        x_ord_dice = {}
-        for key, value in zip(feature_names, list(x_ord)):
-            x_ord_dice[key] = value
+            # creating a DiCE explainer instance
+            explainer = dice_ml.Dice(data, model)
 
-        for f in discrete_features:
-            x_ord_dice[f] = str(int(x_ord_dice[f]))
+        else:
 
-        # important params:
-        # posthoc_sparsity_param=0.1 ->[0,1]
-        # posthoc_sparsity_algorithm ="linear" -> {"linear", "binary"}
-        # proximity_weight=0.5,
-        # diversity_weight=1.0
-        # stopping_threshold=0.5
-        explanations = explainer.generate_counterfactuals(x_ord_dice, total_CFs=n_cf,
-                                                           desired_class=desired_class,
-                                                           stopping_threshold=probability_thresh,
-                                                           posthoc_sparsity_algorithm="binary",
-                                                           features_to_vary=features_to_vary,
-                                                           proximity_weight=proximity_weight,
-                                                           diversity_weight=diversity_weight)
-    else:
-        # creating data a instance
-        data = dice_ml.Data(dataframe=data_frame,
-                         continuous_features=continuous_features,
-                         outcome_name='class')
+            # creating data a instance
+            data = dice_ml.Data(dataframe=data_frame,
+                             continuous_features=continuous_features,
+                             outcome_name='class')
 
-        # setting the pre-trained ML model for explainer
-        backend = 'TF1'
-        model = dice_ml.Model(model=blackbox, backend=backend)
+            # setting the pre-trained ML model for explainer
+            backend = 'TF1'
+            model = dice_ml.Model(model=blackbox, backend=backend)
 
-        # creating a DiCE explainer instance
-        explainer = dice_ml.Dice(data, model)
+            # creating a DiCE explainer instance
+            explainer = dice_ml.Dice(data, model)
 
-        # generating counterfactuals
-        x_ord_dice = {}
-        for key, value in zip(feature_names, list(x_ord)):
-            x_ord_dice[key] = value
+    # preparing instance to explain for DiCE
+    x_ord_dice = {}
+    for key, value in zip(feature_names, list(x_ord)):
+        x_ord_dice[key] = value
 
-        for f in discrete_features:
-            x_ord_dice[f] = str(int(x_ord_dice[f]))
+    for f in discrete_features:
+        x_ord_dice[f] = str(int(x_ord_dice[f]))
 
-        # important params:
-        # posthoc_sparsity_param=0.1 ->[0,1]
-        # posthoc_sparsity_algorithm ="linear" -> {"linear", "binary"}
-        # proximity_weight=0.5,
-        # diversity_weight=1.0
-        # stopping_threshold=0.5
-        explanations = explainer.generate_counterfactuals(x_ord_dice, total_CFs=n_cf,
-                                                           desired_class=desired_class,
-                                                           stopping_threshold=probability_thresh,
-                                                           posthoc_sparsity_algorithm="binary")
+    # generating counterfactuals
+    explanations = explainer.generate_counterfactuals(x_ord_dice, total_CFs=n_cf,
+                                                      desired_class=desired_class,
+                                                      stopping_threshold=probability_thresh,
+                                                      posthoc_sparsity_algorithm="binary",
+                                                      features_to_vary=features_to_vary,
+                                                      proximity_weight=proximity_weight,
+                                                      diversity_weight=diversity_weight)
 
     # extracting solutions
     cfs_ord = explanations.final_cfs_df.iloc[:,:-1]

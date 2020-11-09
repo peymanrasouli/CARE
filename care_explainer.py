@@ -2,20 +2,24 @@ from care import CARE
 from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 
-def CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
+def CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn, explainer=None,
                   sound=False, causality=False, actionable=False, user_preferences=None,
                   cf_class='opposite', probability_thresh=0.5, cf_quantile='neighbor', n_cf=5):
 
-    # creating an instance of CARE explainer
-    explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                     sound=sound, causality=causality, actionable=actionable, n_cf=n_cf)
+    # creating an explainer instance in case it is not pre-created
+    if explainer is None:
 
-    # fitting the explainer on the training data
-    explainer.fit(X_train, Y_train)
+        # creating an instance of CARE explainer
+        explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
+                         sound=sound, causality=causality, actionable=actionable, n_cf=n_cf)
+
+        # fitting the explainer on the training data
+        explainer.fit(X_train, Y_train)
 
     # generating counterfactuals
     explanations = explainer.explain(x_ord, cf_class=cf_class, cf_quantile=cf_quantile,
-                                    probability_thresh=probability_thresh, user_preferences=user_preferences)
+                                     probability_thresh=probability_thresh,
+                                     user_preferences=user_preferences)
 
     # extracting results
     cfs_ord = explanations['cfs_ord']

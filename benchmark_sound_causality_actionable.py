@@ -9,6 +9,10 @@ from utils import *
 from sklearn.model_selection import train_test_split
 from create_model import CreateModel, MLPClassifier
 from user_preferences import userPreferences
+from care import CARE
+from alibi.explainers import CounterFactualProto
+from alibi.utils.mapping import ord_to_ohe
+import dice_ml
 from care_explainer import CAREExplainer
 from cfprototype_explainer import CFPrototypeExplainer
 from dice_explainer import DiCEExplainer
@@ -133,6 +137,36 @@ def main():
             eval_results_csv.write(header)
             eval_results_csv.flush()
 
+            # creating explainer instances
+            # N.B. actionable recourse in DiCE should be adjusted for every instance to explain. Therefore,
+            # we are not able to pre-create an explianer instance and use it for explaining all samples.
+
+            # CARE
+            care_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
+                                  sound=True, causality=True, actionable=True, n_cf=n_cf)
+            care_explainer.fit(X_train, Y_train)
+
+            # CFPrototype
+            cat_vars_ord = {}
+            for i, d in enumerate(dataset['discrete_indices']):
+                cat_vars_ord[d] = dataset['n_cat_discrete'][i]
+            cat_vars_ohe = ord_to_ohe(X_train, cat_vars_ord)[1]
+            x_ohe = ord2ohe(X_train[0], dataset)
+            x_ohe = x_ohe.reshape((1,) + x_ohe.shape)
+            shape = x_ohe.shape
+            rng_min = np.min(X_train, axis=0)
+            rng_max = np.max(X_train, axis=0)
+            rng = tuple([rng_min.reshape(1, -1), rng_max.reshape(1, -1)])
+            rng_shape = (1,) + X_train.shape[1:]
+            feature_range = ((np.ones(rng_shape) * rng[0]).astype(np.float32),
+                             (np.ones(rng_shape) * rng[1]).astype(np.float32))
+            cfprototype_explainer = CounterFactualProto(predict=predict_proba_fn, shape=shape,
+                                                        feature_range=feature_range,
+                                                        cat_vars=cat_vars_ohe, ohe=True, beta=0.1, theta=10,
+                                                        use_kdtree=True, max_iterations=500, c_init=1.0, c_steps=5)
+            X_train_ohe = ord2ohe(X_train, dataset)
+            cfprototype_explainer.fit(X_train_ohe, d_type='abdm', disc_perc=[25, 50, 75])
+
             # explaining instances from test set
             explained = 0
             for x_ord in X_test:
@@ -141,9 +175,9 @@ def main():
                     user_preferences = userPreferences(dataset, x_ord)
 
                     # explain instance x_ord using CARE
-                    CARE_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                                sound=True, causality=True, actionable=True,
-                                                user_preferences=user_preferences,
+                    CARE_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
+                                                predict_proba_fn, explainer=care_explainer,
+                                                user_preferences= user_preferences,
                                                 cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
                     care_x_cfs_highlight = CARE_output['x_cfs_highlight']
                     care_cfs_eval = CARE_output['cfs_eval']
@@ -151,16 +185,17 @@ def main():
 
                     # explain instance x_ord using CFPrototype
                     CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset,
-                                                              task, CARE_output, target_class=None, n_cf=n_cf)
+                                                              task, CARE_output, explainer=cfprototype_explainer,
+                                                              target_class=None, n_cf=n_cf)
                     cfprototype_x_cfs_highlight = CFPrototype_output['x_cfs_highlight']
                     cfprototype_cfs_eval = CFPrototype_output['cfs_eval']
                     cfprototype_x_cfs_eval = CFPrototype_output['x_cfs_eval']
 
                     # explain instance x_ord using DiCE
-                    DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset,
-                                                task, CARE_output, actionable=True, user_preferences=user_preferences,
-                                                n_cf=n_cf, desired_class="opposite", probability_thresh=0.5,
-                                                proximity_weight=1.0, diversity_weight=1.0)
+                    DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train,
+                                                dataset, task, CARE_output, explainer=None, actionable=True,
+                                                user_preferences=user_preferences, n_cf=n_cf, desired_class="opposite",
+                                                probability_thresh=0.5, proximity_weight=1.0, diversity_weight=1.0)
                     dice_x_cfs_highlight = DiCE_output['x_cfs_highlight']
                     dice_cfs_eval = DiCE_output['cfs_eval']
                     dice_x_cfs_eval = DiCE_output['x_cfs_eval']
