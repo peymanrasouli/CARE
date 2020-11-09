@@ -8,7 +8,7 @@ from recover_originals import recoverOriginals
 
 def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset, task, CARE_output,
                   explainer=None, actionable=False, user_preferences=None, n_cf=5, desired_class="opposite",
-                  probability_thresh=0.5, proximity_weight=0.5, diversity_weight=1.0, features_to_vary = 'all'):
+                  probability_thresh=0.5, proximity_weight=0.5, diversity_weight=1.0, features_to_vary='all'):
 
     # reading the data set information
     feature_names = dataset['feature_names']
