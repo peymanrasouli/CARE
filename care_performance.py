@@ -66,34 +66,9 @@ def main():
                 predict_fn = lambda x: blackbox.predict(x).ravel()
                 predict_proba_fn = lambda x: blackbox.predict_proba(x)
 
+            ################################### Explaining test samples #########################################
             # setting experiment size for the data set
             N, n_cf = experiment_size[dataset_kw]
-
-            # creating an instance of CARE explainer for sound=False, causality=False, actionable=False
-            explainer_base = CARE(dataset, task=task, predict_fn=predict_fn,
-                                  predict_proba_fn=predict_proba_fn,
-                                  sound=False, causality=False, actionable=False, n_cf=n_cf)
-            explainer_base.fit(X_train, Y_train)
-
-            # creating an instance of CARE explainer for sound=True, causality=False, actionable=False
-            explainer_sound = CARE(dataset, task=task, predict_fn=predict_fn,
-                                   predict_proba_fn=predict_proba_fn,
-                                   sound=True, causality=False, actionable=False, n_cf=n_cf)
-            explainer_sound.fit(X_train, Y_train)
-
-            # creating an instance of CARE explainer for sound=True, causality=True, actionable=False
-            explainer_sound_causality = CARE(dataset, task=task, predict_fn=predict_fn,
-                                   predict_proba_fn=predict_proba_fn,
-                                   sound=True, causality=True, actionable=False, n_cf=n_cf)
-            explainer_sound_causality.fit(X_train, Y_train)
-
-            # creating an instance of CARE explainer for sound=True, causality=True, actionable=True
-            explainer_sound_causality_actionable = CARE(dataset, task=task, predict_fn=predict_fn,
-                                            predict_proba_fn=predict_proba_fn,
-                                            sound=True, causality=True, actionable=True, n_cf=n_cf)
-            explainer_sound_causality_actionable.fit(X_train, Y_train)
-
-            ################################### Explaining test samples #########################################
 
             # creating/opening a csv file for storing results
             exists = os.path.isfile(
@@ -183,6 +158,30 @@ def main():
                       '=stdev(AI5:AI1000)', '=stdev(AJ5:AJ1000)',)
             eval_results_csv.write(header)
             eval_results_csv.flush()
+
+            # creating an instance of CARE explainer for sound=False, causality=False, actionable=False
+            explainer_base = CARE(dataset, task=task, predict_fn=predict_fn,
+                                  predict_proba_fn=predict_proba_fn,
+                                  sound=False, causality=False, actionable=False, n_cf=n_cf)
+            explainer_base.fit(X_train, Y_train)
+
+            # creating an instance of CARE explainer for sound=True, causality=False, actionable=False
+            explainer_sound = CARE(dataset, task=task, predict_fn=predict_fn,
+                                   predict_proba_fn=predict_proba_fn,
+                                   sound=True, causality=False, actionable=False, n_cf=n_cf)
+            explainer_sound.fit(X_train, Y_train)
+
+            # creating an instance of CARE explainer for sound=True, causality=True, actionable=False
+            explainer_sound_causality = CARE(dataset, task=task, predict_fn=predict_fn,
+                                             predict_proba_fn=predict_proba_fn,
+                                             sound=True, causality=True, actionable=False, n_cf=n_cf)
+            explainer_sound_causality.fit(X_train, Y_train)
+
+            # creating an instance of CARE explainer for sound=True, causality=True, actionable=True
+            explainer_sound_causality_actionable = CARE(dataset, task=task, predict_fn=predict_fn,
+                                                        predict_proba_fn=predict_proba_fn,
+                                                        sound=True, causality=True, actionable=True, n_cf=n_cf)
+            explainer_sound_causality_actionable.fit(X_train, Y_train)
 
             # explaining instances from test set
             explained = 0
