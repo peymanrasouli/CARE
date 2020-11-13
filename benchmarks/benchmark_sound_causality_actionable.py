@@ -14,7 +14,6 @@ from user_preferences import userPreferences
 from care.care import CARE
 from alibi.explainers import CounterFactualProto
 from alibi.utils.mapping import ord_to_ohe
-import dice_ml
 from care_explainer import CAREExplainer
 from cfprototype_explainer import CFPrototypeExplainer
 from dice_explainer import DiCEExplainer
