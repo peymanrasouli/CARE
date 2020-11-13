@@ -1,4 +1,4 @@
-from care import CARE
+from care.care import CARE
 from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 

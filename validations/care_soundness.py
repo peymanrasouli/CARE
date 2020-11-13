@@ -4,12 +4,12 @@ import matplotlib.pyplot as plt
 from create_model import CreateModel
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingClassifier
-from care import CARE
+from care.care import CARE
 from evaluate_counterfactuals import evaluateCounterfactuals
 
 def main():
     # defining path of data sets and experiment results
-    path = './'
+    path = '../'
     dataset_path = path + 'datasets/'
     experiment_path = path + 'experiments/'
 

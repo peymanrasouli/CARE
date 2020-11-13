@@ -1,6 +1,6 @@
 import pandas as pd
 from utils import *
-from feature_distance import featureDistance
+from care.feature_distance import featureDistance
 
 def evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn, predict_proba_fn, task,
                             toolbox, objective_names, featureScaler, feature_names):

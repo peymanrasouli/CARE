@@ -9,16 +9,16 @@ from sklearn.model_selection import train_test_split
 from create_model import CreateModel, MLPClassifier, MLPRegressor
 from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
 from user_preferences import userPreferences
-from care import CARE
+from care.care import CARE
 from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
-from causality import causality
+from care.causality import causality
 from utils import ord2theta
 from itertools import permutations
 
 def main():
     # defining path of data sets and experiment results
-    path = './'
+    path = '../'
     dataset_path = path + 'datasets/'
     experiment_path = path + 'experiments/'
 
