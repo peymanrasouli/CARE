@@ -26,7 +26,7 @@ conda activate CARE
 pip install -r requirements.txt
 ```
 
-# Reproducing the results
+# Explaining instances
 1- To explain a particular instance using CARE run:
 ```
 python main.py
@@ -35,31 +35,39 @@ python main.py
 ```
 python care_cfprototype_dice.py
 ```
-3- To reproduce the CARE performance results run:
+
+# Reproducing the validation results
+1- To reproduce the CARE performance results run:
 ```
 python care_performance.py
 ```
-4- To reproduce the base comparison results run:
+2- To reproduce the CARE soundness results run:
+```
+python care_soundness.py
+```
+3- To reproduce the CARE action series results run:
+```
+python care_action_series.py
+```
+4- To reproduce the CARE causality preservation results run:
+```
+python care_causality_preservation.py
+```
+
+# Reproducing the benchmark results
+1- To reproduce the base benchmark results run:
 ```
 python benchmark_base.py
 ```
-5- To reproduce the sound comparison results run:
+2- To reproduce the sound benchmark results run:
 ```
 python benchmark_sound.py
 ```
-6- To reproduce the sound+causality comparison results run:
+3- To reproduce the sound+causality benchmark results run:
 ```
 python benchmark_sound_causality.py
 ```
-7- To reproduce the sound+causality+actionable  comparison results run:
+4- To reproduce the sound+causality+actionable  benchmark results run:
 ```
 python benchmark_sound_causality_actionable.py
-```
-8- To reproduce the soundness validation results run:
-```
-python validate_soundness.py
-```
-9- To reproduce the action series results run:
-```
-python mocf_action_series.py
 ```
