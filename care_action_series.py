@@ -181,7 +181,7 @@ def main():
                         s = 'cf_'+ str(i) + ' | order: ' + str(order) + ' | cost: ' + str(val)
                         print(s)
 
-                # storing the counterfactual along with best and worst orders
+                # storing the counterfactuals along with the best and worst orders
                 best_action_series_df = pd.DataFrame(data=best_action_series, columns=['Best Order', 'Best Cost'])
                 best_action_series_df = best_action_series_df.set_index(x_cfs_ord.index)
                 worst_action_series_df = pd.DataFrame(data=worst_action_series, columns=['Worst Order', 'Worst Cost'])
