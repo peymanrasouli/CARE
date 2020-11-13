@@ -139,6 +139,28 @@ def userPreferences(dataset, x_ord):
             action_importance[index] = actions[p][1]
             print(p + ':', actions[p][0], 'with importance', '(' + str(actions[p][1]) + ')')
 
+    ## Iris data set
+    elif dataset['name'] == 'iris':
+        ## Feature names and their possible values
+        ## Features with range [] values are continuous (e.g., CRIM) and features with set {} values (e.g., CHAS) are discrete
+
+        # {'sepal length (cm)': [4.3, 7.9]},
+        # {'sepal width (cm)': [2.0, 4.4]},
+        # {'petal length (cm)': [1.0, 6.9]},
+        # {'petal width (cm)': [0.1, 2.5]}
+
+        print('\n')
+        print('----- user-specified actions -----')
+        actions = {}
+
+        action_operation = [None] * len(x_ord)
+        action_importance = [None] * len(x_ord)
+        for p in actions:
+            index = dataset['feature_names'].index(p)
+            action_operation[index] = actions[p][0]
+            action_importance[index] = actions[p][1]
+            print(p + ':', actions[p][0], 'with importance', '(' + str(actions[p][1]) + ')')
+
     ## Boston house price data set
     elif dataset['name'] == 'boston-house-prices':
         ## Feature names and their possible values
