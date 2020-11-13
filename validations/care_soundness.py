@@ -1,3 +1,7 @@
+import sys
+sys.path.append("../")
+import warnings
+warnings.filterwarnings("ignore")
 from utils import *
 from prepare_datasets import *
 import matplotlib.pyplot as plt

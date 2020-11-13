@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append("../")
 import warnings
 warnings.filterwarnings("ignore")
 import pandas as pd
