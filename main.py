@@ -17,10 +17,10 @@ def main():
 
     # defining the list of data sets
     datsets_list = {
-        # 'adult': ('adult.csv', PrepareAdult, 'classification'), # use 'nn-c' or 'gb-c'
+        'adult': ('adult.csv', PrepareAdult, 'classification'), # use 'nn-c' or 'gb-c'
         # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'), # use 'nn-c' or 'gb-c'
         # 'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),  # use 'nn-c' or 'gb-c'
-        'iris': ('iris', PrepareIris, 'classification'),  # use 'gb-c'
+        # 'iris': ('iris', PrepareIris, 'classification'),  # use 'gb-c'
         # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression') # use 'nn-r' or 'gb-r'
     }
 
