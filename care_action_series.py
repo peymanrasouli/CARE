@@ -150,12 +150,14 @@ def main():
                             worst_series[i] = {key: val}
                             worst_val = val
 
-                # print n best counterfactuals and their corresponding objective values
+                # print counterfactuals and their corresponding objective values
                 print('\n')
-                print(x_cfs_highlight.head(n= n_cf + 1))
+                print(x_cfs_highlight)
                 print('\n')
-                print(x_cfs_eval.head(n= n_cf + 1))
+                print(x_cfs_eval)
                 print('\n')
+
+                # finding best and worst action orders for every counterfactual using the causality model
                 print('Best action series:')
                 best_action_series = []
                 best_action_series.append([None,None])

@@ -72,21 +72,21 @@ def main():
                                         n_cf=n_cf, desired_class="opposite", probability_thresh=0.5,
                                         proximity_weight=1.0, diversity_weight=1.0)
 
-            # print n best counterfactuals and their corresponding objective values
+            # print counterfactuals and their corresponding objective values
             print('\n')
             print('CARE counterfactuals')
-            print(CARE_output['x_cfs_highlight'].head(n= n_cf + 1))
-            print(CARE_output['x_cfs_eval'].head(n= n_cf + 1))
+            print(CARE_output['x_cfs_highlight'])
+            print(CARE_output['x_cfs_eval'])
 
             print('\n')
             print('CFPrototype counterfactuals')
-            print(CFPrototype_output['x_cfs_highlight'].head(n=n_cf + 1))
-            print(CFPrototype_output['x_cfs_eval'].head(n=n_cf + 1))
+            print(CFPrototype_output['x_cfs_highlight'])
+            print(CFPrototype_output['x_cfs_eval'])
 
             print('\n')
             print('DiCE counterfactuals')
-            print(DiCE_output['x_cfs_highlight'].head(n=n_cf + 1))
-            print(DiCE_output['x_cfs_eval'].head(n=n_cf + 1))
+            print(DiCE_output['x_cfs_highlight'])
+            print(DiCE_output['x_cfs_eval'])
 
             print('\n')
             print('Done!')
