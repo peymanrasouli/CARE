@@ -1,3 +1,4 @@
+import os
 import warnings
 warnings.filterwarnings("ignore")
 import pandas as pd
@@ -37,6 +38,13 @@ def main():
         # 'gb-r': GradientBoostingRegressor
     }
 
+    experiment_size = {
+        'adult': (500, 10),
+        'credit-card_default': (500, 10),
+        'heart-disease': (50, 10),
+        'boston-house-prices': (100, 10)
+    }
+
     for dataset_kw in datsets_list:
         print('dataset=', dataset_kw)
         print('\n')
@@ -61,14 +69,26 @@ def main():
                 predict_fn = lambda x: blackbox.predict(x).ravel()
                 predict_proba_fn = lambda x: blackbox.predict_proba(x)
 
+            # setting experiment size for the data set
+            N, n_cf = experiment_size[dataset_kw]
+
+            # creating/opening a csv file for storing results
+            exists = os.path.isfile(
+                experiment_path + 'care_action_series_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
+            if exists:
+                os.remove(experiment_path + 'care_action_series_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
+            action_series_results_csv = open(
+                experiment_path + 'care_action_series_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
+
             # creating an instance of CARE explainer
-            n_cf = 10
             explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                              sound=True, causality=True, actionable=True, n_cf=n_cf)
 
             # fitting the explainer on the training data
             explainer.fit(X_train, Y_train)
 
+            # explaining test samples
+            explained = 0
             for x_ord in X_test:
 
                 # set user preferences
@@ -137,14 +157,51 @@ def main():
                 print(x_cfs_eval.head(n= n_cf + 1))
                 print('\n')
                 print('Best action series:')
+                best_action_series = []
+                best_action_series.append([None,None])
                 for i, bs in enumerate(best_series):
                     for key, val in bs.items():
-                        print('cf_'+str(i)+':', [dataset['feature_names'][f] for f in key], '| cost:', val)
+                        order = [dataset['feature_names'][f] for f in key]
+                        order = ['%s' % (order[i]) for i in range(len(order))]
+                        order = ' > '.join(order)
+                        best_action_series.append([order,val])
+                        s = 'cf_'+ str(i) + ' | order: ' + str(order) + ' | cost: ' + str(val)
+                        print(s)
+
                 print('\n')
                 print('Worst action series:')
+                worst_action_series = []
+                worst_action_series.append([None, None])
                 for i, ws in enumerate(worst_series):
                     for key, val in ws.items():
-                        print('cf_'+str(i)+':', [dataset['feature_names'][f] for f in key], '| cost:', val)
+                        order = [dataset['feature_names'][f] for f in key]
+                        order = ['%s' % (order[i]) for i in range(len(order))]
+                        order = ' > '.join(order)
+                        worst_action_series.append([order,val])
+                        s = 'cf_'+ str(i) + ' | order: ' + str(order) + ' | cost: ' + str(val)
+                        print(s)
+
+                # storing the counterfactual along with best and worst orders
+                best_action_series_df = pd.DataFrame(data=best_action_series, columns=['Best Order', 'Best Cost'])
+                best_action_series_df = best_action_series_df.set_index(x_cfs_ord.index)
+                worst_action_series_df = pd.DataFrame(data=worst_action_series, columns=['Worst Order', 'Worst Cost'])
+                worst_action_series_df = worst_action_series_df.set_index(x_cfs_ord.index)
+
+                # storing the best counterfactual found by methods
+                action_series_results = pd.concat([x_cfs_ord, x_cfs_highlight, best_action_series_df, worst_action_series_df], axis=1)
+                action_series_results.to_csv(action_series_results_csv)
+                action_series_results_csv.write('\n')
+                action_series_results_csv.flush()
+
+                explained += 1
+
+                print('\n')
+                print('-----------------------------------------------------------------------')
+                print("%s|%s: %d/%d explained" % (dataset['name'], blackbox_name, explained, N))
+                print('-----------------------------------------------------------------------')
+
+                if explained == N:
+                    break
 
             print('\n')
             print('Done!')

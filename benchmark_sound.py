@@ -35,9 +35,9 @@ def main():
     }
 
     experiment_size = {
-        'adult': (500, 5),
-        'credit-card_default': (500, 5),
-        'heart-disease': (50, 5),
+        'adult': (500, 10),
+        'credit-card_default': (500, 10),
+        'heart-disease': (50, 10),
     }
 
     for dataset_kw in datsets_list:
@@ -60,7 +60,6 @@ def main():
             predict_fn = lambda x: blackbox.predict_classes(x).ravel()
             predict_proba_fn = lambda x: np.asarray([1-blackbox.predict(x).ravel(), blackbox.predict(x).ravel()]).transpose()
 
-            ################################### Explaining test samples #########################################
             # setting experiment size for the data set
             N, n_cf = experiment_size[dataset_kw]
 
@@ -70,7 +69,9 @@ def main():
                 os.remove(experiment_path + 'benchmark_sound_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf))
             cfs_results_csv = open(experiment_path + 'benchmark_sound_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf), 'a')
 
-            feature_space = ['' for _ in range(X_train.shape[1]-1 + 7)]
+            n_out = int(task == 'classification') + 1
+            n_metrics = 10
+            feature_space = ['' for _ in range(X_train.shape[1] - 1 + n_metrics + n_out)]
             header = ['','CARE']
             header += feature_space
             header += ['CFPrototype']
@@ -86,49 +87,45 @@ def main():
                 os.remove(experiment_path + 'benchmark_sound_%s_eval_%s_%s.csv'%(dataset['name'], N, n_cf))
             eval_results_csv = open(experiment_path + 'benchmark_sound_%s_eval_%s_%s.csv'%(dataset['name'], N, n_cf), 'a')
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                      ('CARE', '', '', '', '', '', '',
-                       'CFPrototype', '', '', '', '', '', '',
-                       'DiCE', '', '', '', '', '', '')
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+                      ('CARE', '', '', '', '', '', '', '', '', '',
+                       'CFPrototype', '', '', '', '', '', '', '', '', '',
+                       'DiCE', '', '', '', '', '', '', '', '', '')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                      ('prediction', 'proximity', 'connectedness', 'distance', 'sparsity', 'validity', 'diversity',
-                       'prediction', 'proximity', 'connectedness', 'distance', 'sparsity', 'validity', 'diversity',
-                       'prediction', 'proximity', 'connectedness', 'distance', 'sparsity', 'validity', 'diversity')
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+                      ('Prediction', 'Proximity', 'Connectedness', 'Distance', 'Sparsity', 'i-Validity', 's-Validity',
+                       'f-Diversity', 'v-Diversity', 'd-Diversity',
+                       'Prediction', 'Proximity', 'Connectedness', 'Distance', 'Sparsity', 'i-Validity', 's-Validity',
+                       'f-Diversity', 'v-Diversity', 'd-Diversity',
+                       'Prediction', 'Proximity', 'Connectedness', 'Distance', 'Sparsity', 'i-Validity', 's-Validity',
+                       'f-Diversity', 'v-Diversity', 'd-Diversity')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                      ('=average(A5:A1000)', '=average(B5:B1000)',
-                       '=average(C5:C1000)', '=average(D5:D1000)',
-                       '=average(E5:E1000)', '=average(F5:F1000)',
-                       '=average(G5:G1000)', '=average(H5:H1000)',
-                       '=average(I5:I1000)', '=average(J5:J1000)',
-                       '=average(K5:K1000)', '=average(L5:L1000)',
-                       '=average(M5:M1000)', '=average(N5:N1000)',
-                       '=average(O5:O1000)', '=average(P5:P1000)',
-                       '=average(Q5:Q1000)', '=average(R5:R1000)',
-                       '=average(S5:S1000)', '=average(T5:T1000)',
-                       '=average(U5:U1000)')
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+                     ('=average(A5:A1000)', '=average(B5:B1000)', '=average(C5:C1000)', '=average(D5:D1000)',
+                      '=average(E5:E1000)', '=average(F5:F1000)', '=average(G5:G1000)', '=average(H5:H1000)',
+                      '=average(I5:I1000)', '=average(J5:J1000)', '=average(K5:K1000)', '=average(L5:L1000)',
+                      '=average(M5:M1000)', '=average(N5:N1000)', '=average(O5:O1000)', '=average(P5:P1000)',
+                      '=average(Q5:Q1000)', '=average(R5:R1000)', '=average(S5:S1000)', '=average(T5:T1000)',
+                      '=average(U5:U1000)', '=average(V5:V1000)', '=average(W5:W1000)', '=average(X5:X1000)',
+                      '=average(Y5:Y1000)', '=average(Z5:Z1000)', '=average(AA5:AA1000)','=average(AB5:AB1000)',
+                      '=average(AC5:AC1000)','=average(AD5:AD1000)')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                      ('=stdev(A5:A1000)', '=stdev(B5:B1000)',
-                       '=stdev(C5:C1000)', '=stdev(D5:D1000)',
-                       '=stdev(E5:E1000)', '=stdev(F5:F1000)',
-                       '=stdev(G5:G1000)', '=stdev(H5:H1000)',
-                       '=stdev(I5:I1000)', '=stdev(J5:J1000)',
-                       '=stdev(K5:K1000)', '=stdev(L5:L1000)',
-                       '=stdev(M5:M1000)', '=stdev(N5:N1000)',
-                       '=stdev(O5:O1000)', '=stdev(P5:P1000)',
-                       '=stdev(Q5:Q1000)', '=stdev(R5:R1000)',
-                       '=stdev(S5:S1000)', '=stdev(T5:T1000)',
-                       '=stdev(U5:U1000)')
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+                     ('=stdev(A5:A1000)', '=stdev(B5:B1000)', '=stdev(C5:C1000)', '=stdev(D5:D1000)',
+                      '=stdev(E5:E1000)', '=stdev(F5:F1000)', '=stdev(G5:G1000)', '=stdev(H5:H1000)',
+                      '=stdev(I5:I1000)', '=stdev(J5:J1000)', '=stdev(K5:K1000)', '=stdev(L5:L1000)',
+                      '=stdev(M5:M1000)', '=stdev(N5:N1000)', '=stdev(O5:O1000)', '=stdev(P5:P1000)',
+                      '=stdev(Q5:Q1000)', '=stdev(R5:R1000)', '=stdev(S5:S1000)', '=stdev(T5:T1000)',
+                      '=stdev(U5:U1000)', '=stdev(V5:V1000)', '=stdev(W5:W1000)', '=stdev(X5:X1000)',
+                      '=stdev(Y5:Y1000)', '=stdev(Z5:Z1000)', '=stdev(AA5:AA1000)','=stdev(AB5:AB1000)',
+                      '=stdev(AC5:AC1000)','=stdev(AD5:AD1000)')
             eval_results_csv.write(header)
             eval_results_csv.flush()
 
             # creating explainer instances
-
             # CARE
             care_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                   sound=True, causality=False, actionable=False, n_cf=n_cf)
@@ -208,9 +205,9 @@ def main():
                     cfs_results_csv.flush()
 
                     # storing the evaluation of the best counterfactual found by methods
-                    eval_results = np.r_[care_cfs_eval.iloc[0, :-2],
-                                         cfprototype_cfs_eval.iloc[0, :-2],
-                                         dice_cfs_eval.iloc[0, :-2]]
+                    eval_results = np.r_[care_cfs_eval.iloc[0, :-n_out],
+                                         cfprototype_cfs_eval.iloc[0, :-n_out],
+                                         dice_cfs_eval.iloc[0, :-n_out]]
                     eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
                     eval_results = ','.join(eval_results)
                     eval_results_csv.write('%s\n' % (eval_results))

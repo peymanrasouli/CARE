@@ -56,7 +56,6 @@ def main():
                                    sound=True, causality=False, actionable=False)
             explainer_sound.fit(X_train, Y_train)
 
-            ################################### Explaining test samples #########################################
             # setting size of the experiment
             N = 10  # number of instances to explain
 
