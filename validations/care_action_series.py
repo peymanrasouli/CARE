@@ -27,24 +27,16 @@ def main():
     # defining the list of data sets
     datsets_list = {
         'adult': ('adult.csv', PrepareAdult, 'classification'),
-        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
-        # 'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
-        # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
     }
 
     # defining the list of black-boxes
     blackbox_list = {
         'nn-c': MLPClassifier,
-        # 'gb-c': GradientBoostingClassifier,
-        # 'nn-r': MLPRegressor,
-        # 'gb-r': GradientBoostingRegressor
+        'gb-c': GradientBoostingClassifier,
     }
 
     experiment_size = {
-        'adult': (500, 10),
-        'credit-card_default': (500, 10),
-        'heart-disease': (50, 10),
-        'boston-house-prices': (100, 10)
+        'adult': (500, 10)
     }
 
     for dataset_kw in datsets_list:
@@ -97,8 +89,7 @@ def main():
                 user_preferences = userPreferences(dataset, x_ord)
 
                 # generating counterfactuals
-                explanations = explainer.explain(x_ord, cf_class='opposite', cf_quantile='neighbor',
-                                                 probability_thresh=0.5, user_preferences=user_preferences)
+                explanations = explainer.explain(x_ord, user_preferences=user_preferences)
 
                 # extracting results
                 cfs_ord = explanations['cfs_ord']
@@ -191,7 +182,6 @@ def main():
                 worst_action_series_df = pd.DataFrame(data=worst_action_series, columns=['Worst Order', 'Worst Cost'])
                 worst_action_series_df = worst_action_series_df.set_index(x_cfs_ord.index)
 
-                # storing the best counterfactual found by methods
                 action_series_results = pd.concat([x_cfs_ord, x_cfs_highlight, best_action_series_df, worst_action_series_df], axis=1)
                 action_series_results.to_csv(action_series_results_csv)
                 action_series_results_csv.write('\n')

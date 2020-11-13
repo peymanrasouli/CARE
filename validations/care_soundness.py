@@ -5,7 +5,7 @@ warnings.filterwarnings("ignore")
 from utils import *
 from prepare_datasets import *
 import matplotlib.pyplot as plt
-from create_model import CreateModel
+from create_model import CreateModel, MLPClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingClassifier
 from care.care import CARE
@@ -20,11 +20,12 @@ def main():
     # defining the list of data sets
     datsets_list = {
         'moon': ('moon-sklearn', PrepareMoon, 'classification'),
-        # 'iris': ('iris-sklearn', PrepareIris, 'classification'),
+        'iris-soundness': ('iris-soundness', PrepareIrisSoundness, 'classification'),
     }
 
     # defining the list of black-boxes
     blackbox_list = {
+        'nn-c': MLPClassifier,
         'gb-c': GradientBoostingClassifier,
     }
 

@@ -14,7 +14,8 @@ from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import f1_score, r2_score
 from dython import nominal
 import hdbscan
-from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import Ridge
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib
 matplotlib.use('Agg')
@@ -511,7 +512,7 @@ class CARE():
                     scores.append(score)
                     correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
                 elif f in self.continuous_indices:
-                    model = DecisionTreeRegressor()
+                    model = Ridge()
                     model.fit(X_train_theta[0:val_point, inputs], self.X_train[0:val_point, f])
                     score = r2_score(self.X_train[val_point:, f], model.predict(X_train_theta[val_point:, inputs]))
                     scores.append(score)
@@ -523,7 +524,7 @@ class CARE():
             selected_models = np.where(scores >= median)[0]
             correlation_models = [correlation_models[m] for m in selected_models]
         else:
-            selected_models = np.where(scores >= self.corr_model_score_thresh )[0]
+            selected_models = np.where(scores >= np.float64(self.corr_model_score_thresh))[0]
             correlation_models = [correlation_models[m] for m in selected_models]
 
         return correlation_models

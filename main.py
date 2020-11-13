@@ -20,6 +20,7 @@ def main():
         'adult': ('adult.csv', PrepareAdult, 'classification'),
         # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
         # 'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
+        # 'iris': ('iris', PrepareIris, 'classification'),
         # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
     }
 
