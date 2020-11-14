@@ -30,27 +30,41 @@ def evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn, predict_proba_f
         similar_values = 1.0
         distance = 0.0
     else:
-        # feature-based diversity: measuring Jaccard coefficient for changed features of every pair of counterfactuals
+        # finding changed features in every counterfactual
         changed_feature = []
         for i in range(n_cf):
-            changed_feature.append([dataset['feature_names'][ii] for ii in
-                                    np.where(x_cfs_ord.iloc[0] != x_cfs_ord.iloc[i + 1])[0]])
-        changed_feature = list(filter(None, changed_feature))
+            idx_changed = np.where(x_cfs_ord.iloc[0] != x_cfs_ord.iloc[i + 1])[0]
+            change_dict = {}
+            for j in idx_changed:
+                change_dict[dataset['feature_names'][j]] =  x_cfs_ord.iloc[i + 1, j]
+            changed_feature.append(change_dict)
+
+        # feature-based diversity: measuring Jaccard coefficient for changed features of every pair of counterfactuals
         similar_features = []
-        for i in range(0, len(changed_feature)-1):
-            for j in range(i+1, len(changed_feature)):
-                similarity = len(set(changed_feature[i]) & set(changed_feature[j])) / \
-                             len(set(changed_feature[i]) | set(changed_feature[j]))
-                similar_features.append(similarity)
+        for i in range(0, n_cf - 1):
+            for j in range(i + 1, n_cf):
+                if changed_feature[i] == {}:
+                    pass
+                else:
+                    similarity = len(set(changed_feature[i]) & set(changed_feature[j])) / \
+                                 len(set(changed_feature[i]) | set(changed_feature[j]))
+                    similar_features.append(similarity)
         similar_features = np.mean(similar_features)
 
         # value-based diversity: measuring value similarity for changed features of every pair of counterfactuals
         similar_values = []
         for i in range(0, n_cf - 1):
             for j in range(i + 1, n_cf):
-                similarity = [1 if cfs_ord.iloc[i][f] == cfs_ord.iloc[j][f] else 0
-                              for f in set(changed_feature[i]) & set(changed_feature[j])]
-                [similar_values.append(s) for s in similarity]
+                if changed_feature[i] == {}:
+                    pass
+                else:
+                    similarity = [1 if changed_feature[i][f] == changed_feature[j][f] else 0
+                                 for f in set(changed_feature[i]) & set(changed_feature[j])]
+                    if similarity == []:
+                        pass
+                    else:
+                        similarity = np.mean(similarity)
+                        similar_values.append(similarity)
         similar_values = np.mean(similar_values)
 
         # distance-based diversity: measuring distance between every pair of counterfactuals using Gower metric

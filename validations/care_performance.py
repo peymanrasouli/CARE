@@ -26,6 +26,7 @@ def main():
         'adult': ('adult.csv', PrepareAdult, 'classification'),
         'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
         'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
+        # 'diabetes': ('diabetes-sklearn', PrepareDiabetes, 'regression'),
         # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
     }
 
@@ -41,6 +42,7 @@ def main():
         'adult': (500, 10),
         'credit-card_default': (500, 10),
         'heart-disease': (50, 10),
+        'diabetes': (80, 10),
         'boston-house-prices': (100, 10)
     }
 
@@ -187,7 +189,8 @@ def main():
                     explanation_sound = explainer_sound.explain(x_ord)
                     explanation_sound_causality = explainer_sound_causality.explain(x_ord)
                     user_preferences = userPreferences(dataset, x_ord)
-                    explanation_sound_causality_actionable= explainer_sound_causality_actionable.explain(x_ord, user_preferences=user_preferences)
+                    explanation_sound_causality_actionable = explainer_sound_causality_actionable.explain(x_ord,
+                                                             user_preferences=user_preferences)
 
                     # evaluating counterfactuals based on all objectives results
                     toolbox = explanation_sound_causality_actionable['toolbox']

@@ -20,7 +20,8 @@ def main():
         'adult': ('adult.csv', PrepareAdult, 'classification'), # use 'nn-c' or 'gb-c'
         # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'), # use 'nn-c' or 'gb-c'
         # 'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),  # use 'nn-c' or 'gb-c'
-        # 'iris': ('iris', PrepareIris, 'classification'),  # use 'gb-c'
+        # 'iris': ('iris-sklearn', PrepareIris, 'classification'),  # use 'gb-c'
+        # 'diabetes': ('diabetes-sklearn', PrepareDiabetes, 'regression') # use 'nn-r' or 'gb-r'
         # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression') # use 'nn-r' or 'gb-r'
     }
 
@@ -66,7 +67,7 @@ def main():
 
             # explain instance x_ord using CARE
             output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                   sound=False, causality=False, actionable=False, user_preferences=user_preferences,
+                                   sound=True, causality=True, actionable=True, user_preferences=user_preferences,
                                    cf_class='neighbor', probability_thresh=0.5, cf_quantile='neighbor', n_cf=n_cf)
 
             # print counterfactuals and their corresponding objective values

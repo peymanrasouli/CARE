@@ -27,16 +27,20 @@ def main():
     # defining the list of data sets
     datsets_list = {
         'adult': ('adult.csv', PrepareAdult, 'classification'),
+        # 'diabetes': ('diabetes-sklearn', PrepareDiabetes, 'regression')
     }
 
     # defining the list of black-boxes
     blackbox_list = {
         'nn-c': MLPClassifier,
         'gb-c': GradientBoostingClassifier,
+        # 'nn-r': MLPRegressor,
+        # 'gb-r': GradientBoostingRegressor
     }
 
     experiment_size = {
-        'adult': (500, 1)
+        'adult': (500, 1),
+        'diabetes': (80, 1)
     }
 
     for dataset_kw in datsets_list:

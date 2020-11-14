@@ -161,6 +161,35 @@ def userPreferences(dataset, x_ord):
             action_importance[index] = actions[p][1]
             print(p + ':', actions[p][0], 'with importance', '(' + str(actions[p][1]) + ')')
 
+    ## Diabetes data set
+    elif dataset['name'] == 'diabetes':
+        ## Feature names and their possible values
+        ## Features with range [] values are continuous (e.g., CRIM) and features with set {} values (e.g., CHAS) are discrete
+
+        # {'age': [-0.107225631607358, 0.110726675453815]},
+        # {'sex': [-0.044641636506989, 0.0506801187398187]},
+        # {'bmi': [-0.0902752958985185, 0.17055522598066]},
+        # {'bp': [-0.112399602060758, 0.132044217194516]},
+        # {'s1': [-0.126780669916514, 0.153913713156516]},
+        # {'s2': [-0.115613065979398, 0.198787989657293]},
+        # {'s3': [-0.10230705051742, 0.181179060397284]},
+        # {'s4': [-0.076394503750001, 0.185234443260194]},
+        # {'s5': [-0.126097385560409, 0.133598980013008]},
+        # {'s6': [-0.137767225690012, 0.135611830689079]}
+
+        print('\n')
+        print('----- user-specified actions -----')
+        actions = {'age': ('ge', 1),
+                   'sex': ('fix', 1)}
+
+        action_operation = [None] * len(x_ord)
+        action_importance = [None] * len(x_ord)
+        for p in actions:
+            index = dataset['feature_names'].index(p)
+            action_operation[index] = actions[p][0]
+            action_importance[index] = actions[p][1]
+            print(p + ':', actions[p][0], 'with importance', '(' + str(actions[p][1]) + ')')
+
     ## Boston house price data set
     elif dataset['name'] == 'boston-house-prices':
         ## Feature names and their possible values

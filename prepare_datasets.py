@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, LabelEncoder, StandardScaler
-from sklearn.datasets import load_iris, make_moons
+from sklearn.datasets import load_diabetes, load_iris, make_moons
 
 ## Preparing Adult dataset
 def PrepareAdult(dataset_path, dataset_name):
@@ -35,21 +35,21 @@ def PrepareAdult(dataset_path, dataset_name):
     for d in discrete_features:
         feature_values.append({d: set(df_X_org[d].unique())})
 
-    ## Extracting decimal points of continuous features
+    ## Extracting the precision of continuous features
     types = df_X_org[continuous_features].dtypes
-    continuous_decimals = []
+    continuous_precision = []
     for c in continuous_features:
         if types[c] == float:
             len_dec = []
             for val in df_X_org[c]:
                 len_dec.append(len(str(val).split('.')[1]))
             len_dec = max(set(len_dec), key=len_dec.count)
-            continuous_decimals.append(len_dec)
+            continuous_precision.append(len_dec)
         else:
-            continuous_decimals.append(0)
+            continuous_precision.append(0)
 
-    decimals = pd.Series(continuous_decimals, index=continuous_features)
-    df_X_org = df_X_org.round(decimals)
+    precision = pd.Series(continuous_precision, index=continuous_features)
+    df_X_org = df_X_org.round(precision)
 
     ## Scaling continuous features
     num_feature_scaler =StandardScaler()
@@ -130,7 +130,7 @@ def PrepareAdult(dataset_path, dataset_name):
         'discrete_indices': discrete_indices,
         'continuous_features': continuous_features,
         'continuous_indices': continuous_indices,
-        'continuous_decimals': continuous_decimals,
+        'continuous_precision': continuous_precision,
         'n_cat_discrete': n_cat_discrete,
         'len_discrete_ord': len_discrete_ord,
         'len_continuous_ord': len_continuous_ord,
@@ -175,21 +175,21 @@ def PrepareCreditCardDefault(dataset_path, dataset_name):
     for d in discrete_features:
         feature_values.append({d: set(df_X_org[d].unique())})
 
-    ## Extracting decimal points of continuous features
+    ## Extracting the precision of continuous features
     types = df_X_org[continuous_features].dtypes
-    continuous_decimals = []
+    continuous_precision = []
     for c in continuous_features:
         if types[c] == float:
             len_dec = []
             for val in df_X_org[c]:
                 len_dec.append(len(str(val).split('.')[1]))
             len_dec = max(set(len_dec), key=len_dec.count)
-            continuous_decimals.append(len_dec)
+            continuous_precision.append(len_dec)
         else:
-            continuous_decimals.append(0)
+            continuous_precision.append(0)
 
-    decimals = pd.Series(continuous_decimals, index=continuous_features)
-    df_X_org = df_X_org.round(decimals)
+    precision = pd.Series(continuous_precision, index=continuous_features)
+    df_X_org = df_X_org.round(precision)
 
     ## Scaling continuous features
     num_feature_scaler = StandardScaler()
@@ -270,7 +270,7 @@ def PrepareCreditCardDefault(dataset_path, dataset_name):
         'discrete_indices': discrete_indices,
         'continuous_features': continuous_features,
         'continuous_indices': continuous_indices,
-        'continuous_decimals': continuous_decimals,
+        'continuous_precision': continuous_precision,
         'n_cat_discrete': n_cat_discrete,
         'len_discrete_ord': len_discrete_ord,
         'len_continuous_ord': len_continuous_ord,
@@ -319,21 +319,21 @@ def PrepareHeartDisease(dataset_path, dataset_name):
     for d in discrete_features:
         feature_values.append({d: set(df_X_org[d].unique())})
 
-    ## Extracting decimal points of continuous features
+    ## Extracting the precision of continuous features
     types = df_X_org[continuous_features].dtypes
-    continuous_decimals = []
+    continuous_precision = []
     for c in continuous_features:
         if types[c] == float:
             len_dec = []
             for val in df_X_org[c]:
                 len_dec.append(len(str(val).split('.')[1]))
             len_dec = max(set(len_dec), key=len_dec.count)
-            continuous_decimals.append(len_dec)
+            continuous_precision.append(len_dec)
         else:
-            continuous_decimals.append(0)
+            continuous_precision.append(0)
 
-    decimals = pd.Series(continuous_decimals, index=continuous_features)
-    df_X_org = df_X_org.round(decimals)
+    precision = pd.Series(continuous_precision, index=continuous_features)
+    df_X_org = df_X_org.round(precision)
 
     ## Scaling continuous features
     num_feature_scaler =StandardScaler()
@@ -414,7 +414,7 @@ def PrepareHeartDisease(dataset_path, dataset_name):
         'discrete_indices': discrete_indices,
         'continuous_features': continuous_features,
         'continuous_indices': continuous_indices,
-        'continuous_decimals': continuous_decimals,
+        'continuous_precision': continuous_precision,
         'n_cat_discrete': n_cat_discrete,
         'len_discrete_ord': len_discrete_ord,
         'len_continuous_ord': len_continuous_ord,
@@ -458,21 +458,21 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
     for d in discrete_features:
         feature_values.append({d: set(df_X_org[d].unique())})
 
-    ## Extracting decimal points of continuous features
-    continuous_types = df_X_org[continuous_features].dtypes
-    continuous_decimals = []
+    ## Extracting the precision of continuous features
+    types = df_X_org[continuous_features].dtypes
+    continuous_precision = []
     for c in continuous_features:
-        if continuous_types[c] == float:
+        if types[c] == float:
             len_dec = []
             for val in df_X_org[c]:
                 len_dec.append(len(str(val).split('.')[1]))
             len_dec = max(set(len_dec), key=len_dec.count)
-            continuous_decimals.append(len_dec)
+            continuous_precision.append(len_dec)
         else:
-            continuous_decimals.append(0)
+            continuous_precision.append(0)
 
-    decimals = pd.Series(continuous_decimals, index=continuous_features)
-    df_X_org = df_X_org.round(decimals)
+    precision = pd.Series(continuous_precision, index=continuous_features)
+    df_X_org = df_X_org.round(precision)
 
     # Scaling continuous features
     num_feature_scaler = StandardScaler()
@@ -543,8 +543,132 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
         'discrete_indices': discrete_indices,
         'continuous_features': continuous_features,
         'continuous_indices': continuous_indices,
-        'continuous_decimals': continuous_decimals,
-        'continuous_types': continuous_types,
+        'continuous_precision': continuous_precision,
+        'n_cat_discrete': n_cat_discrete,
+        'len_discrete_ord': len_discrete_ord,
+        'len_continuous_ord': len_continuous_ord,
+        'len_discrete_ohe': len_discrete_ohe,
+        'len_continuous_ohe': len_continuous_ohe,
+        'len_discrete_org': len_discrete_org,
+        'len_continuous_org': len_continuous_org,
+        'X_org': X_org,
+        'X_ord': X_ord,
+        'X_ohe': X_ohe,
+        'y': y
+    }
+
+    return dataset
+
+## Preparing Diabetes dataset
+def PrepareDiabetes(dataset_path, dataset_name):
+
+    ## Importing data from sklearn library
+    data = load_diabetes()
+    df = pd.DataFrame(data=np.c_[data.data,data.target], columns=data.feature_names+['progression'])
+
+    ## Recognizing inputs
+    target_name = 'progression'
+    df_X_org = df.loc[:, df.columns != target_name]
+    df_y = df.loc[:, target_name]
+
+    continuous_features = ['age', 'sex', 'bmi', 'bp', 's1', 's2', 's3', 's4', 's5', 's6']
+    discrete_features = []
+
+    continuous_availability = True
+    discrete_availability = False
+
+    df_X_org = df_X_org[continuous_features]
+
+    continuous_indices = [df_X_org.columns.get_loc(f) for f in continuous_features]
+    discrete_indices = []
+
+    feature_values = []
+    for c in continuous_features:
+        feature_values.append({c: [min(df_X_org[c]), max(df_X_org[c])]})
+
+    ## Extracting the precision of continuous features
+    types = df_X_org[continuous_features].dtypes
+    continuous_precision = []
+    for c in continuous_features:
+        if types[c] == float:
+            len_dec = []
+            for val in df_X_org[c]:
+                len_dec.append(len(str(val).split('.')[1]))
+            len_dec = max(set(len_dec), key=len_dec.count)
+            continuous_precision.append(len_dec)
+        else:
+            continuous_precision.append(0)
+
+    precision = pd.Series(continuous_precision, index=continuous_features)
+    df_X_org = df_X_org.round(precision)
+
+    ## Scaling continuous features
+    num_feature_scaler = StandardScaler()
+    scaled_data = num_feature_scaler.fit_transform(df_X_org.iloc[:, continuous_indices].to_numpy())
+    scaled_data = pd.DataFrame(data=scaled_data, columns=continuous_features)
+
+    ## Encoding discrete features
+    # Ordinal feature transformation
+    ord_feature_encoder = None
+
+    # One-hot feature transformation
+    ohe_feature_encoder = None
+
+    # Creating ordinal and one-hot data frames
+    df_X_ord = scaled_data.copy(deep=True)
+    df_X_ohe = scaled_data.copy(deep=True)
+
+    ## Extracting raw data and labels
+    X_org = df_X_org.values
+    X_ord = df_X_ord.values
+    X_ohe = df_X_ohe.values
+    y =  df_y.to_numpy()
+
+    ## Extracting target range
+    target_range = [min(y),max(y)]
+
+    ## Indexing features
+    feature_names = list(df_X_org.columns)
+    feature_indices = {i: feature for i, feature in enumerate(feature_names)}
+    feature_ranges = {feature_names[i]: [min(X_ord[:, i]), max(X_ord[:, i])] for i in range(X_ord.shape[1])}
+    feature_width = np.max(X_ord, axis=0) - np.min(X_ord, axis=0)
+
+    n_cat_discrete = []
+
+    len_continuous_org = [0, df_X_org.iloc[:, continuous_indices].shape[1]]
+    len_discrete_org = []
+
+    len_continuous_ord = [0, scaled_data.shape[1]]
+    len_discrete_ord = []
+
+    len_continuous_ohe = [0, scaled_data.shape[1]]
+    len_discrete_ohe = []
+
+    ## Returning dataset information
+    dataset = {
+        'name': 'diabetes',
+        'df': df,
+        'df_y': df_y,
+        'df_X_org': df_X_org,
+        'df_X_ord': df_X_ord,
+        'df_X_ohe': df_X_ohe,
+        'target_name': target_name,
+        'target_range': target_range,
+        'ord_feature_encoder': ord_feature_encoder,
+        'ohe_feature_encoder': ohe_feature_encoder,
+        'num_feature_scaler': num_feature_scaler,
+        'feature_names': feature_names,
+        'feature_values': feature_values,
+        'feature_indices': feature_indices,
+        'feature_ranges': feature_ranges,
+        'feature_width': feature_width,
+        'continuous_availability': continuous_availability,
+        'discrete_availability': discrete_availability,
+        'discrete_features': discrete_features,
+        'discrete_indices': discrete_indices,
+        'continuous_features': continuous_features,
+        'continuous_indices': continuous_indices,
+        'continuous_precision': continuous_precision,
         'n_cat_discrete': n_cat_discrete,
         'len_discrete_ord': len_discrete_ord,
         'len_continuous_ord': len_continuous_ord,
@@ -563,7 +687,7 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
 ## Preparing Iris dataset
 def PrepareIris(dataset_path, dataset_name):
 
-    ## Reading data from a csv file
+    ## Importing data from sklearn library
     data = load_iris()
     df = pd.DataFrame(data=np.c_[data.data,data.target], columns=data.feature_names+['class'])
 
@@ -587,21 +711,21 @@ def PrepareIris(dataset_path, dataset_name):
     for c in continuous_features:
         feature_values.append({c:[min(df_X_org[c]),max(df_X_org[c])]})
 
-    ## Extracting decimal points of continuous features
+    ## Extracting the precision of continuous features
     types = df_X_org[continuous_features].dtypes
-    continuous_decimals = []
+    continuous_precision = []
     for c in continuous_features:
         if types[c] == float:
             len_dec = []
             for val in df_X_org[c]:
                 len_dec.append(len(str(val).split('.')[1]))
             len_dec = max(set(len_dec), key=len_dec.count)
-            continuous_decimals.append(len_dec)
+            continuous_precision.append(len_dec)
         else:
-            continuous_decimals.append(0)
+            continuous_precision.append(0)
 
-    decimals = pd.Series(continuous_decimals, index=continuous_features)
-    df_X_org = df_X_org.round(decimals)
+    precision = pd.Series(continuous_precision, index=continuous_features)
+    df_X_org = df_X_org.round(precision)
 
     ## Scaling continuous features
     num_feature_scaler =StandardScaler()
@@ -678,7 +802,7 @@ def PrepareIris(dataset_path, dataset_name):
         'discrete_indices': discrete_indices,
         'continuous_features': continuous_features,
         'continuous_indices': continuous_indices,
-        'continuous_decimals': continuous_decimals,
+        'continuous_precision': continuous_precision,
         'n_cat_discrete': n_cat_discrete,
         'len_discrete_ord': len_discrete_ord,
         'len_continuous_ord': len_continuous_ord,
@@ -697,7 +821,7 @@ def PrepareIris(dataset_path, dataset_name):
 ## Preparing Iris dataset for soundness validation
 def PrepareIrisSoundness(dataset_path, dataset_name):
 
-    ## Reading data from a csv file
+    ## Importing data from sklearn library
     data = load_iris()
     df = pd.DataFrame(data=np.c_[data.data,data.target], columns=data.feature_names+['class'])
 
@@ -721,21 +845,21 @@ def PrepareIrisSoundness(dataset_path, dataset_name):
     for c in continuous_features:
         feature_values.append({c:[min(df_X_org[c]),max(df_X_org[c])]})
 
-    ## Extracting decimal points of continuous features
+    ## Extracting the precision of continuous features
     types = df_X_org[continuous_features].dtypes
-    continuous_decimals = []
+    continuous_precision = []
     for c in continuous_features:
         if types[c] == float:
             len_dec = []
             for val in df_X_org[c]:
                 len_dec.append(len(str(val).split('.')[1]))
             len_dec = max(set(len_dec), key=len_dec.count)
-            continuous_decimals.append(len_dec)
+            continuous_precision.append(len_dec)
         else:
-            continuous_decimals.append(0)
+            continuous_precision.append(0)
 
-    decimals = pd.Series(continuous_decimals, index=continuous_features)
-    df_X_org = df_X_org.round(decimals)
+    precision = pd.Series(continuous_precision, index=continuous_features)
+    df_X_org = df_X_org.round(precision)
 
     ## Scaling continuous features
     num_feature_scaler =StandardScaler()
@@ -812,7 +936,7 @@ def PrepareIrisSoundness(dataset_path, dataset_name):
         'discrete_indices': discrete_indices,
         'continuous_features': continuous_features,
         'continuous_indices': continuous_indices,
-        'continuous_decimals': continuous_decimals,
+        'continuous_precision': continuous_precision,
         'n_cat_discrete': n_cat_discrete,
         'len_discrete_ord': len_discrete_ord,
         'len_continuous_ord': len_continuous_ord,
@@ -831,7 +955,7 @@ def PrepareIrisSoundness(dataset_path, dataset_name):
 ## Preparing Iris dataset for causality-preservation validation
 def PrepareIrisCausality(dataset_path, dataset_name):
 
-    ## Reading data from a csv file
+    ## Importing data from sklearn library
     data = load_iris()
     df = pd.DataFrame(data=np.c_[data.data,data.target], columns=data.feature_names+['class'])
 
@@ -855,21 +979,21 @@ def PrepareIrisCausality(dataset_path, dataset_name):
     for c in continuous_features:
         feature_values.append({c:[min(df_X_org[c]),max(df_X_org[c])]})
 
-    ## Extracting decimal points of continuous features
+    ## Extracting the precision of continuous features
     types = df_X_org[continuous_features].dtypes
-    continuous_decimals = []
+    continuous_precision = []
     for c in continuous_features:
         if types[c] == float:
             len_dec = []
             for val in df_X_org[c]:
                 len_dec.append(len(str(val).split('.')[1]))
             len_dec = max(set(len_dec), key=len_dec.count)
-            continuous_decimals.append(len_dec)
+            continuous_precision.append(len_dec)
         else:
-            continuous_decimals.append(0)
+            continuous_precision.append(0)
 
-    decimals = pd.Series(continuous_decimals, index=continuous_features)
-    df_X_org = df_X_org.round(decimals)
+    precision = pd.Series(continuous_precision, index=continuous_features)
+    df_X_org = df_X_org.round(precision)
 
     ## Scaling continuous features
     num_feature_scaler =StandardScaler()
@@ -946,7 +1070,7 @@ def PrepareIrisCausality(dataset_path, dataset_name):
         'discrete_indices': discrete_indices,
         'continuous_features': continuous_features,
         'continuous_indices': continuous_indices,
-        'continuous_decimals': continuous_decimals,
+        'continuous_precision': continuous_precision,
         'n_cat_discrete': n_cat_discrete,
         'len_discrete_ord': len_discrete_ord,
         'len_continuous_ord': len_continuous_ord,
@@ -965,7 +1089,7 @@ def PrepareIrisCausality(dataset_path, dataset_name):
 ## Preparing Moon dataset
 def PrepareMoon(dataset_path, dataset_name):
 
-    ## Reading data from a csv file
+    ## Creating moon data
     data = make_moons(n_samples=500)
     df = pd.DataFrame(data=np.c_[data[0],data[1]], columns=['f1', 'f2','class'])
 
@@ -989,21 +1113,21 @@ def PrepareMoon(dataset_path, dataset_name):
     for c in continuous_features:
         feature_values.append({c:[min(df_X_org[c]),max(df_X_org[c])]})
 
-    ## Extracting decimal points of continuous features
+    ## Extracting the precision of continuous features
     types = df_X_org[continuous_features].dtypes
-    continuous_decimals = []
+    continuous_precision = []
     for c in continuous_features:
         if types[c] == float:
             len_dec = []
             for val in df_X_org[c]:
                 len_dec.append(len(str(val).split('.')[1]))
             len_dec = max(set(len_dec), key=len_dec.count)
-            continuous_decimals.append(len_dec)
+            continuous_precision.append(len_dec)
         else:
-            continuous_decimals.append(0)
+            continuous_precision.append(0)
 
-    decimals = pd.Series(continuous_decimals, index=continuous_features)
-    df_X_org = df_X_org.round(decimals)
+    precision = pd.Series(continuous_precision, index=continuous_features)
+    df_X_org = df_X_org.round(precision)
 
     ## Scaling continuous features
     num_feature_scaler =StandardScaler()
@@ -1056,7 +1180,7 @@ def PrepareMoon(dataset_path, dataset_name):
 
     ## Returning dataset information
     dataset = {
-        'name': 'iris',
+        'name': 'moon',
         'df': df,
         'df_y': df_y,
         'df_X_org': df_X_org,
@@ -1080,7 +1204,7 @@ def PrepareMoon(dataset_path, dataset_name):
         'discrete_indices': discrete_indices,
         'continuous_features': continuous_features,
         'continuous_indices': continuous_indices,
-        'continuous_decimals': continuous_decimals,
+        'continuous_precision': continuous_precision,
         'n_cat_discrete': n_cat_discrete,
         'len_discrete_ord': len_discrete_ord,
         'len_continuous_ord': len_continuous_ord,

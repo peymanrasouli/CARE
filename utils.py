@@ -132,13 +132,13 @@ def ord2org(X_ord, dataset):
     ord_feature_encoder = dataset['ord_feature_encoder']
     len_continuous_ord = dataset['len_continuous_ord']
     len_discrete_ord = dataset['len_discrete_ord']
-    continuous_decimals = dataset['continuous_decimals']
+    continuous_precision = dataset['continuous_precision']
 
     if X_ord.shape.__len__() == 1:
         if continuous_availability and discrete_availability:
             X_continuous = X_ord[len_continuous_ord[0]:len_continuous_ord[1]]
             X_continuous = num_feature_scaler.inverse_transform(X_continuous.reshape(1, -1)).ravel()
-            for f, dec in enumerate(continuous_decimals):
+            for f, dec in enumerate(continuous_precision):
                 X_continuous[f] = np.around(X_continuous[f], decimals=dec)
             X_discrete = X_ord[len_discrete_ord[0]:len_discrete_ord[1]]
             X_discrete = ord_feature_encoder.inverse_transform(X_discrete.reshape(1,-1)).ravel()
@@ -147,7 +147,7 @@ def ord2org(X_ord, dataset):
         elif continuous_availability:
             X_continuous = X_ord[len_continuous_ord[0]:len_continuous_ord[1]]
             X_continuous = num_feature_scaler.inverse_transform(X_continuous.reshape(1, -1)).ravel()
-            for f, dec in enumerate(continuous_decimals):
+            for f, dec in enumerate(continuous_precision):
                 X_continuous[f] = np.around(X_continuous[f], decimals=dec)
             X_org = X_continuous.copy()
             return X_org
@@ -160,7 +160,7 @@ def ord2org(X_ord, dataset):
         if continuous_availability and discrete_availability:
             X_continuous = X_ord[:,len_continuous_ord[0]:len_continuous_ord[1]]
             X_continuous = num_feature_scaler.inverse_transform(X_continuous)
-            for f, dec in enumerate(continuous_decimals):
+            for f, dec in enumerate(continuous_precision):
                 X_continuous[:,f] = np.around(X_continuous[:,f], decimals=dec)
             X_discrete = X_ord[:,len_discrete_ord[0]:len_discrete_ord[1]]
             X_discrete = ord_feature_encoder.inverse_transform(X_discrete)
@@ -169,7 +169,7 @@ def ord2org(X_ord, dataset):
         elif continuous_availability:
             X_continuous = X_ord[:,len_continuous_ord[0]:len_continuous_ord[1]]
             X_continuous = num_feature_scaler.inverse_transform(X_continuous)
-            for f, dec in enumerate(continuous_decimals):
+            for f, dec in enumerate(continuous_precision):
                 X_continuous[:,f] = np.around(X_continuous[:,f], decimals=dec)
             X_org = X_continuous.copy()
             return X_org
