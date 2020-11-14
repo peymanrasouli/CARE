@@ -116,7 +116,7 @@ def main():
                 print('\n')
 
                 # storing the counterfactuals
-                action_series_results = pd.concat([x_cfs_org, x_cfs_highlight, x_cfs_eval], axis=1)
+                action_series_results = pd.concat([x_cfs_highlight, x_cfs_eval], axis=1)
                 action_series_results.to_csv(action_series_results_csv)
                 action_series_results_csv.write('\n')
                 action_series_results_csv.flush()

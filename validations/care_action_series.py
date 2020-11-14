@@ -36,7 +36,7 @@ def main():
     }
 
     experiment_size = {
-        'adult': (500, 10)
+        'adult': (500, 1)
     }
 
     for dataset_kw in datsets_list:
@@ -182,7 +182,7 @@ def main():
                 worst_action_series_df = pd.DataFrame(data=worst_action_series, columns=['Worst Order', 'Worst Cost'])
                 worst_action_series_df = worst_action_series_df.set_index(x_cfs_ord.index)
 
-                action_series_results = pd.concat([x_cfs_org, x_cfs_highlight, best_action_series_df, worst_action_series_df], axis=1)
+                action_series_results = pd.concat([x_cfs_highlight, best_action_series_df, worst_action_series_df], axis=1)
                 action_series_results.to_csv(action_series_results_csv)
                 action_series_results_csv.write('\n')
                 action_series_results_csv.flush()
