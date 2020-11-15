@@ -20,12 +20,11 @@ def main():
     # defining the list of data sets
     datsets_list = {
         'moon': ('moon-sklearn', PrepareMoon, 'classification'),
-        'iris-soundness': ('iris-soundness', PrepareIrisSoundness, 'classification'),
+        'iris': ('iris-sklearn', PrepareIris, 'classification')
     }
 
     # defining the list of black-boxes
     blackbox_list = {
-        'nn-c': MLPClassifier,
         'gb-c': GradientBoostingClassifier,
     }
 
@@ -35,7 +34,7 @@ def main():
 
         # reading a data set
         dataset_name, prepare_dataset_fn, task = datsets_list[dataset_kw]
-        dataset = prepare_dataset_fn(dataset_path,dataset_name)
+        dataset = prepare_dataset_fn(dataset_path, dataset_name,usage='soundness_validation')
 
         # splitting the data set into train and test sets
         X, y = dataset['X_ord'], dataset['y']
@@ -100,12 +99,6 @@ def main():
                 cf_base_ord = explanation_base['best_cf_ord'].to_numpy()
                 cf_sound_ord = explanation_sound['best_cf_ord'].to_numpy()
 
-
-                X = np.r_[(x_ord.reshape(1,-1)),
-                          (cf_base_ord.reshape(1,-1)),
-                          (cf_sound_ord.reshape(1,-1)),
-                          (X_train)]
-
                 x_ohe = ord2ohe(x_ord, dataset)
                 cf_base_ohe = ord2ohe(cf_base_ord,dataset)
                 cf_sound_ohe = ord2ohe(cf_sound_ord, dataset)
@@ -115,12 +108,16 @@ def main():
                 cf_sound_class = predict_fn(cf_sound_ohe.reshape(1, -1))
                 X_train_class = predict_fn(X_train_ohe)
 
+                # merging counterfactuals with the training data
+                X = np.r_[(x_ord.reshape(1,-1)),
+                          (cf_base_ord.reshape(1,-1)),
+                          (cf_sound_ord.reshape(1,-1)),
+                          (X_train)]
                 y = np.r_[x_class, cf_base_class, cf_sound_class, X_train_class]
 
                 # setup marker generator and color map
                 markers = ('s', 'o', 'D')
                 colors = ('limegreen', 'deeppink', 'dimgray')
-
 
                 x_min, x_max = X[:, 0].min() - 1 , X[:, 0].max() + 1
                 y_min, y_max = X[:, 1].min() - 1 , X[:, 1].max() + 1
@@ -132,13 +129,13 @@ def main():
                 Z = predict_fn(X_surface_ohe)
                 Z = Z.reshape(xx.shape)
 
+                # plot decision surface and data points
                 plt.close('all')
                 f = plt.figure()
                 plt.tight_layout(h_pad=0.5, w_pad=0.5, pad=2.5)
                 plt.contourf(xx, yy, Z, cmap='Set2')
-                plt.xlabel('D1')
-                plt.ylabel('D2')
-
+                plt.xlabel(dataset['feature_names'][0])
+                plt.ylabel(dataset['feature_names'][1])
 
                 for idx, cl in enumerate(np.unique(y)):
                     plt.scatter(X[y == cl, 0],
@@ -162,7 +159,7 @@ def main():
                             s=150,
                             label='x')
 
-                # highlight base counterfactual
+                # highlight base's counterfactual
                 X_cf_base, y_cf_base = X[1, :], y[1]
                 plt.scatter(X_cf_base[0],
                             X_cf_base[1],
@@ -183,7 +180,7 @@ def main():
                                              shrinkA=0, shrinkB=10,
                                              connectionstyle="angle,angleA=0,angleB=90,rad=10"))
 
-                # highlight sound counterfactual
+                # highlight sound's counterfactual
                 X_cf_sound, y_cf_sound = X[2, :], y[2]
                 plt.scatter(X_cf_sound[0],
                             X_cf_sound[1],

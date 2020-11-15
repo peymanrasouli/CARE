@@ -26,7 +26,7 @@ def main():
 
     # defining the list of data sets
     datsets_list = {
-        'iris-causality': ('iris-causality', PrepareIrisCausality, 'classification'),
+        'iris': ('iris-sklearn', PrepareIris, 'classification')
     }
 
     # defining the list of black-boxes
@@ -35,7 +35,7 @@ def main():
     }
 
     experiment_size = {
-        'iris-causality': (30, 5),
+        'iris': (30, 5),
     }
 
     for dataset_kw in datsets_list:
@@ -44,7 +44,7 @@ def main():
 
         # reading a data set
         dataset_name, prepare_dataset_fn, task = datsets_list[dataset_kw]
-        dataset = prepare_dataset_fn(dataset_path,dataset_name)
+        dataset = prepare_dataset_fn(dataset_path,dataset_name,usage='causality_validation')
 
         # splitting the data set into train and test sets
         X, y = dataset['X_ord'], dataset['y']
