@@ -8,15 +8,11 @@ pd.set_option('max_columns', None)
 pd.set_option('display.width', 1000)
 from prepare_datasets import *
 from sklearn.model_selection import train_test_split
-from create_model import CreateModel, MLPClassifier
+from create_model import CreateModel
 from sklearn.ensemble import GradientBoostingClassifier
-from user_preferences import userPreferences
 from care.care import CARE
 from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
-from care.causality import causality
-from utils import ord2theta
-from itertools import permutations
 
 def main():
     # defining path of data sets and experiment results
@@ -26,7 +22,8 @@ def main():
 
     # defining the list of data sets
     datsets_list = {
-        'iris': ('iris-sklearn', PrepareIris, 'classification')
+        'iris': ('iris-sklearn', PrepareIris, 'classification'),
+        'simple-binomial': ('simple-binomial', PrepareSimpleBinomial, 'classification')
     }
 
     # defining the list of black-boxes
@@ -36,6 +33,7 @@ def main():
 
     experiment_size = {
         'iris': (30, 5),
+        'simple-binomial': (300, 5)
     }
 
     for dataset_kw in datsets_list:
@@ -73,59 +71,164 @@ def main():
             action_series_results_csv = open(
                 experiment_path + 'care_causality_preservation_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
 
-            # creating an instance of CARE explainer
-            explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                             sound=True, causality=True, actionable=False, corr_model_score_thresh=0.2, n_cf=n_cf)
+            # creating an instance of CARE explainer with sound=True
+            sound_explainer = CARE(dataset, task=task, predict_fn=predict_fn,
+                                   predict_proba_fn=predict_proba_fn,
+                                   sound=True, causality=False, actionable=False,
+                                   corr_model_score_thresh=0.2, n_cf=n_cf)
 
-            # fitting the explainer on the training data
-            explainer.fit(X_train, Y_train)
+            # creating an instance of CARE explainer with sound=True and causality=True
+            sound_causality_explainer = CARE(dataset, task=task, predict_fn=predict_fn,
+                                             predict_proba_fn=predict_proba_fn,
+                                             sound=True, causality=True, actionable=False,
+                                             corr_model_score_thresh=0.2, n_cf=n_cf)
+
+            # fitting the sound explainer on the training data
+            sound_explainer.fit(X_train, Y_train)
+
+            # fitting the sound and causality explainer on the training data
+            sound_causality_explainer.fit(X_train, Y_train)
 
             # explaining test samples
             explained = 0
+            sound_preservation = []
+            sound_causality_preservation = []
             for x_ord in X_test:
 
                 # generating counterfactuals
-                explanations = explainer.explain(x_ord, cf_class='strange')
+                explanation_sound = sound_explainer.explain(x_ord, cf_class='strange')
+                explanation_sound_causality = sound_causality_explainer.explain(x_ord, cf_class='strange')
 
-                # extracting results
-                cfs_ord = explanations['cfs_ord']
-                toolbox = explanations['toolbox']
-                objective_names = explanations['objective_names']
-                featureScaler = explanations['featureScaler']
+                # extracting objects for evaluation
+                toolbox = explanation_sound_causality['toolbox']
+                objective_names = explanation_sound_causality['objective_names']
+                featureScaler = explanation_sound_causality['featureScaler']
                 feature_names = dataset['feature_names']
 
-                # evaluating counterfactuals
-                cfs_ord, \
-                cfs_eval, \
-                x_cfs_ord, \
-                x_cfs_eval = evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn, predict_proba_fn, task,
-                                                     toolbox, objective_names, featureScaler, feature_names)
+                # evaluating and recovering counterfactuals of sound method
+                cfs_ord_sound, \
+                cfs_eval_sound, \
+                x_cfs_ord_sound, \
+                x_cfs_eval_sound = evaluateCounterfactuals(x_ord, explanation_sound['cfs_ord'], dataset,
+                                                           predict_fn, predict_proba_fn, task, toolbox,
+                                                           objective_names, featureScaler, feature_names)
+                x_org_sound, \
+                cfs_org_sound, \
+                x_cfs_org_sound, \
+                x_cfs_highlight_sound = recoverOriginals(x_ord, cfs_ord_sound, dataset, feature_names)
 
-                # recovering counterfactuals in original format
-                x_org, \
-                cfs_org, \
-                x_cfs_org, \
-                x_cfs_highlight = recoverOriginals(x_ord, cfs_ord, dataset, feature_names)
+                # evaluating and recovering counterfactuals of sound and causality method
+                cfs_ord_sound_causality, \
+                cfs_eval_sound_causality, \
+                x_cfs_ord_sound_causality, \
+                x_cfs_eval_sound_causality = evaluateCounterfactuals(x_ord, explanation_sound_causality['cfs_ord'],
+                                                                     dataset, predict_fn, predict_proba_fn, task,
+                                                                     toolbox, objective_names, featureScaler,
+                                                                     feature_names)
+                x_org_sound_causality, \
+                cfs_org_sound_causality, \
+                x_cfs_org_sound_causality, \
+                x_cfs_highlight_sound_causality = recoverOriginals(x_ord, cfs_ord_sound_causality, dataset,
+                                                                   feature_names)
 
 
                 # print counterfactuals and their corresponding objective values
                 print('\n')
-                print(x_cfs_highlight)
+                print('Sound Results')
+                print(pd.concat([x_cfs_highlight_sound, x_cfs_eval_sound], axis=1))
                 print('\n')
-                print(x_cfs_eval)
+                print('Sound & Causality Results')
+                print(pd.concat([x_cfs_highlight_sound_causality, x_cfs_eval_sound_causality], axis=1))
                 print('\n')
 
                 # storing the counterfactuals
-                action_series_results = pd.concat([x_cfs_highlight, x_cfs_eval], axis=1)
+                action_series_results = pd.concat([x_cfs_highlight_sound, x_cfs_highlight_sound_causality,
+                                                   x_cfs_eval_sound, x_cfs_eval_sound_causality], axis=1)
                 action_series_results.to_csv(action_series_results_csv)
                 action_series_results_csv.write('\n')
                 action_series_results_csv.flush()
+
+                if dataset_kw == 'iris':
+                    # N.B. second and third features have positive monotonic relationship with each other
+                    # but both have negative partial-monotonic relationship with first feature, therefore,
+                    # (1st feature and 2nd feature) increase => 3rd feature decreases
+                    # (1st feature and 2nd feature) decrease => 3rd feature increases
+
+                    # calculating the number of counterfactuals that preserved causality in sound method
+                    causes = np.logical_or(
+                        np.logical_and(cfs_ord_sound.iloc[:, 1] > x_ord[1], cfs_ord_sound.iloc[:, 2] > x_ord[2]),
+                        np.logical_and(cfs_ord_sound.iloc[:, 1] < x_ord[1], cfs_ord_sound.iloc[:, 2] < x_ord[2]))
+                    effects = np.logical_or(np.logical_and(np.logical_and(cfs_ord_sound.iloc[:, 1] > x_ord[1],
+                                                                          cfs_ord_sound.iloc[:, 2] > x_ord[2]),
+                                                           cfs_ord_sound.iloc[:, 0] < x_ord[0]),
+                                            np.logical_and(np.logical_and(cfs_ord_sound.iloc[:, 1] < x_ord[1],
+                                                                          cfs_ord_sound.iloc[:, 2] < x_ord[2]),
+                                                           cfs_ord_sound.iloc[:, 0] > x_ord[0]))
+                    if sum(causes) == 0:
+                        pass
+                    else:
+                        sound_preservation.append(sum(effects) / sum(causes))
+
+                    # calculating the number of counterfactuals that preserved causality in sound and causality method
+                    causes = np.logical_or(np.logical_and(cfs_ord_sound_causality.iloc[:, 1] > x_ord[1],
+                                                          cfs_ord_sound_causality.iloc[:, 2] > x_ord[2]),
+                                           np.logical_and(cfs_ord_sound_causality.iloc[:, 1] < x_ord[1],
+                                                          cfs_ord_sound_causality.iloc[:, 2] < x_ord[2]))
+                    effects = np.logical_or(np.logical_and(np.logical_and(cfs_ord_sound_causality.iloc[:, 1] > x_ord[1],
+                                                                          cfs_ord_sound_causality.iloc[:, 2] > x_ord[2]),
+                                                           cfs_ord_sound_causality.iloc[:, 0] < x_ord[0]),
+                                            np.logical_and(np.logical_and(cfs_ord_sound_causality.iloc[:, 1] < x_ord[1],
+                                                                          cfs_ord_sound_causality.iloc[:, 2] < x_ord[2]),
+                                                           cfs_ord_sound_causality.iloc[:, 0] > x_ord[0]))
+                    if sum(causes) == 0:
+                        pass
+                    else:
+                        sound_causality_preservation.append(sum(effects) / sum(causes))
+
+                elif dataset_kw =='simple-binomial':
+                    # N.B. third features determined by a monotonically increasing/deacreasing function of
+                    # first and second features, therefore,
+                    # (1st feature and 2nd feature) increase => 3rd feature increases
+                    # (1st feature and 2nd feature) decrease => 3rd feature decreases
+
+                    # calculating the number of counterfactuals that preserved causality in sound method
+                    causes = np.logical_or(
+                        np.logical_and(cfs_ord_sound.iloc[:, 0] > x_ord[0], cfs_ord_sound.iloc[:, 1] > x_ord[1]),
+                        np.logical_and(cfs_ord_sound.iloc[:, 0] < x_ord[0], cfs_ord_sound.iloc[:, 1] < x_ord[1]))
+                    effects = np.logical_or(np.logical_and(np.logical_and(cfs_ord_sound.iloc[:, 0] > x_ord[0],
+                                                                          cfs_ord_sound.iloc[:, 1] > x_ord[1]),
+                                                           cfs_ord_sound.iloc[:, 2] > x_ord[2]),
+                                            np.logical_and(np.logical_and(cfs_ord_sound.iloc[:, 0] < x_ord[0],
+                                                                          cfs_ord_sound.iloc[:, 1] < x_ord[1]),
+                                                           cfs_ord_sound.iloc[:, 2] < x_ord[2]))
+                    if sum(causes) == 0:
+                        pass
+                    else:
+                        sound_preservation.append(sum(effects) / sum(causes))
+
+                    # calculating the number of counterfactuals that preserved causality in sound and causality method
+                    causes = np.logical_or(np.logical_and(cfs_ord_sound_causality.iloc[:, 0] > x_ord[0],
+                                                          cfs_ord_sound_causality.iloc[:, 1] > x_ord[1]),
+                                           np.logical_and(cfs_ord_sound_causality.iloc[:, 0] < x_ord[0],
+                                                          cfs_ord_sound_causality.iloc[:, 1] < x_ord[1]))
+                    effects = np.logical_or(np.logical_and(np.logical_and(cfs_ord_sound_causality.iloc[:, 0] > x_ord[0],
+                                                                          cfs_ord_sound_causality.iloc[:, 1] > x_ord[1]),
+                                                           cfs_ord_sound_causality.iloc[:, 2] > x_ord[2]),
+                                            np.logical_and(np.logical_and(cfs_ord_sound_causality.iloc[:, 0] < x_ord[0],
+                                                                          cfs_ord_sound_causality.iloc[:, 1] < x_ord[1]),
+                                                           cfs_ord_sound_causality.iloc[:, 2] < x_ord[2]))
+                    if sum(causes) == 0:
+                        pass
+                    else:
+                        sound_causality_preservation.append(sum(effects) / sum(causes))
 
                 explained += 1
 
                 print('\n')
                 print('-----------------------------------------------------------------------')
-                print("%s|%s: %d/%d explained" % (dataset['name'], blackbox_name, explained, N))
+                print("%s | %s: %d/%d explained" % (dataset['name'], blackbox_name, explained, N))
+                print("preserved causality | sound: %0.3f - sound_causality: %0.3f" %
+                      (np.mean(sound_preservation), np.mean(sound_causality_preservation)))
                 print('-----------------------------------------------------------------------')
 
                 if explained == N:
@@ -136,5 +239,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
