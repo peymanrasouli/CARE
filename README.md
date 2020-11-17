@@ -55,9 +55,9 @@ python care_causality_preservation.py
 ```
 
 # Reproducing the benchmark results
-1- To reproduce the base benchmark results run:
+1- To reproduce the valid benchmark results run:
 ```
-python benchmark_base.py
+python benchmark_valid.py
 ```
 2- To reproduce the sound benchmark results run:
 ```
