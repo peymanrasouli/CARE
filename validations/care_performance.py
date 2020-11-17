@@ -84,7 +84,7 @@ def main():
             n_out = int(task == 'classification') + 1
             n_metrics = 12
             feature_space = ['' for _ in range(X_train.shape[1] - 1 + n_metrics + n_out)]
-            header = ['', 'Base']
+            header = ['', 'Valid']
             header += feature_space
             header += ['Sound']
             header += feature_space
@@ -105,7 +105,7 @@ def main():
 
             header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,' \
                      '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                     ('Base', '', '', '', '', '', '', '', '', '', '', '',
+                     ('Valid', '', '', '', '', '', '', '', '', '', '', '',
                       'Sound', '', '', '', '', '', '', '', '', '', '', '',
                       'Sound+Causality', '', '', '', '', '', '', '', '', '', '', '',
                       'Sound+Causality+Actionable', '', '', '', '', '', '', '', '', '', '', '')
@@ -157,10 +157,10 @@ def main():
             eval_results_csv.flush()
 
             # creating an instance of CARE explainer for sound=False, causality=False, actionable=False
-            explainer_base = CARE(dataset, task=task, predict_fn=predict_fn,
+            explainer_valid = CARE(dataset, task=task, predict_fn=predict_fn,
                                   predict_proba_fn=predict_proba_fn,
                                   sound=False, causality=False, actionable=False, n_cf=n_cf)
-            explainer_base.fit(X_train, Y_train)
+            explainer_valid.fit(X_train, Y_train)
 
             # creating an instance of CARE explainer for sound=True, causality=False, actionable=False
             explainer_sound = CARE(dataset, task=task, predict_fn=predict_fn,
@@ -185,7 +185,7 @@ def main():
             for x_ord in X_test:
 
                 try:
-                    explanation_base = explainer_base.explain(x_ord)
+                    explanation_valid = explainer_valid.explain(x_ord)
                     explanation_sound = explainer_sound.explain(x_ord)
                     explanation_sound_causality = explainer_sound_causality.explain(x_ord)
                     user_preferences = userPreferences(dataset, x_ord)
@@ -198,17 +198,17 @@ def main():
                     featureScaler = explanation_sound_causality_actionable['featureScaler']
                     feature_names = dataset['feature_names']
 
-                    # evaluating and recovering counterfactuals of base method
-                    cfs_ord_base, \
-                    cfs_eval_base, \
-                    x_cfs_ord_base, \
-                    x_cfs_eval_base = evaluateCounterfactuals(x_ord, explanation_base['cfs_ord'], dataset,
+                    # evaluating and recovering counterfactuals of valid method
+                    cfs_ord_valid, \
+                    cfs_eval_valid, \
+                    x_cfs_ord_valid, \
+                    x_cfs_eval_valid = evaluateCounterfactuals(x_ord, explanation_valid['cfs_ord'], dataset,
                                                               predict_fn, predict_proba_fn, task, toolbox,
                                                               objective_names, featureScaler, feature_names)
-                    x_org_base, \
-                    cfs_org_base, \
-                    x_cfs_org_base, \
-                    x_cfs_highlight_base = recoverOriginals(x_ord, cfs_ord_base, dataset, feature_names)
+                    x_org_valid, \
+                    cfs_org_valid, \
+                    x_cfs_org_valid, \
+                    x_cfs_highlight_valid = recoverOriginals(x_ord, cfs_ord_valid, dataset, feature_names)
 
 
                     # evaluating and recovering counterfactuals of sound method
@@ -252,8 +252,8 @@ def main():
                     x_cfs_highlight_sound_causality_actionable = recoverOriginals(x_ord, cfs_ord_sound_causality_actionable, dataset, feature_names)
 
                     # finding the index of the best counterfactual in the output of every method
-                    idx_best_base = (np.where((x_cfs_ord_base ==
-                                               explanation_base['best_cf_ord']).all(axis=1)==True))[0][0]
+                    idx_best_valid = (np.where((x_cfs_ord_valid ==
+                                               explanation_valid['best_cf_ord']).all(axis=1)==True))[0][0]
                     idx_best_sound = (np.where((x_cfs_ord_sound ==
                                                 explanation_sound['best_cf_ord']).all(axis=1)==True))[0][0]
                     idx_best_sound_causality = (np.where((x_cfs_ord_sound_causality ==
@@ -262,8 +262,8 @@ def main():
                                                          explanation_sound_causality_actionable['best_cf_ord']).all(axis=1)==True))[0][0]
 
                     # storing the best counterfactual found by methods
-                    cfs_results = pd.concat([x_cfs_highlight_base.iloc[[0,idx_best_base]],
-                                             x_cfs_eval_base.iloc[[0,idx_best_base]],
+                    cfs_results = pd.concat([x_cfs_highlight_valid.iloc[[0,idx_best_valid]],
+                                             x_cfs_eval_valid.iloc[[0,idx_best_valid]],
                                              x_cfs_highlight_sound.iloc[[0,idx_best_sound]],
                                              x_cfs_eval_sound.iloc[[0,idx_best_sound]],
                                              x_cfs_highlight_sound_causality.iloc[[0,idx_best_sound_causality]],
@@ -275,7 +275,7 @@ def main():
                     cfs_results_csv.flush()
 
                     # storing the evaluation of the best counterfactual found by methods
-                    eval_results = np.r_[x_cfs_eval_base.iloc[idx_best_base, :-n_out],
+                    eval_results = np.r_[x_cfs_eval_valid.iloc[idx_best_valid, :-n_out],
                                          x_cfs_eval_sound.iloc[idx_best_sound, :-n_out],
                                          x_cfs_eval_sound_causality.iloc[idx_best_sound_causality, :-n_out],
                                          x_cfs_eval_sound_causality_actionable.iloc[idx_best_sound_causality_actionable, :-n_out]]
