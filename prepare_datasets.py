@@ -442,12 +442,10 @@ def PrepareIris(dataset_path, dataset_name, usage='counterfactual_generation'):
     df_X_org = df.loc[:, df.columns!=class_name]
     df_y = df.loc[:, class_name]
 
-    if usage == 'counterfactual_generation':
-        continuous_features = ['sepal length (cm)', 'sepal width (cm)', 'petal length (cm)', 'petal width (cm)']
-    elif usage == 'causality_validation':
-        continuous_features = ['sepal width (cm)', 'petal length (cm)', 'petal width (cm)']
-    elif usage == 'soundness_validation':
+    if usage == 'soundness_validation':
         continuous_features = ['sepal length (cm)', 'petal length (cm)']
+    else:
+        continuous_features = ['sepal length (cm)', 'sepal width (cm)', 'petal length (cm)', 'petal width (cm)']
 
     discrete_features = []
 
