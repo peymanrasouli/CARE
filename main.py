@@ -17,19 +17,19 @@ def main():
 
     # defining the list of data sets
     datsets_list = {
-        'adult': ('adult.csv', PrepareAdult, 'classification'), # use 'nn-c' or 'gb-c'
+        # 'adult': ('adult.csv', PrepareAdult, 'classification'), # use 'nn-c' or 'gb-c'
         # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'), # use 'nn-c' or 'gb-c'
         # 'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),  # use 'nn-c' or 'gb-c'
         # 'iris': ('iris-sklearn', PrepareIris, 'classification'),  # use 'gb-c'
         # 'diabetes': ('diabetes-sklearn', PrepareDiabetes, 'regression') # use 'nn-r' or 'gb-r'
-        # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression') # use 'nn-r' or 'gb-r'
+        'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression') # use 'nn-r' or 'gb-r'
     }
 
     # defining the list of black-boxes
     blackbox_list = {
-        'nn-c': MLPClassifier,
+        # 'nn-c': MLPClassifier,
         # 'gb-c': GradientBoostingClassifier,
-        # 'nn-r': MLPRegressor,
+        'nn-r': MLPRegressor,
         # 'gb-r': GradientBoostingRegressor
     }
 

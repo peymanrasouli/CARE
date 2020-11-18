@@ -85,9 +85,10 @@ class CARE():
             self.n_objectives = 3
 
             # defining objective function
-            def objectiveFunction(x_ord, x_org, cf_class, cf_range, probability_thresh, proximity_model, connectedness_model,
-                             user_preferences, dataset, predict_fn, predict_proba_fn, feature_width, continuous_indices,
-                             discrete_indices, featureScaler, correlationModel, cf_theta):
+            def objectiveFunction(x_ord, x_org, task, cf_class, cf_range, probability_thresh, proximity_model,
+                                  connectedness_model, user_preferences, dataset, predict_fn, predict_proba_fn,
+                                  feature_width, continuous_indices, discrete_indices, featureScaler,
+                                  correlationModel, cf_theta):
 
                 # constructing counterfactual from the EA decision variables
                 cf_theta = np.asarray(cf_theta)
@@ -96,8 +97,8 @@ class CARE():
                 cf_ohe = ord2ohe(cf_ord, dataset)
 
                 # objective 1: prediction distance
-                prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
-                                                probability_thresh, cf_class, cf_range)
+                prediction_cost = predictionDistance(cf_ohe, task, predict_fn, predict_proba_fn, probability_thresh,
+                                                     cf_class, cf_range)
                 # objective 2: feature distance
                 distance_cost = featureDistance(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
 
@@ -117,11 +118,10 @@ class CARE():
             self.n_objectives = 4
 
             # defining objective function
-            def objectiveFunction(x_ord, x_org, cf_class, cf_range, probability_thresh, proximity_model,
-                                  connectedness_model,
-                                  user_preferences, dataset, predict_fn, predict_proba_fn, feature_width,
-                                  continuous_indices,
-                                  discrete_indices, featureScaler, correlationModel, cf_theta):
+            def objectiveFunction(x_ord, x_org, task, cf_class, cf_range, probability_thresh, proximity_model,
+                                  connectedness_model, user_preferences, dataset, predict_fn, predict_proba_fn,
+                                  feature_width, continuous_indices, discrete_indices, featureScaler,
+                                  correlationModel, cf_theta):
 
                 # constructing counterfactual from the EA decision variables
                 cf_theta = np.asarray(cf_theta)
@@ -130,8 +130,8 @@ class CARE():
                 cf_ohe = ord2ohe(cf_ord, dataset)
 
                 # objective 1: prediction distance
-                prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
-                                                     probability_thresh, cf_class, cf_range)
+                prediction_cost = predictionDistance(cf_ohe, task, predict_fn, predict_proba_fn, probability_thresh,
+                                                     cf_class, cf_range)
 
                 # objective 2: actionable recourse
                 actionable_cost = actionableRecourse(x_org, cf_org, user_preferences)
@@ -155,9 +155,10 @@ class CARE():
             self.n_objectives = 4
 
             # defining objective function
-            def objectiveFunction(x_ord, x_org, cf_class, cf_range, probability_thresh, proximity_model, connectedness_model,
-                             user_preferences, dataset, predict_fn, predict_proba_fn, feature_width, continuous_indices,
-                             discrete_indices, featureScaler, correlationModel, cf_theta):
+            def objectiveFunction(x_ord, x_org, task, cf_class, cf_range, probability_thresh, proximity_model,
+                                  connectedness_model, user_preferences, dataset, predict_fn, predict_proba_fn,
+                                  feature_width, continuous_indices, discrete_indices, featureScaler,
+                                  correlationModel, cf_theta):
 
                 # constructing counterfactual from the EA decision variables
                 cf_theta = np.asarray(cf_theta)
@@ -166,8 +167,8 @@ class CARE():
                 cf_ohe = ord2ohe(cf_ord, dataset)
 
                 # objective 1: prediction distance
-                prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
-                                                     probability_thresh, cf_class, cf_range)
+                prediction_cost = predictionDistance(cf_ohe, task, predict_fn, predict_proba_fn, probability_thresh,
+                                                     cf_class, cf_range)
 
                 # objective 2: causality
                 causality_cost = causality(x_ord, cf_ord, cf_theta, feature_width,
@@ -192,9 +193,10 @@ class CARE():
             self.n_objectives = 5
 
             # defining objective function
-            def objectiveFunction(x_ord, x_org, cf_class, cf_range, probability_thresh, proximity_model, connectedness_model,
-                             user_preferences, dataset, predict_fn, predict_proba_fn, feature_width, continuous_indices,
-                             discrete_indices, featureScaler, correlationModel, cf_theta):
+            def objectiveFunction(x_ord, x_org, task, cf_class, cf_range, probability_thresh, proximity_model,
+                                  connectedness_model, user_preferences, dataset, predict_fn, predict_proba_fn,
+                                  feature_width, continuous_indices, discrete_indices, featureScaler,
+                                  correlationModel, cf_theta):
 
                 # constructing counterfactual from the EA decision variables
                 cf_theta = np.asarray(cf_theta)
@@ -203,8 +205,8 @@ class CARE():
                 cf_ohe = ord2ohe(cf_ord, dataset)
 
                 # objective 1: prediction distance
-                prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
-                                                     probability_thresh, cf_class, cf_range)
+                prediction_cost = predictionDistance(cf_ohe, task, predict_fn, predict_proba_fn, probability_thresh,
+                                                     cf_class, cf_range)
 
                 # objective 2: causality
                 causality_cost = causality(x_ord, cf_ord, cf_theta, feature_width,
@@ -232,9 +234,10 @@ class CARE():
             self.n_objectives = 5
 
             # defining objective function
-            def objectiveFunction(x_ord, x_org, cf_class, cf_range, probability_thresh, proximity_model, connectedness_model,
-                             user_preferences, dataset, predict_fn, predict_proba_fn, feature_width, continuous_indices,
-                             discrete_indices, featureScaler, correlationModel, cf_theta):
+            def objectiveFunction(x_ord, x_org, task, cf_class, cf_range, probability_thresh, proximity_model,
+                                  connectedness_model, user_preferences, dataset, predict_fn, predict_proba_fn,
+                                  feature_width, continuous_indices, discrete_indices, featureScaler,
+                                  correlationModel, cf_theta):
 
                 # constructing counterfactual from the EA decision variables
                 cf_theta = np.asarray(cf_theta)
@@ -243,8 +246,8 @@ class CARE():
                 cf_ohe = ord2ohe(cf_ord, dataset)
 
                 # objective 1: prediction distance
-                prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
-                                                     probability_thresh, cf_class, cf_range)
+                prediction_cost = predictionDistance(cf_ohe, task, predict_fn, predict_proba_fn, probability_thresh,
+                                                     cf_class, cf_range)
                 # objective 2: proximity
                 proximity_fitness = proximity(cf_theta, proximity_model)
 
@@ -270,9 +273,10 @@ class CARE():
             self.n_objectives = 6
 
             # defining objective function
-            def objectiveFunction(x_ord, x_org, cf_class, cf_range, probability_thresh, proximity_model, connectedness_model,
-                             user_preferences, dataset, predict_fn, predict_proba_fn, feature_width, continuous_indices,
-                             discrete_indices, featureScaler, correlationModel, cf_theta):
+            def objectiveFunction(x_ord, x_org, task, cf_class, cf_range, probability_thresh, proximity_model,
+                                  connectedness_model, user_preferences, dataset, predict_fn, predict_proba_fn,
+                                  feature_width, continuous_indices, discrete_indices, featureScaler,
+                                  correlationModel, cf_theta):
 
                 # constructing counterfactual from the EA decision variables
                 cf_theta = np.asarray(cf_theta)
@@ -281,8 +285,8 @@ class CARE():
                 cf_ohe = ord2ohe(cf_ord, dataset)
 
                 # objective 1: prediction distance
-                prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
-                                                     probability_thresh, cf_class, cf_range)
+                prediction_cost = predictionDistance(cf_ohe, task, predict_fn, predict_proba_fn, probability_thresh,
+                                                     cf_class, cf_range)
                 # objective 2: proximity
                 proximity_fitness = proximity(cf_theta, proximity_model)
 
@@ -311,11 +315,10 @@ class CARE():
             self.n_objectives = 6
 
             # defining objective function
-            def objectiveFunction(x_ord, x_org, cf_class, cf_range, probability_thresh, proximity_model,
-                                  connectedness_model,
-                                  user_preferences, dataset, predict_fn, predict_proba_fn, feature_width,
-                                  continuous_indices,
-                                  discrete_indices, featureScaler, correlationModel, cf_theta):
+            def objectiveFunction(x_ord, x_org, task, cf_class, cf_range, probability_thresh, proximity_model,
+                                  connectedness_model, user_preferences, dataset, predict_fn, predict_proba_fn,
+                                  feature_width, continuous_indices, discrete_indices, featureScaler,
+                                  correlationModel, cf_theta):
 
                 # constructing counterfactual from the EA decision variables
                 cf_theta = np.asarray(cf_theta)
@@ -324,8 +327,8 @@ class CARE():
                 cf_ohe = ord2ohe(cf_ord, dataset)
 
                 # objective 1: prediction distance
-                prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
-                                                     probability_thresh, cf_class, cf_range)
+                prediction_cost = predictionDistance(cf_ohe, task, predict_fn, predict_proba_fn, probability_thresh,
+                                                     cf_class, cf_range)
                 # objective 2: proximity
                 proximity_fitness = proximity(cf_theta, proximity_model)
 
@@ -355,11 +358,10 @@ class CARE():
             self.n_objectives = 7
 
             # defining objective function
-            def objectiveFunction(x_ord, x_org, cf_class, cf_range, probability_thresh, proximity_model,
-                                  connectedness_model,
-                                  user_preferences, dataset, predict_fn, predict_proba_fn, feature_width,
-                                  continuous_indices,
-                                  discrete_indices, featureScaler, correlationModel, cf_theta):
+            def objectiveFunction(x_ord, x_org, task, cf_class, cf_range, probability_thresh, proximity_model,
+                                  connectedness_model, user_preferences, dataset, predict_fn, predict_proba_fn,
+                                  feature_width, continuous_indices, discrete_indices, featureScaler,
+                                  correlationModel, cf_theta):
 
                 # constructing counterfactual from the EA decision variables
                 cf_theta = np.asarray(cf_theta)
@@ -368,8 +370,8 @@ class CARE():
                 cf_ohe = ord2ohe(cf_ord, dataset)
 
                 # objective 1: prediction distance
-                prediction_cost = predictionDistance(cf_ohe, predict_fn, predict_proba_fn,
-                                                     probability_thresh, cf_class, cf_range)
+                prediction_cost = predictionDistance(cf_ohe, task, predict_fn, predict_proba_fn, probability_thresh,
+                                                     cf_class, cf_range)
                 # objective 2: proximity
                 proximity_fitness = proximity(cf_theta, proximity_model)
 
@@ -578,10 +580,10 @@ class CARE():
         toolbox = base.Toolbox()
         creator.create("FitnessMulti", base.Fitness, weights=self.objective_weights)
         creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
-        toolbox.register("evaluate", self.objectiveFunction, x_ord, x_org, cf_class, cf_range, probability_thresh,
-                         proximity_model, connectedness_model, user_preferences, self.dataset, self.predict_fn,
-                         self.predict_proba_fn, self.feature_width, self.continuous_indices, self.discrete_indices,
-                         self.featureScaler, self.correlationModel)
+        toolbox.register("evaluate", self.objectiveFunction, x_ord, x_org, self.task, cf_class, cf_range,
+                         probability_thresh, proximity_model, connectedness_model, user_preferences, self.dataset,
+                         self.predict_fn, self.predict_proba_fn, self.feature_width, self.continuous_indices,
+                         self.discrete_indices, self.featureScaler, self.correlationModel)
         toolbox.register("attr_float", initialization, x_theta, neighbor_theta, self.n_features, self.init_probability)
         toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
