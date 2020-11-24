@@ -32,7 +32,7 @@ def main():
     }
 
     experiment_size = {
-        'simple-binomial': (500, 10)
+        'simple-binomial': (1000, 1)
     }
 
     for dataset_kw in datsets_list:
@@ -67,7 +67,7 @@ def main():
                 experiment_path + 'care_causality_preservation_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
             if exists:
                 os.remove(experiment_path + 'care_causality_preservation_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
-            action_series_results_csv = open(
+            cfs_results_csv = open(
                 experiment_path + 'care_causality_preservation_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
 
             # creating an instance of CARE explainer with sound=True
@@ -141,11 +141,11 @@ def main():
                 print('\n')
 
                 # storing the counterfactuals
-                action_series_results = pd.concat([x_cfs_highlight_sound, x_cfs_highlight_sound_causality,
-                                                   x_cfs_eval_sound, x_cfs_eval_sound_causality], axis=1)
-                action_series_results.to_csv(action_series_results_csv)
-                action_series_results_csv.write('\n')
-                action_series_results_csv.flush()
+                cfs_results = pd.concat([x_cfs_highlight_sound, x_cfs_highlight_sound_causality,
+                                         x_cfs_eval_sound, x_cfs_eval_sound_causality], axis=1)
+                cfs_results.to_csv(cfs_results_csv)
+                cfs_results_csv.write('\n')
+                cfs_results_csv.flush()
 
                 # N.B. third features determined by a monotonically increasing/decreasing function of
                 # first and second features, therefore,
@@ -195,8 +195,7 @@ def main():
                 if explained == N:
                     break
 
-            print('\n')
-            print('Done!')
+            cfs_results_csv.close()
 
 if __name__ == '__main__':
     main()

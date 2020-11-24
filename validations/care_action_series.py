@@ -75,7 +75,7 @@ def main():
                 experiment_path + 'care_action_series_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
             if exists:
                 os.remove(experiment_path + 'care_action_series_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
-            action_series_results_csv = open(
+            cfs_results_csv = open(
                 experiment_path + 'care_action_series_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
 
             # creating an instance of CARE explainer
@@ -186,10 +186,10 @@ def main():
                 worst_action_series_df = pd.DataFrame(data=worst_action_series, columns=['Worst Order', 'Worst Cost'])
                 worst_action_series_df = worst_action_series_df.set_index(x_cfs_ord.index)
 
-                action_series_results = pd.concat([x_cfs_highlight, best_action_series_df, worst_action_series_df], axis=1)
-                action_series_results.to_csv(action_series_results_csv)
-                action_series_results_csv.write('\n')
-                action_series_results_csv.flush()
+                cfs_results = pd.concat([x_cfs_highlight, best_action_series_df, worst_action_series_df], axis=1)
+                cfs_results.to_csv(cfs_results_csv)
+                cfs_results_csv.write('\n')
+                cfs_results_csv.flush()
 
                 explained += 1
 
@@ -201,8 +201,7 @@ def main():
                 if explained == N:
                     break
 
-            print('\n')
-            print('Done!')
+            cfs_results_csv.close()
 
 if __name__ == '__main__':
     main()
