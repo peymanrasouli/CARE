@@ -37,37 +37,41 @@ python care_cfprototype_dice.py
 ```
 
 # Reproducing the validation results
-1- To reproduce the CARE performance results run:
+1- To reproduce the results of module effect validation run:
 ```
-python care_performance.py
+python care_module_effect.py
 ```
-2- To reproduce the CARE soundness results run:
+2- To reproduce the results of soundness validation run:
 ```
 python care_soundness.py
 ```
-3- To reproduce the CARE action series results run:
+3- To reproduce the results of action series validation run:
 ```
 python care_action_series.py
 ```
-4- To reproduce the CARE causality preservation results run:
+4- To reproduce the results of causality-preservation validation run:
 ```
 python care_causality_preservation.py
 ```
 
 # Reproducing the benchmark results
-1- To reproduce the valid benchmark results run:
+1- To reproduce the results of valid benchmark run:
 ```
 python benchmark_valid.py
 ```
-2- To reproduce the sound benchmark results run:
+2- To reproduce the results of sound benchmark run:
 ```
 python benchmark_sound.py
 ```
-3- To reproduce the sound+causality benchmark results run:
+3- To reproduce the results of sound+causality benchmark run:
 ```
 python benchmark_sound_causality.py
 ```
-4- To reproduce the sound+causality+actionable  benchmark results run:
+4- To reproduce the results of sound+causality+actionable benchmark run:
 ```
 python benchmark_sound_causality_actionable.py
+```
+5- To reproduce the results of causality-preservation benchmark run:
+```
+python benchmark_causality_preservation.py
 ```
