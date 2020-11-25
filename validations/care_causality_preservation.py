@@ -71,16 +71,12 @@ def main():
                 experiment_path + 'care_causality_preservation_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
 
             # creating an instance of CARE explainer with sound=True
-            sound_explainer = CARE(dataset, task=task, predict_fn=predict_fn,
-                                   predict_proba_fn=predict_proba_fn,
-                                   sound=True, causality=False, actionable=False,
-                                   corr_model_score_thresh=0.2, n_cf=n_cf)
+            sound_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
+                                   sound=True, causality=False, actionable=False, corr_model_score_thresh=0.2, n_cf=n_cf)
 
             # creating an instance of CARE explainer with sound=True and causality=True
-            sound_causality_explainer = CARE(dataset, task=task, predict_fn=predict_fn,
-                                             predict_proba_fn=predict_proba_fn,
-                                             sound=True, causality=True, actionable=False,
-                                             corr_model_score_thresh=0.2, n_cf=n_cf)
+            sound_causality_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
+                                             sound=True, causality=True, actionable=False, corr_model_score_thresh=0.2, n_cf=n_cf)
 
             # fitting the sound explainer on the training data
             sound_explainer.fit(X_train, Y_train)
