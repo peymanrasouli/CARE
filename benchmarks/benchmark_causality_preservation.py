@@ -60,7 +60,6 @@ def main():
             # setting experiment size for the data set
             N, n_cf = experiment_size[dataset_kw]
 
-
             # creating/opening a csv file for storing results
             exists = os.path.isfile(experiment_path + 'benchmark_causality_preservation_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf))
             if exists:
@@ -87,9 +86,15 @@ def main():
             eval_results_csv = open(
                 experiment_path + 'benchmark_causality_preservation_%s_eval_%s_%s.csv' % (dataset['name'], N, n_cf), 'a')
 
-            header = ['CARE-#causes', 'CARE-preserved',
-                      'CFPrototype-#causes', 'CFPrototype-preserved',
-                      'DiCE-#causes', 'DiCE-preserved']
+            header = ['CARE', '', '',
+                      'CFPrototype', '', '',
+                      'DiCE', '', '',]
+            header = ','.join(header)
+            eval_results_csv.write('%s\n' % (header))
+
+            header = ['n_causes', 'n_effect', 'preservation_rate',
+                      'n_causes', 'n_effect', 'preservation_rate',
+                      'n_causes', 'n_effect', 'preservation_rate']
             header = ','.join(header)
             eval_results_csv.write('%s\n' % (header))
             eval_results_csv.flush()
@@ -97,7 +102,7 @@ def main():
             # creating explainer instances
             # CARE
             care_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                  sound=True, causality=True, actionable=False, corr_model_score_thresh=0.2, n_cf=n_cf)
+                                  sound=True, causality=True, actionable=False, corr_model_score_thresh=0.7, n_cf=n_cf)
             care_explainer.fit(X_train, Y_train)
 
             # CFPrototype
@@ -137,6 +142,9 @@ def main():
             care_n_causes = []
             cfprototype_n_causes = []
             dice_n_causes = []
+            care_n_effects = []
+            cfprototype_n_effects = []
+            dice_n_effects = []
             for x_ord in X_test:
 
                 try:
@@ -197,6 +205,7 @@ def main():
                         pass
                     else:
                         care_n_causes.append(causes)
+                        care_n_effects.append(effects)
                         care_preservation.append(sum(effects) / sum(causes))
 
                     # calculating the number of counterfactuals that preserved causality in sound and CFPrototype method
@@ -214,6 +223,7 @@ def main():
                         pass
                     else:
                         cfprototype_n_causes.append(causes)
+                        cfprototype_n_effects.append(effects)
                         cfprototype_preservation.append(sum(effects) / sum(causes))
 
 
@@ -231,6 +241,7 @@ def main():
                         pass
                     else:
                         dice_n_causes.append(causes)
+                        dice_n_effects.append(effects)
                         dice_preservation.append(sum(effects) / sum(causes))
 
 
@@ -252,9 +263,9 @@ def main():
                     cfs_results_csv.flush()
 
                     # storing the evaluation of the best counterfactual found by methods
-                    eval_results = np.r_[np.sum(care_n_causes), np.mean(care_preservation),
-                                         np.sum(cfprototype_n_causes), np.mean(cfprototype_preservation),
-                                         np.sum(dice_n_causes), np.mean(dice_preservation)]
+                    eval_results = np.r_[np.sum(care_n_causes), np.sum(care_n_effects), np.mean(care_preservation),
+                                         np.sum(cfprototype_n_causes), np.sum(cfprototype_n_effects), np.mean(cfprototype_preservation),
+                                         np.sum(dice_n_causes), np.sum(dice_n_effects), np.mean(dice_preservation)]
                     eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
                     eval_results = ','.join(eval_results)
                     eval_results_csv.write('%s\n' % (eval_results))
