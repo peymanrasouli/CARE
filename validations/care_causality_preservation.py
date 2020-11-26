@@ -64,11 +64,11 @@ def main():
 
             # creating/opening a csv file for storing results
             exists = os.path.isfile(
-                experiment_path + 'care_causality_preservation_%s_eval_%s_%s.csv' % (dataset['name'], N, n_cf))
+                experiment_path + 'care_causality_preservation_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
             if exists:
-                os.remove(experiment_path + 'care_causality_preservation_%s_eval_%s_%s.csv' % (dataset['name'], N, n_cf))
+                os.remove(experiment_path + 'care_causality_preservation_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
             eval_results_csv = open(
-                experiment_path + 'care_causality_preservation_%s_eval_%s_%s.csv' % (dataset['name'], N, n_cf), 'a')
+                experiment_path + 'care_causality_preservation_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
 
             header = ['Valid', '', '',
                       'Sound', '', '',
