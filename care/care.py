@@ -33,7 +33,7 @@ class CARE():
                  n_cf=5,
                  response_quantile=4,
                  K_nbrs=500,
-                 corr_thresh=0.1,
+                 corr_thresh=0.001,
                  corr_model_train_percent=0.8,
                  corr_model_score_thresh=None,
                  n_generation=10,
@@ -493,7 +493,7 @@ class CARE():
 
         # only consider the features that have correlation above the threshold
         corr = corr.to_numpy()
-        corr[np.diag_indices(corr.shape[0])] = 0
+        corr[np.diag_indices(corr.shape[0])] = 0.0
         corr_features = np.where(abs(corr) > self.corr_thresh)
         corr_ = np.zeros(corr.shape)
         corr_[corr_features] = 1
