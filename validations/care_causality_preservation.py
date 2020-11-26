@@ -59,24 +59,6 @@ def main():
             N, n_cf = experiment_size[dataset_kw]
 
             # creating/opening a csv file for storing results
-            exists = os.path.isfile(experiment_path + 'care_causality_preservation_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf))
-            if exists:
-                os.remove(experiment_path + 'care_causality_preservation_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf))
-            cfs_results_csv = open(experiment_path + 'care_causality_preservation_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf), 'a')
-
-            n_out = int(task == 'classification') + 1
-            n_metrics = 11
-            feature_space = ['' for _ in range(X_train.shape[1] - 1 + n_metrics + n_out)]
-            header = ['','Valid']
-            header += feature_space
-            header += ['Sound']
-            header += feature_space
-            header += ['Sound+Causality']
-            header = ','.join(header)
-            cfs_results_csv.write('%s\n' % (header))
-            cfs_results_csv.flush()
-
-            # creating/opening a csv file for storing results
             exists = os.path.isfile(
                 experiment_path + 'care_causality_preservation_%s_eval_%s_%s.csv' % (dataset['name'], N, n_cf))
             if exists:
@@ -159,7 +141,7 @@ def main():
                     print('Sound Results')
                     print(pd.concat([sound_x_cfs_highlight, sound_x_cfs_eval], axis=1))
                     print('\n')
-                    print('Sound_Causality Results')
+                    print('Sound+Causality Results')
                     print(pd.concat([sound_causality_x_cfs_highlight, sound_causality_x_cfs_eval], axis=1))
                     print('\n')
 
@@ -232,14 +214,6 @@ def main():
                           (np.mean(valid_preservation), np.mean(sound_preservation), np.mean(sound_causality_preservation)))
                     print('-----------------------------------------------------------------------')
 
-                    # storing the best counterfactual found by methods
-                    cfs_results = pd.concat([valid_x_cfs_highlight.iloc[:2], valid_x_cfs_eval.iloc[:2],
-                                             sound_x_cfs_highlight.iloc[:2], sound_x_cfs_eval.iloc[:2],
-                                             sound_causality_x_cfs_highlight.iloc[:2], sound_causality_x_cfs_eval.iloc[:2]], axis=1)
-                    cfs_results.to_csv(cfs_results_csv)
-                    cfs_results_csv.write('\n')
-                    cfs_results_csv.flush()
-
                     # storing the evaluation of the best counterfactual found by methods
                     eval_results = np.r_[np.sum(valid_n_causes), np.sum(valid_n_effects), np.mean(valid_preservation),
                                          np.sum(sound_n_causes), np.sum(sound_n_effects), np.mean(sound_preservation),
@@ -255,7 +229,6 @@ def main():
                 if explained == N:
                     break
 
-            cfs_results_csv.close()
             eval_results_csv.close()
 
 if __name__ == '__main__':
