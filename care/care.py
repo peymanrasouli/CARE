@@ -33,9 +33,9 @@ class CARE():
                  n_cf=5,
                  response_quantile=4,
                  K_nbrs=500,
-                 corr_thresh=0.001,
+                 corr_thresh=0.1,
                  corr_model_train_percent=0.8,
-                 corr_model_score_thresh=None,
+                 corr_model_score_thresh='median',
                  n_generation=10,
                  hof_size=100,
                  x_init=0.3,
@@ -521,7 +521,7 @@ class CARE():
                     correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
 
         # select models that have prediction score above a threshold/median value
-        if self.corr_model_score_thresh == None:
+        if self.corr_model_score_thresh == 'median':
             median = np.median(scores)
             selected_models = np.where(scores >= median)[0]
             correlation_models = [correlation_models[m] for m in selected_models]

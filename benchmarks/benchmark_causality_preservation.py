@@ -102,7 +102,8 @@ def main():
             # creating explainer instances
             # CARE
             care_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                  sound=True, causality=True, actionable=False, corr_model_score_thresh=0.7, n_cf=n_cf)
+                                  sound=True, causality=True, actionable=False, n_cf=n_cf,
+                                  corr_thresh=0.0001, corr_model_score_thresh=0.7)
             care_explainer.fit(X_train, Y_train)
 
             # CFPrototype
@@ -192,57 +193,57 @@ def main():
                     # (1st feature and 2nd feature) decrease => 3rd feature decreases
 
                     # calculating the number of counterfactuals that preserved causality in CARE method
-                    causes = np.logical_or(
+                    care_causes = np.logical_or(
                         np.logical_and(care_cfs_ord.iloc[:, 0] > x_ord[0], care_cfs_ord.iloc[:, 1] > x_ord[1]),
                         np.logical_and(care_cfs_ord.iloc[:, 0] < x_ord[0], care_cfs_ord.iloc[:, 1] < x_ord[1]))
-                    effects = np.logical_or(np.logical_and(np.logical_and(care_cfs_ord.iloc[:, 0] > x_ord[0],
+                    care_effects = np.logical_or(np.logical_and(np.logical_and(care_cfs_ord.iloc[:, 0] > x_ord[0],
                                                                           care_cfs_ord.iloc[:, 1] > x_ord[1]),
                                                            care_cfs_ord.iloc[:, 2] > x_ord[2]),
                                             np.logical_and(np.logical_and(care_cfs_ord.iloc[:, 0] < x_ord[0],
                                                                           care_cfs_ord.iloc[:, 1] < x_ord[1]),
                                                            care_cfs_ord.iloc[:, 2] < x_ord[2]))
-                    if sum(causes) == 0:
+                    if sum(care_causes) == 0:
                         pass
                     else:
-                        care_n_causes.append(causes)
-                        care_n_effects.append(effects)
-                        care_preservation.append(sum(effects) / sum(causes))
+                        care_n_causes.append(care_causes)
+                        care_n_effects.append(care_effects)
+                        care_preservation.append(sum(care_effects) / sum(care_causes))
 
                     # calculating the number of counterfactuals that preserved causality in sound and CFPrototype method
-                    causes = np.logical_or(np.logical_and(cfprototype_cfs_ord.iloc[:, 0] > x_ord[0],
+                    cfprototype_causes = np.logical_or(np.logical_and(cfprototype_cfs_ord.iloc[:, 0] > x_ord[0],
                                                           cfprototype_cfs_ord.iloc[:, 1] > x_ord[1]),
                                            np.logical_and(cfprototype_cfs_ord.iloc[:, 0] < x_ord[0],
                                                           cfprototype_cfs_ord.iloc[:, 1] < x_ord[1]))
-                    effects = np.logical_or(np.logical_and(np.logical_and(cfprototype_cfs_ord.iloc[:, 0] > x_ord[0],
+                    cfprototype_effects = np.logical_or(np.logical_and(np.logical_and(cfprototype_cfs_ord.iloc[:, 0] > x_ord[0],
                                                                           cfprototype_cfs_ord.iloc[:, 1] > x_ord[1]),
                                                            cfprototype_cfs_ord.iloc[:, 2] > x_ord[2]),
                                             np.logical_and(np.logical_and(cfprototype_cfs_ord.iloc[:, 0] < x_ord[0],
                                                                           cfprototype_cfs_ord.iloc[:, 1] < x_ord[1]),
                                                            cfprototype_cfs_ord.iloc[:, 2] < x_ord[2]))
-                    if sum(causes) == 0:
+                    if sum(cfprototype_causes) == 0:
                         pass
                     else:
-                        cfprototype_n_causes.append(causes)
-                        cfprototype_n_effects.append(effects)
-                        cfprototype_preservation.append(sum(effects) / sum(causes))
+                        cfprototype_n_causes.append(cfprototype_causes)
+                        cfprototype_n_effects.append(cfprototype_effects)
+                        cfprototype_preservation.append(sum(cfprototype_effects) / sum(cfprototype_causes))
 
 
                     # calculating the number of counterfactuals that preserved causality in DiCE method
-                    causes = np.logical_or(
+                    dice_causes = np.logical_or(
                         np.logical_and(dice_cfs_ord.iloc[:, 0] > x_ord[0], dice_cfs_ord.iloc[:, 1] > x_ord[1]),
                         np.logical_and(dice_cfs_ord.iloc[:, 0] < x_ord[0], dice_cfs_ord.iloc[:, 1] < x_ord[1]))
-                    effects = np.logical_or(np.logical_and(np.logical_and(dice_cfs_ord.iloc[:, 0] > x_ord[0],
+                    dice_effects = np.logical_or(np.logical_and(np.logical_and(dice_cfs_ord.iloc[:, 0] > x_ord[0],
                                                                           dice_cfs_ord.iloc[:, 1] > x_ord[1]),
                                                            dice_cfs_ord.iloc[:, 2] > x_ord[2]),
                                             np.logical_and(np.logical_and(dice_cfs_ord.iloc[:, 0] < x_ord[0],
                                                                           dice_cfs_ord.iloc[:, 1] < x_ord[1]),
                                                            dice_cfs_ord.iloc[:, 2] < x_ord[2]))
-                    if sum(causes) == 0:
+                    if sum(dice_causes) == 0:
                         pass
                     else:
-                        dice_n_causes.append(causes)
-                        dice_n_effects.append(effects)
-                        dice_preservation.append(sum(effects) / sum(causes))
+                        dice_n_causes.append(dice_causes)
+                        dice_n_effects.append(dice_effects)
+                        dice_preservation.append(sum(dice_effects) / sum(dice_causes))
 
 
                     explained += 1
