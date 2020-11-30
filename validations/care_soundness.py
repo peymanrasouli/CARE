@@ -5,6 +5,7 @@ warnings.filterwarnings("ignore")
 from utils import *
 from prepare_datasets import *
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 from create_model import CreateModel, MLPClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingClassifier
@@ -116,8 +117,14 @@ def main():
                 y = np.r_[x_class, cf_base_class, cf_sound_class, X_train_class]
 
                 # setup marker generator and color map
-                markers = ('s', 'o', 'D')
-                colors = ('limegreen', 'deeppink', 'dimgray')
+                if dataset_kw == 'iris':
+                    markers = ('s', 'o', 'D')
+                    colors = ('#c060a1', '#6a097d', '#f1d4d4')
+                    cmap = ListedColormap(['#f1d4d4', '#c060a1', '#6a097d'])
+                else:
+                    markers = ('s', 'D')
+                    colors = ('#c060a1', '#f1d4d4')
+                    cmap = ListedColormap(['#f1d4d4', '#6a097d'])
 
                 x_min, x_max = X[:, 0].min() - 1 , X[:, 0].max() + 1
                 y_min, y_max = X[:, 1].min() - 1 , X[:, 1].max() + 1
@@ -133,7 +140,7 @@ def main():
                 plt.close('all')
                 f = plt.figure()
                 plt.tight_layout(h_pad=0.5, w_pad=0.5, pad=2.5)
-                plt.contourf(xx, yy, Z, cmap='Set2')
+                plt.contourf(xx, yy, Z, cmap=cmap)
                 plt.xlabel(dataset['feature_names'][0])
                 plt.ylabel(dataset['feature_names'][1])
 
@@ -152,7 +159,7 @@ def main():
                 plt.scatter(X_x[0],
                             X_x[1],
                             c='',
-                            edgecolor='black',
+                            edgecolor='red',
                             alpha=1.0,
                             linewidth=2,
                             marker='D',
@@ -164,18 +171,18 @@ def main():
                 plt.scatter(X_cf_base[0],
                             X_cf_base[1],
                             c='',
-                            edgecolor='black',
+                            edgecolor='red',
                             alpha=1.0,
                             linewidth=2,
                             marker='o',
                             s=150,
-                            label='Base cf')
+                            label='Valid cf')
 
                 plt.annotate(('proximity= %.2f \nconnectedness= %.2f') %
                              (x_cfs_eval_base.iloc[1, 1], x_cfs_eval_base.iloc[1, 2]),
                              xy=X_cf_base, xycoords='data',
                              xytext=(-30, -60), textcoords='offset points',
-                             bbox=dict(boxstyle="round", fc="0.8"),
+                             bbox=dict(boxstyle="round", fc="white"),
                              arrowprops=dict(arrowstyle="->",
                                              shrinkA=0, shrinkB=10,
                                              connectionstyle="angle,angleA=0,angleB=90,rad=10"))
@@ -185,7 +192,7 @@ def main():
                 plt.scatter(X_cf_sound[0],
                             X_cf_sound[1],
                             c='',
-                            edgecolor='black',
+                            edgecolor='red',
                             alpha=1.0,
                             linewidth=2,
                             marker='s',
@@ -196,7 +203,7 @@ def main():
                             (x_cfs_eval_sound.iloc[1, 1], x_cfs_eval_sound.iloc[1, 2]),
                             xy=X_cf_sound, xycoords='data',
                             xytext=(-60, 30), textcoords='offset points',
-                            bbox=dict(boxstyle="round", fc="0.8"),
+                            bbox=dict(boxstyle="round", fc="white"),
                             arrowprops=dict(arrowstyle="->",
                                             shrinkA=0, shrinkB=10,
                                             connectionstyle="angle,angleA=0,angleB=90,rad=10"))
