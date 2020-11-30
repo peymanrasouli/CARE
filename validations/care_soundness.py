@@ -62,7 +62,7 @@ def main():
             explainer_sound.fit(X_train, Y_train)
 
             # setting size of the experiment
-            N = 10  # number of instances to explain
+            N = 20  # number of instances to explain
 
             # selecting instances to explain from test set
             np.random.seed(42)
@@ -138,6 +138,7 @@ def main():
 
                 # plot decision surface and data points
                 plt.close('all')
+                plt.rcParams['font.size'] = '14'
                 f = plt.figure()
                 plt.tight_layout(h_pad=0.5, w_pad=0.5, pad=2.5)
                 plt.contourf(xx, yy, Z, cmap=cmap)
@@ -150,7 +151,7 @@ def main():
                                 alpha=1,
                                 c=colors[idx],
                                 marker=markers[idx],
-                                s=30,
+                                s=40,
                                 label=cl,
                                 edgecolor='black')
 
@@ -161,7 +162,7 @@ def main():
                             c='',
                             edgecolor='red',
                             alpha=1.0,
-                            linewidth=2,
+                            linewidth=3,
                             marker='D',
                             s=150,
                             label='x')
@@ -173,18 +174,18 @@ def main():
                             c='',
                             edgecolor='red',
                             alpha=1.0,
-                            linewidth=2,
+                            linewidth=3,
                             marker='o',
                             s=150,
                             label='Valid cf')
 
-                plt.annotate(('proximity= %.2f \nconnectedness= %.2f') %
+                plt.annotate(('p= %.2f \nc= %.2f') %
                              (x_cfs_eval_base.iloc[1, 1], x_cfs_eval_base.iloc[1, 2]),
                              xy=X_cf_base, xycoords='data',
-                             xytext=(-30, -60), textcoords='offset points',
+                             xytext=(30, 30), textcoords='offset points',
                              bbox=dict(boxstyle="round", fc="white"),
                              arrowprops=dict(arrowstyle="->",
-                                             shrinkA=0, shrinkB=10,
+                                             shrinkA=0, shrinkB=0,
                                              connectionstyle="angle,angleA=0,angleB=90,rad=10"))
 
                 # highlight sound's counterfactual
@@ -194,22 +195,22 @@ def main():
                             c='',
                             edgecolor='red',
                             alpha=1.0,
-                            linewidth=2,
+                            linewidth=3,
                             marker='s',
                             s=150,
                             label='Sound cf')
 
-                plt.annotate(('proximity= %.2f \nconnectedness= %.2f') %
+                plt.annotate(('p= %.2f \nc= %.2f') %
                             (x_cfs_eval_sound.iloc[1, 1], x_cfs_eval_sound.iloc[1, 2]),
                             xy=X_cf_sound, xycoords='data',
-                            xytext=(-60, 30), textcoords='offset points',
+                            xytext=(-90, -60), textcoords='offset points',
                             bbox=dict(boxstyle="round", fc="white"),
                             arrowprops=dict(arrowstyle="->",
-                                            shrinkA=0, shrinkB=10,
+                                            shrinkA=0, shrinkB=0,
                                             connectionstyle="angle,angleA=0,angleB=90,rad=10"))
 
                 plt.legend(bbox_to_anchor=(0, 1.02, 1, 0.2), loc="lower left",
-                                mode="expand", borderaxespad=0, ncol=6)
+                                mode="expand", borderaxespad=0, ncol=6, handletextpad=0.1)
                 plt.show()
                 f.savefig(experiment_path+str(ind_explain[i])+'.pdf')
                 plt.close()
