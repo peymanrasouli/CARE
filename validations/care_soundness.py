@@ -162,9 +162,9 @@ def main():
                             c='',
                             edgecolor='red',
                             alpha=1.0,
-                            linewidth=3,
+                            linewidth=2,
                             marker='D',
-                            s=150,
+                            s=180,
                             label='x')
 
                 # highlight base's counterfactual
@@ -174,12 +174,12 @@ def main():
                             c='',
                             edgecolor='red',
                             alpha=1.0,
-                            linewidth=3,
+                            linewidth=2,
                             marker='o',
-                            s=150,
+                            s=180,
                             label='Valid cf')
 
-                plt.annotate(('p= %.2f \nc= %.2f') %
+                plt.annotate(('p = %.1f \nc = %.1f') %
                              (x_cfs_eval_base.iloc[1, 1], x_cfs_eval_base.iloc[1, 2]),
                              xy=X_cf_base, xycoords='data',
                              xytext=(30, 30), textcoords='offset points',
@@ -195,12 +195,12 @@ def main():
                             c='',
                             edgecolor='red',
                             alpha=1.0,
-                            linewidth=3,
+                            linewidth=2,
                             marker='s',
-                            s=150,
+                            s=180,
                             label='Sound cf')
 
-                plt.annotate(('p= %.2f \nc= %.2f') %
+                plt.annotate(('p = %.1f \nc = %.1f') %
                             (x_cfs_eval_sound.iloc[1, 1], x_cfs_eval_sound.iloc[1, 2]),
                             xy=X_cf_sound, xycoords='data',
                             xytext=(-90, -60), textcoords='offset points',
