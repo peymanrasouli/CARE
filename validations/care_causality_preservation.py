@@ -32,7 +32,7 @@ def main():
     }
 
     experiment_size = {
-        'simple-binomial': (1000, 10)
+        'simple-binomial': (200, 10)
     }
 
     for dataset_kw in datsets_list:

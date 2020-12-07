@@ -963,9 +963,9 @@ def PrepareSimpleBinomial(dataset_path, dataset_name, usage='causality_validatio
     def sigmoid(x):
         return 1 / (1 + np.exp(-x))
 
-    x1 = np.random.normal(50, 15, 10000)
-    x2 = np.random.normal(50, 17, 10000)
-    x3 = np.random.normal((0.0003 * ((x1 + x2) ** 2) + 10), 0.5, 10000)
+    x1 = np.random.normal(50, 15, 1000)
+    x2 = np.random.normal(50, 17, 1000)
+    x3 = np.random.normal((0.0003 * ((x1 + x2) ** 2) + 10), 0.5, 1000)
     y = sigmoid(0.0013 * (x1 * x2) + 10 - x3)
     y[y > 0.5] = 1
     y[y <= 0.5] = 0
