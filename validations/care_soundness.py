@@ -138,7 +138,7 @@ def main():
 
                 # plot decision surface and data points
                 plt.close('all')
-                plt.rcParams['font.size'] = '14'
+                plt.rcParams['font.size'] = '13'
                 f = plt.figure()
                 plt.tight_layout(h_pad=0.5, w_pad=0.5, pad=2.5)
                 plt.contourf(xx, yy, Z, cmap=cmap)
@@ -152,7 +152,7 @@ def main():
                                 c=colors[idx],
                                 marker=markers[idx],
                                 s=40,
-                                label=cl,
+                                # label=cl,
                                 edgecolor='black')
 
                 # highlight x
@@ -165,7 +165,7 @@ def main():
                             linewidth=2,
                             marker='D',
                             s=180,
-                            label='x')
+                            label='$x$')
 
                 # highlight base's counterfactual
                 X_cf_base, y_cf_base = X[1, :], y[1]
@@ -177,16 +177,17 @@ def main():
                             linewidth=2,
                             marker='o',
                             s=180,
-                            label='Valid cf')
+                            label=('$cf_{valid}: p=%d, c=%d$') %
+                             (x_cfs_eval_base.iloc[1, 1], x_cfs_eval_base.iloc[1, 2]))
 
-                plt.annotate(('p = %.1f \nc = %.1f') %
-                             (x_cfs_eval_base.iloc[1, 1], x_cfs_eval_base.iloc[1, 2]),
-                             xy=X_cf_base, xycoords='data',
-                             xytext=(30, 30), textcoords='offset points',
-                             bbox=dict(boxstyle="round", fc="white"),
-                             arrowprops=dict(arrowstyle="->",
-                                             shrinkA=0, shrinkB=0,
-                                             connectionstyle="angle,angleA=0,angleB=90,rad=10"))
+                # plt.annotate(('$p = %.1f$ \n$c = %.1f$') %
+                #              (x_cfs_eval_base.iloc[1, 1], x_cfs_eval_base.iloc[1, 2]),
+                #              xy=X_cf_base, xycoords='data',
+                #              xytext=(30, 30), textcoords='offset points',
+                #              bbox=dict(boxstyle="round", fc="white"),
+                #              arrowprops=dict(arrowstyle="->",
+                #                              shrinkA=0, shrinkB=0,
+                #                              connectionstyle="angle,angleA=0,angleB=90,rad=10"))
 
                 # highlight sound's counterfactual
                 X_cf_sound, y_cf_sound = X[2, :], y[2]
@@ -198,19 +199,20 @@ def main():
                             linewidth=2,
                             marker='s',
                             s=180,
-                            label='Sound cf')
+                            label=('$cf_{sound}: p=%d, c=%d$') %
+                            (x_cfs_eval_sound.iloc[1, 1], x_cfs_eval_sound.iloc[1, 2]))
 
-                plt.annotate(('p = %.1f \nc = %.1f') %
-                            (x_cfs_eval_sound.iloc[1, 1], x_cfs_eval_sound.iloc[1, 2]),
-                            xy=X_cf_sound, xycoords='data',
-                            xytext=(-90, -60), textcoords='offset points',
-                            bbox=dict(boxstyle="round", fc="white"),
-                            arrowprops=dict(arrowstyle="->",
-                                            shrinkA=0, shrinkB=0,
-                                            connectionstyle="angle,angleA=0,angleB=90,rad=10"))
+                # plt.annotate(('$p = %.1f$ \n$c = %.1f$') %
+                #             (x_cfs_eval_sound.iloc[1, 1], x_cfs_eval_sound.iloc[1, 2]),
+                #             xy=X_cf_sound, xycoords='data',
+                #             xytext=(-90, -60), textcoords='offset points',
+                #             bbox=dict(boxstyle="round", fc="white"),
+                #             arrowprops=dict(arrowstyle="->",
+                #                             shrinkA=0, shrinkB=0,
+                #                             connectionstyle="angle,angleA=0,angleB=90,rad=10"))
 
                 plt.legend(bbox_to_anchor=(0, 1.02, 1, 0.2), loc="lower left",
-                                mode="expand", borderaxespad=0, ncol=6, handletextpad=0.1)
+                                mode="expand", borderaxespad=0, ncol=3, handletextpad=0.1)
                 plt.show()
                 f.savefig(experiment_path+str(ind_explain[i])+'.pdf')
                 plt.close()
