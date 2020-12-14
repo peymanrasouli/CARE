@@ -112,10 +112,10 @@ def main():
 
             # explaining instances from test set
             explained = 0
-            valid_preservation = []
-            sound_preservation = []
-            causality_preservation = []
-            sound_causality_preservation = []
+            valid_preservation = 0.0
+            sound_preservation = 0.0
+            causality_preservation = 0.0
+            sound_causality_preservation = 0.0
             valid_n_causes = []
             sound_n_causes = []
             causality_n_causes = []
@@ -196,7 +196,7 @@ def main():
                     else:
                         valid_n_causes.append(valid_causes)
                         valid_n_effects.append(valid_effects)
-                        valid_preservation.append(sum(valid_effects) / sum(valid_causes))
+                        valid_preservation = np.mean(valid_n_effects) / np.mean(valid_n_causes)
 
                     # calculating the number of counterfactuals that preserved causality in CARE sound method
                     sound_causes = np.logical_or(np.logical_and(sound_cfs_ord.iloc[:, 0] > x_ord[0],
@@ -214,7 +214,7 @@ def main():
                     else:
                         sound_n_causes.append(sound_causes)
                         sound_n_effects.append(sound_effects)
-                        sound_preservation.append(sum(sound_effects) / sum(sound_causes))
+                        sound_preservation = np.mean(sound_n_effects) / np.mean(sound_n_causes)
 
                     # calculating the number of counterfactuals that preserved causality in CARE causality method
                     causality_causes = np.logical_or(np.logical_and(causality_cfs_ord.iloc[:, 0] > x_ord[0],
@@ -232,7 +232,7 @@ def main():
                     else:
                         causality_n_causes.append(causality_causes)
                         causality_n_effects.append(causality_effects)
-                        causality_preservation.append(sum(causality_effects) / sum(causality_causes))
+                        causality_preservation = np.mean(causality_n_effects) / np.mean(causality_n_causes)
 
 
                     # calculating the number of counterfactuals that preserved causality in CARE sound+causality method
@@ -250,7 +250,7 @@ def main():
                     else:
                         sound_causality_n_causes.append(sound_causality_causes)
                         sound_causality_n_effects.append(sound_causality_effects)
-                        sound_causality_preservation.append(sum(sound_causality_effects) / sum(sound_causality_causes))
+                        sound_causality_preservation = np.mean(sound_causality_n_effects) / np.mean(sound_causality_n_causes)
 
 
                     explained += 1
@@ -259,15 +259,14 @@ def main():
                     print('-----------------------------------------------------------------------')
                     print("%s | %s: %d/%d explained" % (dataset['name'], blackbox_name, explained, N))
                     print("preserved causality | Valid: %0.3f - Sound: %0.3f - Causality: %0.3f - Sound+Causality: %0.3f" %
-                          (np.mean(valid_preservation), np.mean(sound_preservation),
-                           np.mean(causality_preservation), np.mean(sound_causality_preservation)))
+                          (valid_preservation, sound_preservation, causality_preservation, sound_causality_preservation))
                     print('-----------------------------------------------------------------------')
 
                     # storing the evaluation of the best counterfactual found by methods
-                    eval_results = np.r_[np.mean(valid_n_causes), np.mean(valid_n_effects), np.mean(valid_preservation),
-                                         np.mean(sound_n_causes), np.mean(sound_n_effects), np.mean(sound_preservation),
-                                         np.mean(causality_n_causes), np.mean(causality_n_effects), np.mean(causality_preservation),
-                                         np.mean(sound_causality_n_causes), np.mean(sound_causality_n_effects), np.mean(sound_causality_preservation)]
+                    eval_results = np.r_[np.mean(valid_n_causes), np.mean(valid_n_effects), valid_preservation,
+                                         np.mean(sound_n_causes), np.mean(sound_n_effects), sound_preservation,
+                                         np.mean(causality_n_causes), np.mean(causality_n_effects), causality_preservation,
+                                         np.mean(sound_causality_n_causes), np.mean(sound_causality_n_effects), sound_causality_preservation]
                     eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
                     eval_results = ','.join(eval_results)
                     eval_results_csv.write('%s\n' % (eval_results))
