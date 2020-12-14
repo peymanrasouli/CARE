@@ -27,7 +27,7 @@ def main():
 
     # defining the list of black-boxes
     blackbox_list = {
-        'nn-c': MLPClassifier,
+        # 'nn-c': MLPClassifier,
         'gb-c': GradientBoostingClassifier
     }
 
