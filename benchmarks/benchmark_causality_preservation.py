@@ -137,9 +137,9 @@ def main():
 
             # explaining instances from test set
             explained = 0
-            care_preservation = 0
-            cfprototype_preservation = 0
-            dice_preservation = 0
+            care_preservation = 0.0
+            cfprototype_preservation = 0.0
+            dice_preservation = 0.0
             care_n_causes = []
             cfprototype_n_causes = []
             dice_n_causes = []
