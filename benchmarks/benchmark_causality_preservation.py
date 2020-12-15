@@ -137,9 +137,9 @@ def main():
 
             # explaining instances from test set
             explained = 0
-            care_preservation = []
-            cfprototype_preservation = []
-            dice_preservation = []
+            care_preservation = 0
+            cfprototype_preservation = 0
+            dice_preservation = 0
             care_n_causes = []
             cfprototype_n_causes = []
             dice_n_causes = []
@@ -205,9 +205,9 @@ def main():
                     if sum(care_causes) == 0:
                         pass
                     else:
-                        care_n_causes.append(care_causes)
-                        care_n_effects.append(care_effects)
-                        care_preservation.append(sum(care_effects) / sum(care_causes))
+                        care_n_causes.append(sum(care_causes))
+                        care_n_effects.append(sum(care_effects))
+                        care_preservation = sum(care_n_effects) / sum(care_n_causes)
 
                     # calculating the number of counterfactuals that preserved causality in sound and CFPrototype method
                     cfprototype_causes = np.logical_or(np.logical_and(cfprototype_cfs_ord.iloc[:, 0] > x_ord[0],
@@ -220,12 +220,13 @@ def main():
                                             np.logical_and(np.logical_and(cfprototype_cfs_ord.iloc[:, 0] < x_ord[0],
                                                                           cfprototype_cfs_ord.iloc[:, 1] < x_ord[1]),
                                                            cfprototype_cfs_ord.iloc[:, 2] < x_ord[2]))
+
                     if sum(cfprototype_causes) == 0:
                         pass
                     else:
-                        cfprototype_n_causes.append(cfprototype_causes)
-                        cfprototype_n_effects.append(cfprototype_effects)
-                        cfprototype_preservation.append(sum(cfprototype_effects) / sum(cfprototype_causes))
+                        cfprototype_n_causes.append(sum(cfprototype_causes))
+                        cfprototype_n_effects.append(sum(cfprototype_effects))
+                        cfprototype_preservation = sum(cfprototype_n_effects) / sum(cfprototype_n_causes)
 
 
                     # calculating the number of counterfactuals that preserved causality in DiCE method
@@ -238,13 +239,13 @@ def main():
                                             np.logical_and(np.logical_and(dice_cfs_ord.iloc[:, 0] < x_ord[0],
                                                                           dice_cfs_ord.iloc[:, 1] < x_ord[1]),
                                                            dice_cfs_ord.iloc[:, 2] < x_ord[2]))
+
                     if sum(dice_causes) == 0:
                         pass
                     else:
-                        dice_n_causes.append(dice_causes)
-                        dice_n_effects.append(dice_effects)
-                        dice_preservation.append(sum(dice_effects) / sum(dice_causes))
-
+                        dice_n_causes.append(sum(dice_causes))
+                        dice_n_effects.append(sum(dice_effects))
+                        dice_preservation = sum(dice_n_effects) / sum(dice_n_causes)
 
                     explained += 1
 
@@ -252,7 +253,7 @@ def main():
                     print('-----------------------------------------------------------------------')
                     print("%s | %s: %d/%d explained" % (dataset['name'], blackbox_name, explained, N))
                     print("preserved causality | CARE: %0.3f - CFPrototype: %0.3f - DiCE: %0.3f" %
-                          (np.mean(care_preservation), np.mean(cfprototype_preservation), np.mean(dice_preservation)))
+                          (care_preservation, cfprototype_preservation, dice_preservation))
                     print('-----------------------------------------------------------------------')
 
                     # storing the best counterfactual found by methods
@@ -264,9 +265,9 @@ def main():
                     cfs_results_csv.flush()
 
                     # storing the evaluation of the best counterfactual found by methods
-                    eval_results = np.r_[np.sum(care_n_causes), np.sum(care_n_effects), np.mean(care_preservation),
-                                         np.sum(cfprototype_n_causes), np.sum(cfprototype_n_effects), np.mean(cfprototype_preservation),
-                                         np.sum(dice_n_causes), np.sum(dice_n_effects), np.mean(dice_preservation)]
+                    eval_results = np.r_[np.sum(care_n_causes), np.sum(care_n_effects), care_preservation,
+                                         np.sum(cfprototype_n_causes), np.sum(cfprototype_n_effects), cfprototype_preservation,
+                                         np.sum(dice_n_causes), np.sum(dice_n_effects), dice_preservation]
                     eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
                     eval_results = ','.join(eval_results)
                     eval_results_csv.write('%s\n' % (eval_results))

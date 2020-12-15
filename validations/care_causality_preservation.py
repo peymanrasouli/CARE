@@ -32,7 +32,7 @@ def main():
     }
 
     experiment_size = {
-        'simple-binomial': (200, 10)
+        'simple-binomial': (200, 5)
     }
 
     for dataset_kw in datsets_list:
@@ -191,12 +191,10 @@ def main():
                                             np.logical_and(np.logical_and(valid_cfs_ord.iloc[:, 0] < x_ord[0],
                                                                           valid_cfs_ord.iloc[:, 1] < x_ord[1]),
                                                            valid_cfs_ord.iloc[:, 2] < x_ord[2]))
-                    if sum(valid_causes) == 0:
-                        pass
-                    else:
-                        valid_n_causes.append(valid_causes)
-                        valid_n_effects.append(valid_effects)
-                        valid_preservation = np.mean(valid_n_effects) / np.mean(valid_n_causes)
+
+                    valid_n_causes.append(sum(valid_causes))
+                    valid_n_effects.append(sum(valid_effects))
+                    valid_preservation = np.mean(valid_n_effects) / np.mean(valid_n_causes)
 
                     # calculating the number of counterfactuals that preserved causality in CARE sound method
                     sound_causes = np.logical_or(np.logical_and(sound_cfs_ord.iloc[:, 0] > x_ord[0],
@@ -209,12 +207,10 @@ def main():
                                             np.logical_and(np.logical_and(sound_cfs_ord.iloc[:, 0] < x_ord[0],
                                                                           sound_cfs_ord.iloc[:, 1] < x_ord[1]),
                                                            sound_cfs_ord.iloc[:, 2] < x_ord[2]))
-                    if sum(sound_causes) == 0:
-                        pass
-                    else:
-                        sound_n_causes.append(sound_causes)
-                        sound_n_effects.append(sound_effects)
-                        sound_preservation = np.mean(sound_n_effects) / np.mean(sound_n_causes)
+
+                    sound_n_causes.append(sum(sound_causes))
+                    sound_n_effects.append(sum(sound_effects))
+                    sound_preservation = np.mean(sound_n_effects) / np.mean(sound_n_causes)
 
                     # calculating the number of counterfactuals that preserved causality in CARE causality method
                     causality_causes = np.logical_or(np.logical_and(causality_cfs_ord.iloc[:, 0] > x_ord[0],
@@ -227,12 +223,10 @@ def main():
                                             np.logical_and(np.logical_and(causality_cfs_ord.iloc[:, 0] < x_ord[0],
                                                                           causality_cfs_ord.iloc[:, 1] < x_ord[1]),
                                                            causality_cfs_ord.iloc[:, 2] < x_ord[2]))
-                    if sum(causality_causes) == 0:
-                        pass
-                    else:
-                        causality_n_causes.append(causality_causes)
-                        causality_n_effects.append(causality_effects)
-                        causality_preservation = np.mean(causality_n_effects) / np.mean(causality_n_causes)
+
+                    causality_n_causes.append(sum(causality_causes))
+                    causality_n_effects.append(sum(causality_effects))
+                    causality_preservation = np.mean(causality_n_effects) / np.mean(causality_n_causes)
 
 
                     # calculating the number of counterfactuals that preserved causality in CARE sound+causality method
@@ -245,13 +239,10 @@ def main():
                                             np.logical_and(np.logical_and(sound_causality_cfs_ord.iloc[:, 0] < x_ord[0],
                                                                           sound_causality_cfs_ord.iloc[:, 1] < x_ord[1]),
                                                            sound_causality_cfs_ord.iloc[:, 2] < x_ord[2]))
-                    if sum(sound_causality_causes) == 0:
-                        pass
-                    else:
-                        sound_causality_n_causes.append(sound_causality_causes)
-                        sound_causality_n_effects.append(sound_causality_effects)
-                        sound_causality_preservation = np.mean(sound_causality_n_effects) / np.mean(sound_causality_n_causes)
 
+                    sound_causality_n_causes.append(sum(sound_causality_causes))
+                    sound_causality_n_effects.append(sum(sound_causality_effects))
+                    sound_causality_preservation = np.mean(sound_causality_n_effects) / np.mean(sound_causality_n_causes)
 
                     explained += 1
 
