@@ -6,7 +6,7 @@ from utils import *
 from prepare_datasets import *
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
-from create_model import CreateModel, MLPClassifier
+from create_model import CreateModel
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingClassifier
 from care.care import CARE
@@ -121,10 +121,12 @@ def main():
                     markers = ('s', 'o', 'D')
                     colors = ('#c060a1', '#6a097d', '#f1d4d4')
                     cmap = ListedColormap(['#f1d4d4', '#c060a1', '#6a097d'])
+                    loc = "lower right"
                 else:
                     markers = ('s', 'D')
                     colors = ('#c060a1', '#f1d4d4')
                     cmap = ListedColormap(['#f1d4d4', '#6a097d'])
+                    loc = "lower left"
 
                 x_min, x_max = X[:, 0].min() - 1 , X[:, 0].max() + 1
                 y_min, y_max = X[:, 1].min() - 1 , X[:, 1].max() + 1
@@ -138,8 +140,10 @@ def main():
 
                 # plot decision surface and data points
                 plt.close('all')
-                plt.rcParams['font.size'] = '13'
+                plt.rcParams['font.size'] = '16'
                 f = plt.figure()
+                plt.xticks([])
+                plt.yticks([])
                 plt.tight_layout(h_pad=0.5, w_pad=0.5, pad=2.5)
                 plt.contourf(xx, yy, Z, cmap=cmap)
                 plt.xlabel(dataset['feature_names'][0])
@@ -151,7 +155,7 @@ def main():
                                 alpha=1,
                                 c=colors[idx],
                                 marker=markers[idx],
-                                s=40,
+                                s=50,
                                 # label=cl,
                                 edgecolor='black')
 
@@ -164,8 +168,8 @@ def main():
                             alpha=1.0,
                             linewidth=2,
                             marker='D',
-                            s=180,
-                            label='$x$')
+                            s=200,
+                            label='$\mathbf{x}$')
 
                 # highlight base's counterfactual
                 X_cf_base, y_cf_base = X[1, :], y[1]
@@ -176,18 +180,9 @@ def main():
                             alpha=1.0,
                             linewidth=2,
                             marker='o',
-                            s=180,
-                            label=('$cf_{valid}: p=%d, c=%d$') %
+                            s=200,
+                            label=('$\mathbf{cf_{V}}; p=%d, c=%d$') %
                              (x_cfs_eval_base.iloc[1, 1], x_cfs_eval_base.iloc[1, 2]))
-
-                # plt.annotate(('$p = %.1f$ \n$c = %.1f$') %
-                #              (x_cfs_eval_base.iloc[1, 1], x_cfs_eval_base.iloc[1, 2]),
-                #              xy=X_cf_base, xycoords='data',
-                #              xytext=(30, 30), textcoords='offset points',
-                #              bbox=dict(boxstyle="round", fc="white"),
-                #              arrowprops=dict(arrowstyle="->",
-                #                              shrinkA=0, shrinkB=0,
-                #                              connectionstyle="angle,angleA=0,angleB=90,rad=10"))
 
                 # highlight sound's counterfactual
                 X_cf_sound, y_cf_sound = X[2, :], y[2]
@@ -198,23 +193,13 @@ def main():
                             alpha=1.0,
                             linewidth=2,
                             marker='s',
-                            s=180,
-                            label=('$cf_{sound}: p=%d, c=%d$') %
+                            s=200,
+                            label=('$\mathbf{cf_{S}}; p=%d, c=%d$') %
                             (x_cfs_eval_sound.iloc[1, 1], x_cfs_eval_sound.iloc[1, 2]))
 
-                # plt.annotate(('$p = %.1f$ \n$c = %.1f$') %
-                #             (x_cfs_eval_sound.iloc[1, 1], x_cfs_eval_sound.iloc[1, 2]),
-                #             xy=X_cf_sound, xycoords='data',
-                #             xytext=(-90, -60), textcoords='offset points',
-                #             bbox=dict(boxstyle="round", fc="white"),
-                #             arrowprops=dict(arrowstyle="->",
-                #                             shrinkA=0, shrinkB=0,
-                #                             connectionstyle="angle,angleA=0,angleB=90,rad=10"))
-
-                plt.legend(bbox_to_anchor=(0, 1.02, 1, 0.2), loc="lower left",
-                                mode="expand", borderaxespad=0, ncol=3, handletextpad=0.1)
+                plt.legend(loc=loc, handletextpad=0.1, fontsize=16)
                 plt.show()
-                f.savefig(experiment_path+str(ind_explain[i])+'.pdf')
+                f.savefig(experiment_path+str(ind_explain[i])+'.pdf', bbox_inches = 'tight')
                 plt.close()
 
             print('Done!')
