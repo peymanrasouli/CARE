@@ -11,7 +11,7 @@ sudo apt-get install build-essential
 ```
 2- Clone the repository using HTTP/SSH:
 ```
-git clone https://github.com/peymanras/CARE
+git clone https://github.com/peymanrasouli/CARE
 ```
 3- Create a conda virtual environment:
 ```
