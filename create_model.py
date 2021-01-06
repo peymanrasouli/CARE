@@ -2,7 +2,7 @@ from utils import *
 import tensorflow as tf
 tf.set_random_seed(42)
 from tensorflow import keras
-from sklearn.metrics import f1_score, accuracy_score, mean_absolute_error, mean_squared_error
+from sklearn.metrics import f1_score, accuracy_score, r2_score, mean_squared_error
 
 def CreateModel(dataset, X_train, X_test, Y_train, Y_test, task, model_name, constructor):
     X_train_ohe = ord2ohe(X_train, dataset)
@@ -34,8 +34,8 @@ def CreateModel(dataset, X_train, X_test, Y_train, Y_test, task, model_name, con
             blackbox = constructor(X_train_ohe.shape[1])
             blackbox.fit(X_train_ohe, Y_train, validation_split=0.20, epochs=100, verbose=1)
             pred_test = blackbox.predict(X_test_ohe)
-            bb_mae_error = mean_absolute_error(Y_test, pred_test)
-            print(model_name , 'blackbox MAE=', bb_mae_error)
+            bb_r2_score = r2_score(Y_test, pred_test)
+            print(model_name , 'blackbox R2-score=', bb_r2_score)
             bb_mse_error = mean_squared_error(Y_test, pred_test)
             print(model_name , 'blackbox MSE=', bb_mse_error)
             return blackbox
@@ -43,8 +43,8 @@ def CreateModel(dataset, X_train, X_test, Y_train, Y_test, task, model_name, con
             blackbox = constructor(random_state=42, n_estimators=100)
             blackbox.fit(X_train_ohe, Y_train)
             pred_test = blackbox.predict(X_test_ohe)
-            bb_mae_error = mean_absolute_error(Y_test, pred_test)
-            print(model_name , 'blackbox MAE=', bb_mae_error)
+            bb_r2_score = r2_score(Y_test, pred_test)
+            print(model_name , 'blackbox R2-score=', bb_r2_score)
             bb_mse_error = mean_squared_error(Y_test, pred_test)
             print(model_name , 'blackbox MSE=', bb_mse_error)
             return blackbox
