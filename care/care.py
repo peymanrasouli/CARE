@@ -37,6 +37,7 @@ class CARE():
                  corr_model_train_percent=0.8,
                  corr_model_score_thresh='median',
                  n_generation=10,
+                 n_population='adaptive',
                  hof_size=100,
                  x_init=0.3,
                  neighbor_init=0.6,
@@ -65,6 +66,7 @@ class CARE():
         self.corr_model_train_percent = corr_model_train_percent
         self.corr_model_score_thresh = corr_model_score_thresh
         self.n_generation = n_generation
+        self.n_population = n_population
         self.hof_size = hof_size
         self.init_probability = [x_init, neighbor_init, random_init] / np.sum([x_init, neighbor_init, random_init])
         self.crossover_perc = crossover_perc
@@ -712,10 +714,13 @@ class CARE():
         self.toolbox = self.setupToolbox(x_ord, x_org, x_theta, cf_class, cf_range, probability_thresh,
                                          user_preferences, neighbor_theta, proximity_model, connectedness_model)
 
+        # computing the number of population adaptively
+        if self.n_population == 'adaptive':
+            n_reference_points = factorial(self.n_objectives + self.division_factor - 1) / \
+                                 (factorial(self.division_factor) * factorial(self.n_objectives - 1))
+            self.n_population = int(n_reference_points + (4 - n_reference_points % 4))
+
         # running optimization algorithm for finding counterfactual instances
-        n_reference_points = factorial(self.n_objectives + self.division_factor - 1) / \
-                             (factorial(self.division_factor) * factorial(self.n_objectives - 1))
-        self.n_population = int(n_reference_points + (4 - n_reference_points % 4))
         fronts, pop, hof, record, logbook = self.runEA()
 
         ## constructing counterfactuals
