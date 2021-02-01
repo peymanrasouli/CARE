@@ -460,7 +460,7 @@ class CARE():
 
         # creating Local Outlier Factor models for modeling proximity
         lof_models = {}
-        for key, data in self.groundtruth_data.items():
+        for key, data in self.groundtruthData.items():
             lof_model = LocalOutlierFactor(n_neighbors=1, novelty=True)
             data_theta = self.featureScaler.transform(data)
             lof_model.fit(data_theta)
@@ -473,7 +473,7 @@ class CARE():
 
         # creating HDBSCAN models for modeling connectedness
         hdbscan_models = {}
-        for key, data in self.groundtruth_data.items():
+        for key, data in self.groundtruthData.items():
             data_theta = self.featureScaler.transform(data)
             hdbscan_model = hdbscan.HDBSCAN(min_samples=2, metric='minkowski', p=2, prediction_data=True,
                                             approx_min_span_tree=False, gen_min_span_tree=True).fit(data_theta)
@@ -533,18 +533,18 @@ class CARE():
 
         return correlation_models
 
-    def groundtruthNeighborhoodModel(self):
+    def neighborhoodModel(self):
 
         print('Creating neighborhood models for every class/quantile of correctly predicted training data ...')
 
-        groundtruth_neighborhood_models = {}
-        for key, data in self.groundtruth_data.items():
+        neighborhood_models = {}
+        for key, data in self.groundtruthData.items():
             data_theta = self.featureScaler.transform(data)
             K_nbrs = min(self.K_nbrs, len(data_theta))
-            groundtruth_neighborhood_model = NearestNeighbors(n_neighbors=K_nbrs, algorithm='kd_tree')
-            groundtruth_neighborhood_model.fit(data_theta)
-            groundtruth_neighborhood_models[key] = groundtruth_neighborhood_model
-        return groundtruth_neighborhood_models
+            neighborhood_model = NearestNeighbors(n_neighbors=K_nbrs, algorithm='kd_tree')
+            neighborhood_model.fit(data_theta)
+            neighborhood_models[key] = neighborhood_model
+        return neighborhood_models
 
     def fit(self, X_train, Y_train):
 
@@ -553,13 +553,12 @@ class CARE():
         self.X_train = X_train
         self.Y_train = Y_train
 
-        self.groundtruth_data = self.groundtruthData()
+        self.groundtruthData = self.groundtruthData()
         self.featureScaler = self.featureScaler()
         self.proximityModel = self.proximityModel()
         self.connectednessModel = self.connectednessModel()
         self.correlationModel = self.correlationModel()
-        self.groundtruthNeighborhoodModel = self.groundtruthNeighborhoodModel()
-
+        self.neighborhoodModel = self.neighborhoodModel()
 
     # creating toolbox for optimization algorithm
     def setupToolbox(self, x_ord, x_org, x_theta, cf_class, cf_range, probability_thresh, user_preferences,
@@ -704,8 +703,8 @@ class CARE():
                 cf_range = self.response_ranges[cf_target]
 
         # finding the neighborhood data of the counterfactual instance
-        distances, indices = self.groundtruthNeighborhoodModel[cf_target].kneighbors(x_theta.reshape(1, -1))
-        neighbor_data = self.groundtruth_data[cf_target][indices[0]].copy()
+        distances, indices = self.neighborhoodModel[cf_target].kneighbors(x_theta.reshape(1, -1))
+        neighbor_data = self.groundtruthData[cf_target][indices[0]].copy()
         neighbor_theta = self.featureScaler.transform(neighbor_data)
 
         # creating toolbox for the counterfactual instance
@@ -741,7 +740,7 @@ class CARE():
                         'toolbox': self.toolbox,
                         'featureScaler': self.featureScaler,
                         'objective_names': self.objective_names,
-                        'objective_weights': self.objective_weights,
+                        'objective_weights': self.objective_weights
                         }
 
         return explanations
