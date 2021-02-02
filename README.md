@@ -15,14 +15,15 @@ git clone https://github.com/peymanrasouli/CARE
 ```
 3- Create a conda virtual environment:
 ```
-conda create -n CARE python=3.6
+conda create -n CARE python=3.7
 ```
 4- Activate the conda environment: 
 ```
 conda activate CARE
 ```
-5- Standing in CARE directory, install the requirements:
+5- Standing in CARE directory, install the baselines and requirements:
 ```
+pip install -r baselines.txt
 pip install -r requirements.txt
 ```
 
