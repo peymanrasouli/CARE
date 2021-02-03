@@ -156,25 +156,25 @@ def main():
             eval_results_csv.write(header)
             eval_results_csv.flush()
 
-            # creating an instance of CARE explainer for SOUNDNESS=False, CAUSALITY=False, ACTIONABILITY=False
+            # CARE validity
             explainer_validity = CARE(dataset, task=task, predict_fn=predict_fn,
                                   predict_proba_fn=predict_proba_fn,
                                   SOUNDNESS=False, CAUSALITY=False, ACTIONABILITY=False, n_cf=n_cf)
             explainer_validity.fit(X_train, Y_train)
 
-            # creating an instance of CARE explainer for SOUNDNESS=True, CAUSALITY=False, ACTIONABILITY=False
+            # CARE soundness
             explainer_soundness = CARE(dataset, task=task, predict_fn=predict_fn,
                                    predict_proba_fn=predict_proba_fn,
                                    SOUNDNESS=True, CAUSALITY=False, ACTIONABILITY=False, n_cf=n_cf)
             explainer_soundness.fit(X_train, Y_train)
 
-            # creating an instance of CARE explainer for SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=False
+            # CARE soundness+causality
             explainer_soundness_causality = CARE(dataset, task=task, predict_fn=predict_fn,
                                              predict_proba_fn=predict_proba_fn,
                                              SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=False, n_cf=n_cf)
             explainer_soundness_causality.fit(X_train, Y_train)
 
-            # creating an instance of CARE explainer for SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=True
+            # CARE soundness+causality+actionability
             explainer_soundness_causality_actionability = CARE(dataset, task=task, predict_fn=predict_fn,
                                                         predict_proba_fn=predict_proba_fn,
                                                         SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=True, n_cf=n_cf)

@@ -49,17 +49,17 @@ def main():
             predict_fn = lambda x: blackbox.predict(x).ravel()
             predict_proba_fn = lambda x: blackbox.predict_proba(x)
 
-            # creating an instance of CARE explainer for sound=False, causality=False, actionable=False
-            explainer_base = CARE(dataset, task=task, predict_fn=predict_fn,
+            # CARE validity
+            explainer_validity = CARE(dataset, task=task, predict_fn=predict_fn,
                                   predict_proba_fn=predict_proba_fn,
                                   SOUNDNESS=False, CAUSALITY=False, ACTIONABILITY=False)
-            explainer_base.fit(X_train, Y_train)
+            explainer_validity.fit(X_train, Y_train)
 
-            # creating an instance of CARE explainer for sound=True, causality=False, actionable=False
-            explainer_sound = CARE(dataset, task=task, predict_fn=predict_fn,
+            # CARE soundness
+            explainer_soundness = CARE(dataset, task=task, predict_fn=predict_fn,
                                    predict_proba_fn=predict_proba_fn,
                                    SOUNDNESS=True, CAUSALITY=False, ACTIONABILITY=False)
-            explainer_sound.fit(X_train, Y_train)
+            explainer_soundness.fit(X_train, Y_train)
 
             # setting size of the experiment
             N = 20  # number of instances to explain
@@ -72,49 +72,49 @@ def main():
             # explaining instances
             for i, x_ord in enumerate(X_explain):
 
-                explanation_base = explainer_base.explain(x_ord, cf_class='strange')
-                explanation_sound = explainer_sound.explain(x_ord, cf_class='strange')
+                explanation_validity = explainer_validity.explain(x_ord, cf_class='strange')
+                explanation_soundness = explainer_soundness.explain(x_ord, cf_class='strange')
 
                 # extracting results
-                cfs_ord_base = explanation_base['cfs_ord']
-                cfs_ord_sound = explanation_sound['cfs_ord']
-                toolbox = explanation_sound['toolbox']
-                objective_names = explanation_sound['objective_names']
-                featureScaler = explanation_sound['featureScaler']
+                cfs_ord_validity = explanation_validity['cfs_ord']
+                cfs_ord_soundness = explanation_soundness['cfs_ord']
+                toolbox = explanation_soundness['toolbox']
+                objective_names = explanation_soundness['objective_names']
+                featureScaler = explanation_soundness['featureScaler']
                 feature_names = dataset['feature_names']
 
-                # evaluating counterfactuals base
-                cfs_ord_base, \
-                cfs_eval_base, \
-                x_cfs_ord_base, \
-                x_cfs_eval_base = evaluateCounterfactuals(x_ord, cfs_ord_base, dataset, predict_fn, predict_proba_fn,
+                # evaluating counterfactuals validity
+                cfs_ord_validity, \
+                cfs_eval_validity, \
+                x_cfs_ord_validity, \
+                x_cfs_eval_validity = evaluateCounterfactuals(x_ord, cfs_ord_validity, dataset, predict_fn, predict_proba_fn,
                                                           task, toolbox, objective_names, featureScaler, feature_names)
 
-                # evaluating counterfactuals sound
-                cfs_ord_sound, \
-                cfs_eval_sound, \
-                x_cfs_ord_sound, \
-                x_cfs_eval_sound = evaluateCounterfactuals(x_ord, cfs_ord_sound, dataset, predict_fn, predict_proba_fn,
+                # evaluating counterfactuals soundness
+                cfs_ord_soundness, \
+                cfs_eval_soundness, \
+                x_cfs_ord_soundness, \
+                x_cfs_eval_soundness = evaluateCounterfactuals(x_ord, cfs_ord_soundness, dataset, predict_fn, predict_proba_fn,
                                                            task, toolbox, objective_names, featureScaler, feature_names)
 
-                cf_base_ord = explanation_base['best_cf_ord'].to_numpy()
-                cf_sound_ord = explanation_sound['best_cf_ord'].to_numpy()
+                cf_validity_ord = explanation_validity['best_cf_ord'].to_numpy()
+                cf_soundness_ord = explanation_soundness['best_cf_ord'].to_numpy()
 
                 x_ohe = ord2ohe(x_ord, dataset)
-                cf_base_ohe = ord2ohe(cf_base_ord,dataset)
-                cf_sound_ohe = ord2ohe(cf_sound_ord, dataset)
+                cf_validity_ohe = ord2ohe(cf_validity_ord,dataset)
+                cf_soundness_ohe = ord2ohe(cf_soundness_ord, dataset)
                 X_train_ohe = ord2ohe(X_train, dataset)
                 x_class = predict_fn(x_ohe.reshape(1,-1))
-                cf_base_class = predict_fn(cf_base_ohe.reshape(1,-1))
-                cf_sound_class = predict_fn(cf_sound_ohe.reshape(1, -1))
+                cf_validity_class = predict_fn(cf_validity_ohe.reshape(1,-1))
+                cf_soundness_class = predict_fn(cf_soundness_ohe.reshape(1, -1))
                 X_train_class = predict_fn(X_train_ohe)
 
                 # merging counterfactuals with the training data
                 X = np.r_[(x_ord.reshape(1,-1)),
-                          (cf_base_ord.reshape(1,-1)),
-                          (cf_sound_ord.reshape(1,-1)),
+                          (cf_validity_ord.reshape(1,-1)),
+                          (cf_soundness_ord.reshape(1,-1)),
                           (X_train)]
-                y = np.r_[x_class, cf_base_class, cf_sound_class, X_train_class]
+                y = np.r_[x_class, cf_validity_class, cf_soundness_class, X_train_class]
 
                 # setup marker generator and color map
                 if dataset_kw == 'iris':
@@ -171,10 +171,10 @@ def main():
                             s=200,
                             label='$\mathbf{x}$')
 
-                # highlight base's counterfactual
-                X_cf_base, y_cf_base = X[1, :], y[1]
-                plt.scatter(X_cf_base[0],
-                            X_cf_base[1],
+                # highlight validity's counterfactual
+                X_cf_validity, y_cf_validity = X[1, :], y[1]
+                plt.scatter(X_cf_validity[0],
+                            X_cf_validity[1],
                             c='',
                             edgecolor='red',
                             alpha=1.0,
@@ -182,12 +182,12 @@ def main():
                             marker='o',
                             s=200,
                             label=('$\mathbf{cf_{V}}; p=%d, c=%d$') %
-                             (x_cfs_eval_base.iloc[1, 1], x_cfs_eval_base.iloc[1, 2]))
+                             (x_cfs_eval_validity.iloc[1, 1], x_cfs_eval_validity.iloc[1, 2]))
 
-                # highlight sound's counterfactual
-                X_cf_sound, y_cf_sound = X[2, :], y[2]
-                plt.scatter(X_cf_sound[0],
-                            X_cf_sound[1],
+                # highlight soundness's counterfactual
+                X_cf_soundness, y_cf_soundness = X[2, :], y[2]
+                plt.scatter(X_cf_soundness[0],
+                            X_cf_soundness[1],
                             c='',
                             edgecolor='red',
                             alpha=1.0,
@@ -195,7 +195,7 @@ def main():
                             marker='s',
                             s=200,
                             label=('$\mathbf{cf_{S}}; p=%d, c=%d$') %
-                            (x_cfs_eval_sound.iloc[1, 1], x_cfs_eval_sound.iloc[1, 2]))
+                            (x_cfs_eval_soundness.iloc[1, 1], x_cfs_eval_soundness.iloc[1, 2]))
 
                 plt.legend(loc=loc, handletextpad=0.1, fontsize=16)
                 plt.show()
