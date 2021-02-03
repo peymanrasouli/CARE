@@ -191,7 +191,7 @@ def main():
 
                     # explain instance x_ord using DiCE
                     DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train,
-                                                dataset, task, CARE_output, explainer=dice_explainer, actionable=False,
+                                                dataset, task, CARE_output, explainer=dice_explainer, ACTIONABILITY=False,
                                                 user_preferences=None, n_cf=n_cf, desired_class="opposite",
                                                 probability_thresh=0.5, proximity_weight=1.0, diversity_weight=1.0)
                     dice_x_cfs_highlight = DiCE_output['x_cfs_highlight']
