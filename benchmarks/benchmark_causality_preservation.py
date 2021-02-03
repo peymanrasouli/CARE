@@ -61,10 +61,13 @@ def main():
             N, n_cf = experiment_size[dataset_kw]
 
             # creating/opening a csv file for storing results
-            exists = os.path.isfile(experiment_path + 'benchmark_causality_preservation_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf))
+            exists = os.path.isfile(experiment_path + 'benchmark_causality_preservation_%s_cfs_%s_%s.csv'%
+                                    (dataset['name'], N, n_cf))
             if exists:
-                os.remove(experiment_path + 'benchmark_causality_preservation_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf))
-            cfs_results_csv = open(experiment_path + 'benchmark_causality_preservation_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf), 'a')
+                os.remove(experiment_path + 'benchmark_causality_preservation_%s_cfs_%s_%s.csv'%
+                          (dataset['name'], N, n_cf))
+            cfs_results_csv = open(experiment_path + 'benchmark_causality_preservation_%s_cfs_%s_%s.csv'%
+                                   (dataset['name'], N, n_cf), 'a')
 
             n_out = int(task == 'classification') + 1
             n_metrics = 11
@@ -82,7 +85,8 @@ def main():
             exists = os.path.isfile(
                 experiment_path + 'benchmark_causality_preservation_%s_eval_%s_%s.csv' % (dataset['name'], N, n_cf))
             if exists:
-                os.remove(experiment_path + 'benchmark_causality_preservation_%s_eval_%s_%s.csv' % (dataset['name'], N, n_cf))
+                os.remove(experiment_path + 'benchmark_causality_preservation_%s_eval_%s_%s.csv' %
+                          (dataset['name'], N, n_cf))
             eval_results_csv = open(
                 experiment_path + 'benchmark_causality_preservation_%s_eval_%s_%s.csv' % (dataset['name'], N, n_cf), 'a')
 

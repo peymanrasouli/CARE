@@ -86,25 +86,25 @@ def main():
             eval_results_csv.flush()
 
             # creating explainer instances
-            # CARE validity config
+            # CARE with {validity} config
             care_config_1 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                  SOUNDNESS=False, CAUSALITY=False, ACTIONABILITY=False, n_cf=n_cf,
                                  corr_thresh=0.0001, corr_model_score_thresh=0.7)
             care_config_1.fit(X_train, Y_train)
 
-            # CARE validity+soundness config
+            # CARE with {validity, soundness} config
             care_config_12 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                   SOUNDNESS=True, CAUSALITY=False, ACTIONABILITY=False, n_cf=n_cf,
                                   corr_thresh=0.0001, corr_model_score_thresh=0.7)
             care_config_12.fit(X_train, Y_train)
 
-            # CARE validity+causality config
+            # CARE with {validity, causality} config
             care_config_13 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                   SOUNDNESS=False, CAUSALITY=True, ACTIONABILITY=False, n_cf=n_cf,
                                   corr_thresh=0.0001, corr_model_score_thresh=0.7)
             care_config_13.fit(X_train, Y_train)
 
-            # CARE validity+soundness+causality config
+            # CARE {validity, soundness, causality} config
             care_config_123 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                    SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=False, n_cf=n_cf,
                                    corr_thresh=0.0001, corr_model_score_thresh=0.7)
@@ -127,7 +127,7 @@ def main():
             for x_ord in X_test:
 
                 try:
-                    # explaining instance x_ord using CARE validity config
+                    # explaining instance x_ord using CARE with {validity} config
                     config_1_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
                                                     predict_proba_fn, explainer=care_config_1,
                                                     cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
@@ -135,7 +135,7 @@ def main():
                     config_1_x_cfs_eval = config_1_output['x_cfs_eval']
                     config_1_cfs_ord = config_1_output['cfs_ord']
 
-                    # explaining instance x_ord using CARE validity+soundness config
+                    # explaining instance x_ord using CARE with {validity, soundness} config
                     config_12_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
                                                      predict_proba_fn, explainer=care_config_12,
                                                      cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
@@ -143,7 +143,7 @@ def main():
                     config_12_x_cfs_eval = config_12_output['x_cfs_eval']
                     config_12_cfs_ord = config_12_output['cfs_ord']
 
-                    # explaining instance x_ord using CARE validity+causality config
+                    # explaining instance x_ord using CARE with {validity, causality} config
                     config_13_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
                                                      predict_proba_fn, explainer=care_config_13,
                                                      cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
@@ -152,7 +152,7 @@ def main():
                     config_13_cfs_ord = config_13_output['cfs_ord']
 
 
-                    # explaining instance x_ord using CARE validity+soundness+causality config
+                    # explaining instance x_ord using CARE with {validity, soundness, causality} config
                     config_123_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
                                                       predict_proba_fn, explainer=care_config_123,
                                                       cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
@@ -165,13 +165,13 @@ def main():
                     print('Validity Results')
                     print(pd.concat([config_1_x_cfs_highlight, config_1_x_cfs_eval], axis=1))
                     print('\n')
-                    print('Soundness Results')
+                    print('Validity+Soundness Results')
                     print(pd.concat([config_12_x_cfs_highlight, config_12_x_cfs_eval], axis=1))
                     print('\n')
-                    print('Causality Results')
+                    print('Validity+Causality Results')
                     print(pd.concat([config_13_x_cfs_highlight, config_13_x_cfs_eval], axis=1))
                     print('\n')
-                    print('Soundness+Causality Results')
+                    print('Validity+Soundness+Causality Results')
                     print(pd.concat([config_123_x_cfs_highlight, config_123_x_cfs_eval], axis=1))
                     print('\n')
 
@@ -181,7 +181,8 @@ def main():
                     # (1st feature and 2nd feature) increase => 3rd feature increases
                     # (1st feature and 2nd feature) decrease => 3rd feature decreases
 
-                    # calculating the number of counterfactuals that preserved causality in CARE validity config
+                    # calculating the number of counterfactuals that preserved causality in
+                    # CARE with {validity} config
                     config_1_causes = np.logical_or(
                         np.logical_and(config_1_cfs_ord.iloc[:, 0] > x_ord[0], config_1_cfs_ord.iloc[:, 1] > x_ord[1]),
                         np.logical_and(config_1_cfs_ord.iloc[:, 0] < x_ord[0], config_1_cfs_ord.iloc[:, 1] < x_ord[1]))
@@ -196,7 +197,8 @@ def main():
                     config_1_n_effects.append(sum(config_1_effects))
                     config_1_preservation = np.mean(config_1_n_effects) / np.mean(config_1_n_causes)
 
-                    # calculating the number of counterfactuals that preserved causality in CARE validity+soundness config
+                    # calculating the number of counterfactuals that preserved causality in
+                    # CARE with {validity, soundness} config
                     config_12_causes = np.logical_or(np.logical_and(config_12_cfs_ord.iloc[:, 0] > x_ord[0],
                                                           config_12_cfs_ord.iloc[:, 1] > x_ord[1]),
                                            np.logical_and(config_12_cfs_ord.iloc[:, 0] < x_ord[0],
@@ -212,7 +214,8 @@ def main():
                     config_12_n_effects.append(sum(config_12_effects))
                     config_12_preservation = np.mean(config_12_n_effects) / np.mean(config_12_n_causes)
 
-                    # calculating the number of counterfactuals that preserved causality in CARE validity+causality config
+                    # calculating the number of counterfactuals that preserved causality in
+                    # CARE with {validity, causality} config
                     config_13_causes = np.logical_or(np.logical_and(config_13_cfs_ord.iloc[:, 0] > x_ord[0],
                                                           config_13_cfs_ord.iloc[:, 1] > x_ord[1]),
                                            np.logical_and(config_13_cfs_ord.iloc[:, 0] < x_ord[0],
@@ -229,7 +232,8 @@ def main():
                     config_13_preservation = np.mean(config_13_n_effects) / np.mean(config_13_n_causes)
 
 
-                    # calculating the number of counterfactuals that preserved causality in CARE validity+soundness+causality config
+                    # calculating the number of counterfactuals that preserved causality in
+                    # CARE with {validity, soundness, causality} config
                     config_123_causes = np.logical_or(
                         np.logical_and(config_123_cfs_ord.iloc[:, 0] > x_ord[0], config_123_cfs_ord.iloc[:, 1] > x_ord[1]),
                         np.logical_and(config_123_cfs_ord.iloc[:, 0] < x_ord[0], config_123_cfs_ord.iloc[:, 1] < x_ord[1]))

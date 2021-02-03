@@ -49,12 +49,12 @@ def main():
             predict_fn = lambda x: blackbox.predict(x).ravel()
             predict_proba_fn = lambda x: blackbox.predict_proba(x)
 
-            # CARE validity config
+            # CARE with {validity} config
             care_config_1 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                  SOUNDNESS=False, CAUSALITY=False, ACTIONABILITY=False)
             care_config_1.fit(X_train, Y_train)
 
-            # CARE validity+soundness config
+            # CARE with {validity, soundness} config
             care_config_12 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                   SOUNDNESS=True, CAUSALITY=False, ACTIONABILITY=False)
             care_config_12.fit(X_train, Y_train)
@@ -70,10 +70,10 @@ def main():
             # explaining instances
             for i, x_ord in enumerate(X_explain):
 
-                # explaining instance x_ord using CARE validity config
+                # explaining instance x_ord using CARE with {validity} config
                 explanation_config_1 = care_config_1.explain(x_ord, cf_class='strange')
 
-                # explaining instance x_ord using CARE validity+soundness config
+                # explaining instance x_ord using CARE with {validity, soundness} config
                 explanation_config_12 = care_config_12.explain(x_ord, cf_class='strange')
 
                 # extracting results
@@ -86,7 +86,7 @@ def main():
                 featureScaler = explanation_config_12['featureScaler']
                 feature_names = dataset['feature_names']
 
-                # evaluating counterfactuals of CARE validity config
+                # evaluating counterfactuals of CARE with {validity} config
                 cfs_ord_config_1, \
                 cfs_eval_config_1, \
                 x_cfs_ord_config_1, \
@@ -95,7 +95,7 @@ def main():
                                                               toolbox, objective_names, featureScaler,
                                                               feature_names)
 
-                # evaluating counterfactuals of CARE validity+soundness config
+                # evaluating counterfactuals of CARE with {validity, soundness} config
                 cfs_ord_config_12, \
                 cfs_eval_config_12, \
                 x_cfs_ord_config_12, \
@@ -175,7 +175,7 @@ def main():
                             s=200,
                             label='$\mathbf{x}$')
 
-                # highlighting CARE validity config's counterfactual
+                # highlighting the counterfactual of CARE with {validity} config
                 X_cf_config_1, y_cf_config_1 = X[1, :], y[1]
                 plt.scatter(X_cf_config_1[0],
                             X_cf_config_1[1],
@@ -188,7 +188,7 @@ def main():
                             label=('$\mathbf{cf_{V}}; p=%d, c=%d$') %
                              (x_cfs_eval_config_1.iloc[1, 1], x_cfs_eval_config_1.iloc[1, 2]))
 
-                # highlighting CARE validity+soundness config's counterfactual
+                # highlighting the counterfactual of CARE with {validity, soundness} config
                 X_cf_config_12, y_cf_config_12 = X[2, :], y[2]
                 plt.scatter(X_cf_config_12[0],
                             X_cf_config_12[1],

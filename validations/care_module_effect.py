@@ -156,22 +156,22 @@ def main():
             eval_results_csv.write(header)
             eval_results_csv.flush()
 
-            # CARE validity config
+            # CARE with {validity} config
             care_config_1 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                  SOUNDNESS=False, CAUSALITY=False, ACTIONABILITY=False, n_cf=n_cf)
             care_config_1.fit(X_train, Y_train)
 
-            # CARE validity+soundness config
+            # CARE with {validity, soundness} config
             care_config_12 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                   SOUNDNESS=True, CAUSALITY=False, ACTIONABILITY=False, n_cf=n_cf)
             care_config_12.fit(X_train, Y_train)
 
-            # CARE validity+soundness+causality config
+            # CARE with {validity, soundness, causality} config
             care_config_123 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                    SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=False, n_cf=n_cf)
             care_config_123.fit(X_train, Y_train)
 
-            # CARE validity+soundness+causality+actionability config
+            # CARE with {validity, soundness, causality, actionability} config
             care_config_1234 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                     SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=True, n_cf=n_cf)
             care_config_1234.fit(X_train, Y_train)
@@ -193,7 +193,7 @@ def main():
                     featureScaler = explanation_config_1234['featureScaler']
                     feature_names = dataset['feature_names']
 
-                    # evaluating and recovering counterfactuals of validity config
+                    # evaluating and recovering counterfactuals of {validity} config
                     cfs_ord_config_1, \
                     cfs_eval_config_1, \
                     x_cfs_ord_config_1, \
@@ -206,7 +206,7 @@ def main():
                     x_cfs_highlight_config_1 = recoverOriginals(x_ord, cfs_ord_config_1, dataset, feature_names)
 
 
-                    # evaluating and recovering counterfactuals of validity+soundness config
+                    # evaluating and recovering counterfactuals of {validity, soundness} config
                     cfs_ord_config_12, \
                     cfs_eval_config_12, \
                     x_cfs_ord_config_12, \
@@ -219,7 +219,7 @@ def main():
                     x_cfs_highlight_config_12 = recoverOriginals(x_ord, cfs_ord_config_12, dataset, feature_names)
 
 
-                    # evaluating and recovering counterfactuals of validity+soundness+causality config
+                    # evaluating and recovering counterfactuals of {validity, soundness, causality} config
                     cfs_ord_config_123, \
                     cfs_eval_config_123, \
                     x_cfs_ord_config_123, \
@@ -233,7 +233,7 @@ def main():
                     x_cfs_highlight_config_123 = recoverOriginals(x_ord, cfs_ord_config_123, dataset, feature_names)
 
 
-                    # evaluating and recovering counterfactuals of validity+soundness+causality+actionability config
+                    # evaluating and recovering counterfactuals of {validity, soundness, causality, actionability} config
                     cfs_ord_config_1234, \
                     cfs_eval_config_1234, \
                     x_cfs_ord_config_1234, \

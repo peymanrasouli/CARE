@@ -70,7 +70,8 @@ def main():
             exists = os.path.isfile(experiment_path + 'benchmark_validity_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf))
             if exists:
                 os.remove(experiment_path + 'benchmark_validity_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf))
-            cfs_results_csv = open(experiment_path + 'benchmark_validity_%s_cfs_%s_%s.csv'%(dataset['name'], N, n_cf), 'a')
+            cfs_results_csv = open(experiment_path + 'benchmark_validity_%s_cfs_%s_%s.csv'%
+                                   (dataset['name'], N, n_cf), 'a')
 
             n_out = int(task == 'classification') + 1
             n_metrics = 8
@@ -88,7 +89,8 @@ def main():
             exists = os.path.isfile(experiment_path + 'benchmark_validity_%s_eval_%s_%s.csv'%(dataset['name'], N, n_cf))
             if exists:
                 os.remove(experiment_path + 'benchmark_validity_%s_eval_%s_%s.csv'%(dataset['name'], N, n_cf))
-            eval_results_csv = open(experiment_path + 'benchmark_validity_%s_eval_%s_%s.csv'%(dataset['name'], N, n_cf), 'a')
+            eval_results_csv = open(experiment_path + 'benchmark_validity_%s_eval_%s_%s.csv'%
+                                    (dataset['name'], N, n_cf), 'a')
 
             header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                       ('CARE', '', '', '', '', '', '', '',
@@ -125,7 +127,7 @@ def main():
             eval_results_csv.flush()
 
             # creating explainer instances
-            # CARE validity config
+            # CARE with {validity} config
             care_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                   SOUNDNESS=False, CAUSALITY=False, ACTIONABILITY=False, n_cf=n_cf)
             care_explainer.fit(X_train, Y_train)
