@@ -133,7 +133,7 @@ def main():
             # N.B. actionable recourse in DiCE should be adjusted for every instance to explain. Therefore,
             # we are not able to pre-create an explianer instance and use it for explaining all samples.
 
-            # CARE soundness+causality+actionability
+            # CARE validity+soundness+causality+actionability config
             care_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                   SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=True, n_cf=n_cf)
             care_explainer.fit(X_train, Y_train)

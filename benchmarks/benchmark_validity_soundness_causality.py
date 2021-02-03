@@ -130,7 +130,7 @@ def main():
             eval_results_csv.flush()
 
             # creating explainer instances
-            # CARE soundness+causality
+            # CARE validity+soundness+causality config
             care_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                   SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=False, n_cf=n_cf)
             care_explainer.fit(X_train, Y_train)
