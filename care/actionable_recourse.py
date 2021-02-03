@@ -1,4 +1,4 @@
-def actionableRecourse(x_org, cf_org, user_preferences):
+def actionabilityObj(x_org, cf_org, user_preferences):
 
     constraint = user_preferences['constraint']
     importance = user_preferences['importance']

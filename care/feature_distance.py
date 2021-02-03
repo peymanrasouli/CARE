@@ -1,6 +1,6 @@
 import numpy as np
 
-def featureDistance(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices):
+def distanceObj(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices):
     distance = []
     if continuous_indices is not None:
         for j in continuous_indices:

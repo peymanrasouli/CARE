@@ -1,6 +1,6 @@
 import numpy as np
 
-def predictionDistance(cf_ohe, task, predict_fn, predict_proba_fn, probability_thresh, cf_class, cf_range):
+def outcomeObj(cf_ohe, task, predict_fn, predict_proba_fn, probability_thresh, cf_class, cf_range):
     if task == 'classification':
         cf_probability = predict_proba_fn(cf_ohe.reshape(1, -1))[0, cf_class]
         cost = np.max([0, probability_thresh - cf_probability])
