@@ -88,25 +88,25 @@ def main():
             # creating explainer instances
             # CARE valid
             valid_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                  sound=False, causality=False, actionable=False, n_cf=n_cf,
+                                  SOUNDNESS=False, CAUSALITY=False, ACTIONABILITY=False, n_cf=n_cf,
                                   corr_thresh=0.0001, corr_model_score_thresh=0.7)
             valid_explainer.fit(X_train, Y_train)
 
             # CARE sound
             sound_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                  sound=True, causality=False, actionable=False, n_cf=n_cf,
+                                  SOUNDNESS=True, CAUSALITY=False, ACTIONABILITY=False, n_cf=n_cf,
                                   corr_thresh=0.0001, corr_model_score_thresh=0.7)
             sound_explainer.fit(X_train, Y_train)
 
             # CARE causality
             causality_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                       sound=False, causality=True, actionable=False, n_cf=n_cf,
+                                       SOUNDNESS=False, CAUSALITY=True, ACTIONABILITY=False, n_cf=n_cf,
                                        corr_thresh=0.0001, corr_model_score_thresh=0.7)
             causality_explainer.fit(X_train, Y_train)
 
             # CARE sound+causality
             sound_causality_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                             sound=True, causality=True, actionable=False, n_cf=n_cf,
+                                             SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=False, n_cf=n_cf,
                                              corr_thresh=0.0001, corr_model_score_thresh=0.7)
             sound_causality_explainer.fit(X_train, Y_train)
 

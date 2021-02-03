@@ -135,7 +135,7 @@ def main():
 
             # CARE
             care_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                  sound=True, causality=True, actionable=True, n_cf=n_cf)
+                                  SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=True, n_cf=n_cf)
             care_explainer.fit(X_train, Y_train)
 
             # CFPrototype

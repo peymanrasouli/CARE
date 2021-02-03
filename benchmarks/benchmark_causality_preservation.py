@@ -102,7 +102,7 @@ def main():
             # creating explainer instances
             # CARE
             care_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                  sound=True, causality=True, actionable=False, n_cf=n_cf,
+                                  SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=False, n_cf=n_cf,
                                   corr_thresh=0.0001, corr_model_score_thresh=0.7)
             care_explainer.fit(X_train, Y_train)
 

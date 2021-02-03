@@ -3,13 +3,13 @@ import pandas as pd
 from math import *
 from deap import algorithms, base, creator, tools
 from utils import *
-from care.prediction_distance import outcomeObj
-from care.feature_distance import distanceObj
-from care.sparsity import sparsityObj
-from care.proximity import proximityObj
-from care.connectedness import connectednessObj
-from care.actionable_recourse import actionabilityObj
-from care.causality import causalityObj
+from care.outcome_obj import outcomeObj
+from care.distance_obj import distanceObj
+from care.sparsity_obj import sparsityObj
+from care.proximity_obj import proximityObj
+from care.connectedness_obj import connectednessObj
+from care.actionability_obj import actionabilityObj
+from care.causality_obj import causalityObj
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import f1_score, r2_score
 from dython import nominal

@@ -52,13 +52,13 @@ def main():
             # creating an instance of CARE explainer for sound=False, causality=False, actionable=False
             explainer_base = CARE(dataset, task=task, predict_fn=predict_fn,
                                   predict_proba_fn=predict_proba_fn,
-                                  sound=False, causality=False, actionable=False)
+                                  SOUNDNESS=False, CAUSALITY=False, ACTIONABILITY=False)
             explainer_base.fit(X_train, Y_train)
 
             # creating an instance of CARE explainer for sound=True, causality=False, actionable=False
             explainer_sound = CARE(dataset, task=task, predict_fn=predict_fn,
                                    predict_proba_fn=predict_proba_fn,
-                                   sound=True, causality=False, actionable=False)
+                                   SOUNDNESS=True, CAUSALITY=False, ACTIONABILITY=False)
             explainer_sound.fit(X_train, Y_train)
 
             # setting size of the experiment

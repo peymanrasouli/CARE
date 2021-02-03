@@ -1,6 +1,6 @@
 import pandas as pd
 from utils import *
-from care.feature_distance import featureDistance
+from care.distance_obj import distanceObj
 
 def evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn, predict_proba_fn, task,
                             toolbox, objective_names, featureScaler, feature_names):
@@ -71,9 +71,9 @@ def evaluateCounterfactuals(x_ord, cfs_ord, dataset, predict_fn, predict_proba_f
         distance = []
         for i in range(0, n_cf-1):
             for j in range(i+1, n_cf):
-                distance.append(featureDistance(cfs_ord.iloc[i].to_numpy(), cfs_ord.iloc[j].to_numpy(),
-                                                dataset['feature_width'], dataset['continuous_indices'],
-                                                dataset['discrete_indices']))
+                distance.append(distanceObj(cfs_ord.iloc[i].to_numpy(), cfs_ord.iloc[j].to_numpy(),
+                                            dataset['feature_width'], dataset['continuous_indices'],
+                                            dataset['discrete_indices']))
         distance = np.mean(distance)
 
     f_diversity = [(1.0 - similar_features) for _ in range(n_cf + 1)]

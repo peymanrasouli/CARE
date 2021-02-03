@@ -7,7 +7,7 @@ from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 
 def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset, task, CARE_output,
-                  explainer=None, actionable=False, user_preferences=None, n_cf=5, desired_class="opposite",
+                  explainer=None, ACTIONABILITY=False, user_preferences=None, n_cf=5, desired_class="opposite",
                   probability_thresh=0.5, proximity_weight=0.5, diversity_weight=1.0, features_to_vary='all'):
 
     # reading the data set information
@@ -24,7 +24,7 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
         data_frame[discrete_features] = (data_frame[discrete_features]).astype(int)
 
         # setting actions to explainer in case actionable recourse is applied
-        if actionable is True:
+        if ACTIONABILITY is True:
 
             # preparing actions for DiCE
             action_operation = user_preferences['action_operation']
