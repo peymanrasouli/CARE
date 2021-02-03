@@ -14,9 +14,9 @@ def userPreferences(dataset, x_ord):
     for i, f in enumerate(dataset['feature_names']):
         print(f+':', x_org[i])
 
-    ## discrete operations = {'fix', {v1, v2, v3, ...}}
-    ## continuous operations = {'fix', 'l', 'g', 'le', 'ge', [lb, ub]}
-    ## actions = {feature_name_1: (operation, importance), feature_name_2: (operation, importance), ...}
+    ## discrete constraints = {'fix', {v1, v2, v3, ...}}
+    ## continuous constraints = {'fix', 'l', 'g', 'le', 'ge', [lb, ub]}
+    ## constraints = {feature_name_1: (constraint, importance), feature_name_2: (constraint, importance), ...}
 
     ## Adult data set
     if dataset['name'] == 'adult':
@@ -51,19 +51,19 @@ def userPreferences(dataset, x_ord):
         #                     ' Thailand', ' Cuba', ' China'}}
 
         print('\n')
-        print('----- user-specified actions -----')
-        actions = {'age': ('ge',1),
+        print('----- user-specified constraints -----')
+        constraints = {'age': ('ge',1),
                    'sex': ('fix', 1),
                    'race': ('fix', 1),
                    'native-country': ('fix', 1)}
 
-        action_operation = [None] * len(x_ord)
-        action_importance = [None] * len(x_ord)
-        for p in actions:
+        constraint = [None] * len(x_ord)
+        importance = [None] * len(x_ord)
+        for p in constraints:
             index = dataset['feature_names'].index(p)
-            action_operation[index] = actions[p][0]
-            action_importance[index] = actions[p][1]
-            print(p + ':', actions[p][0], 'with importance', '(' + str(actions[p][1]) + ')')
+            constraint[index] = constraints[p][0]
+            importance[index] = constraints[p][1]
+            print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
 
     ## Credit card default data set
     elif dataset['name'] == 'credit-card-default':
@@ -95,17 +95,17 @@ def userPreferences(dataset, x_ord):
         # {'PAY_6': {0, 2, 3, 4, 5, 6, 7, 8, -1, -2}}
 
         print('\n')
-        print('----- user-specified actions -----')
-        actions = {'AGE': ('ge', 1),
+        print('----- user-specified constraints -----')
+        constraints = {'AGE': ('ge', 1),
                    'SEX': ('fix', 1)}
 
-        action_operation = [None] * len(x_ord)
-        action_importance = [None] * len(x_ord)
-        for p in actions:
+        constraint = [None] * len(x_ord)
+        importance = [None] * len(x_ord)
+        for p in constraints:
             index = dataset['feature_names'].index(p)
-            action_operation[index] = actions[p][0]
-            action_importance[index] = actions[p][1]
-            print(p + ':', actions[p][0], 'with importance', '(' + str(actions[p][1]) + ')')
+            constraint[index] = constraints[p][0]
+            importance[index] = constraints[p][1]
+            print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
 
     ## Heart disease data set
     elif dataset['name'] == 'heart-disease':
@@ -127,17 +127,17 @@ def userPreferences(dataset, x_ord):
         # {'thal': {3.0, 6.0, 7.0}}
 
         print('\n')
-        print('---- user-specified actions -----')
-        actions = {'age': ('ge', 1),
+        print('---- user-specified constraints -----')
+        constraints = {'age': ('ge', 1),
                    'sex': ('fix', 1)}
 
-        action_operation = [None] * len(x_ord)
-        action_importance = [None] * len(x_ord)
-        for p in actions:
+        constraint = [None] * len(x_ord)
+        importance = [None] * len(x_ord)
+        for p in constraints:
             index = dataset['feature_names'].index(p)
-            action_operation[index] = actions[p][0]
-            action_importance[index] = actions[p][1]
-            print(p + ':', actions[p][0], 'with importance', '(' + str(actions[p][1]) + ')')
+            constraint[index] = constraints[p][0]
+            importance[index] = constraints[p][1]
+            print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
 
     ## Iris data set
     elif dataset['name'] == 'iris':
@@ -150,16 +150,16 @@ def userPreferences(dataset, x_ord):
         # {'petal width (cm)': [0.1, 2.5]}
 
         print('\n')
-        print('----- user-specified actions -----')
-        actions = {}
+        print('----- user-specified constraints -----')
+        constraints = {}
 
-        action_operation = [None] * len(x_ord)
-        action_importance = [None] * len(x_ord)
-        for p in actions:
+        constraint = [None] * len(x_ord)
+        importance = [None] * len(x_ord)
+        for p in constraints:
             index = dataset['feature_names'].index(p)
-            action_operation[index] = actions[p][0]
-            action_importance[index] = actions[p][1]
-            print(p + ':', actions[p][0], 'with importance', '(' + str(actions[p][1]) + ')')
+            constraint[index] = constraints[p][0]
+            importance[index] = constraints[p][1]
+            print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
 
     ## Diabetes data set
     elif dataset['name'] == 'diabetes':
@@ -178,17 +178,17 @@ def userPreferences(dataset, x_ord):
         # {'s6': [-0.137767225690012, 0.135611830689079]}
 
         print('\n')
-        print('----- user-specified actions -----')
-        actions = {'age': ('ge', 1),
+        print('----- user-specified constraints -----')
+        constraints = {'age': ('ge', 1),
                    'sex': ('fix', 1)}
 
-        action_operation = [None] * len(x_ord)
-        action_importance = [None] * len(x_ord)
-        for p in actions:
+        constraint = [None] * len(x_ord)
+        importance = [None] * len(x_ord)
+        for p in constraints:
             index = dataset['feature_names'].index(p)
-            action_operation[index] = actions[p][0]
-            action_importance[index] = actions[p][1]
-            print(p + ':', actions[p][0], 'with importance', '(' + str(actions[p][1]) + ')')
+            constraint[index] = constraints[p][0]
+            importance[index] = constraints[p][1]
+            print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
 
     ## Boston house price data set
     elif dataset['name'] == 'boston-house-prices':
@@ -210,19 +210,19 @@ def userPreferences(dataset, x_ord):
         # {'CHAS': {0, 1}}
 
         print('\n')
-        print('----- user-specified actions -----')
-        actions = {'AGE': ('ge', 1)}
+        print('----- user-specified constraints -----')
+        constraints = {'AGE': ('ge', 1)}
 
-        action_operation = [None] * len(x_ord)
-        action_importance = [None] * len(x_ord)
-        for p in actions:
+        constraint = [None] * len(x_ord)
+        importance = [None] * len(x_ord)
+        for p in constraints:
             index = dataset['feature_names'].index(p)
-            action_operation[index] = actions[p][0]
-            action_importance[index] = actions[p][1]
-            print(p + ':', actions[p][0], 'with importance', '(' + str(actions[p][1]) + ')')
+            constraint[index] = constraints[p][0]
+            importance[index] = constraints[p][1]
+            print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
 
     print('\n')
-    preferences = {'action_operation': action_operation,
-                   'action_importance': action_importance}
+    preferences = {'constraint': constraint,
+                   'importance': importance}
 
     return preferences
