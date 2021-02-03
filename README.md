@@ -56,21 +56,21 @@ python care_causality_preservation.py
 ```
 
 # Reproducing the benchmark results
-1- To reproduce the results of valid benchmark run:
+1- To reproduce the results of validity benchmark run:
 ```
-python benchmark_valid.py
+python benchmark_validity.py
 ```
-2- To reproduce the results of sound benchmark run:
+2- To reproduce the results of soundness benchmark run:
 ```
-python benchmark_sound.py
+python benchmark_soundness.py
 ```
-3- To reproduce the results of sound+causality benchmark run:
+3- To reproduce the results of soundness+causality benchmark run:
 ```
-python benchmark_sound_causality.py
+python benchmark_soundness_causality.py
 ```
-4- To reproduce the results of sound+causality+actionable benchmark run:
+4- To reproduce the results of soundness+causality+actionability benchmark run:
 ```
-python benchmark_sound_causality_actionable.py
+python benchmark_soundness_causality_actionability.py
 ```
 5- To reproduce the results of causality-preservation benchmark run:
 ```
