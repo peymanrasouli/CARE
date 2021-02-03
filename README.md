@@ -60,15 +60,15 @@ python care_causality_preservation.py
 ```
 python benchmark_validity.py
 ```
-2- To reproduce the results of CARE with {validity+soundness} config vs. CFPrototype and DiCE run:
+2- To reproduce the results of CARE with {validity, soundness} config vs. CFPrototype and DiCE run:
 ```
 python benchmark_validity_soundness.py
 ```
-3- To reproduce the results of CARE with {validity+soundness+causality} config vs. CFPrototype and DiCE run:
+3- To reproduce the results of CARE with {validity, soundness, causality} config vs. CFPrototype and DiCE run:
 ```
 python benchmark_validity_soundness_causality.py
 ```
-4- To reproduce the results of CARE with {validity+soundness+causality+actionability} config vs. CFPrototype and DiCE run:
+4- To reproduce the results of CARE with {validity, soundness, causality, actionability} config vs. CFPrototype and DiCE run:
 ```
 python benchmark_validity_soundness_causality_actionability.py
 ```
