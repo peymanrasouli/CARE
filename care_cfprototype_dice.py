@@ -51,7 +51,7 @@ def main():
             # instance to explain
             ind = 0
             x_ord = X_test[ind]
-            n_cf = 5
+            n_cf = 10
 
             # set user preferences
             user_preferences = userPreferences(dataset, x_ord)
