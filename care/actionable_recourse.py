@@ -1,23 +1,23 @@
 def actionableRecourse(x_org, cf_org, user_preferences):
 
-    action_operation = user_preferences['action_operation']
-    action_importance = user_preferences['action_importance']
+    constraint = user_preferences['constraint']
+    importance = user_preferences['importance']
 
     cost = []
-    idx =  [i for i, op in enumerate(action_operation) if op is not None]
+    idx =  [i for i, c in enumerate(constraint) if c is not None]
     for i in idx:
-        if action_operation[i] == 'fix':
-            cost.append(int(cf_org[i] != x_org[i]) * action_importance[i])
-        elif action_operation[i] == 'l':
-            cost.append(int(cf_org[i] >= x_org[i]) * action_importance[i])
-        elif action_operation[i] == 'g':
-            cost.append(int(cf_org[i] <= x_org[i]) * action_importance[i])
-        elif action_operation[i] == 'ge':
-            cost.append(int(cf_org[i] < x_org[i]) * action_importance[i])
-        elif action_operation[i] == 'le':
-            cost.append(int(cf_org[i] > x_org[i]) * action_importance[i])
-        elif type(action_operation[i]) == set:
-            cost.append(int(not(cf_org[i] in action_operation[i])) * action_importance[i])
-        elif type(action_operation[i]) == list:
-            cost.append(int(not(action_operation[i][0] <= cf_org[i] <= action_operation[i][1])) * action_importance[i])
+        if constraint[i] == 'fix':
+            cost.append(int(cf_org[i] != x_org[i]) * importance[i])
+        elif constraint[i] == 'l':
+            cost.append(int(cf_org[i] >= x_org[i]) * importance[i])
+        elif constraint[i] == 'g':
+            cost.append(int(cf_org[i] <= x_org[i]) * importance[i])
+        elif constraint[i] == 'ge':
+            cost.append(int(cf_org[i] < x_org[i]) * importance[i])
+        elif constraint[i] == 'le':
+            cost.append(int(cf_org[i] > x_org[i]) * importance[i])
+        elif type(constraint[i]) == set:
+            cost.append(int(not(cf_org[i] in constraint[i])) * importance[i])
+        elif type(constraint[i]) == list:
+            cost.append(int(not(constraint[i][0] <= cf_org[i] <= constraint[i][1])) * importance[i])
     return sum(cost)
