@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, "alibi")
+sys.path.insert(0, "DiCE")
 import warnings
 warnings.filterwarnings("ignore")
 import pandas as pd
@@ -58,7 +61,7 @@ def main():
 
             # explain instance x_ord using CARE
             CARE_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                        SOUNDNESS=False, CAUSALITY=False, ACTIONABILITY=False,
+                                        SOUNDNESS=True, CAUSALITY=False, ACTIONABILITY=False,
                                         user_preferences=user_preferences, cf_class='opposite',
                                         probability_thresh=0.5, n_cf=n_cf)
 

@@ -21,9 +21,8 @@ conda create -n CARE python=3.7
 ```
 conda activate CARE
 ```
-5- Standing in CARE directory, install the baselines and requirements:
+5- Standing in CARE directory, install the requirements:
 ```
-pip install -r baselines.txt
 pip install -r requirements.txt
 ```
 

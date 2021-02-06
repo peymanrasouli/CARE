@@ -27,24 +27,24 @@ def DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_trai
         if ACTIONABILITY is True:
 
             # preparing actions for DiCE
-            action_operation = user_preferences['action_operation']
+            constraint = user_preferences['constraint']
             continuous_indices = dataset['continuous_indices']
-            features_to_vary = [feature_names[i] for i, op in enumerate(action_operation) if op is not 'fix']
+            features_to_vary = [feature_names[i] for i, c in enumerate(constraint) if c is not 'fix']
             permitted_range = {}
             x_org = ord2org(x_ord, dataset)
-            for i, op in enumerate(action_operation):
-                if (i in continuous_indices) and (type(op) is list):
+            for i, c in enumerate(constraint):
+                if (i in continuous_indices) and (type(c) is list):
                     x_org_lb = x_org.copy()
                     x_org_ub = x_org.copy()
-                    x_org_lb[i] = op[0]
-                    x_org_ub[i] = op[1]
+                    x_org_lb[i] = c[0]
+                    x_org_ub[i] = c[1]
                     x_ord_lb = org2ord(x_org_lb, dataset)
                     x_ord_ub = org2ord(x_org_ub, dataset)
                     range_scaled = [x_ord_lb[i], x_ord_ub[i]]
                     permitted_range[feature_names[i]] = range_scaled
-                if (i in continuous_indices) and (op == 'ge'):
+                if (i in continuous_indices) and (c == 'ge'):
                     permitted_range[feature_names[i]] = [x_ord[i], dataset['feature_ranges'][feature_names[i]][1]]
-                if (i in continuous_indices) and (op == 'le'):
+                if (i in continuous_indices) and (c == 'le'):
                     permitted_range[feature_names[i]] = [dataset['feature_ranges'][feature_names[i]][0], x_ord[i]]
 
             # creating data a instance

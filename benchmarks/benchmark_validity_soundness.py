@@ -1,6 +1,8 @@
 import os
 import sys
 sys.path.append("../")
+sys.path.insert(0, "../alibi")
+sys.path.insert(0, "../DiCE")
 import warnings
 warnings.filterwarnings("ignore")
 import pandas as pd
