@@ -222,6 +222,9 @@ def userPreferences(dataset, x_ord):
             print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
 
     print('\n')
+    print('N.B. preferences are taken into account when ACTIONABILITY=True!')
+    print('\n')
+
     preferences = {'constraint': constraint,
                    'importance': importance}
 

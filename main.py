@@ -62,7 +62,7 @@ def main():
             x_ord = X_test[ind]
             n_cf = 10
 
-            # set user preferences || they are taken into account when ACTIONABILITY=True
+            # set user preferences || they are taken into account when ACTIONABILITY=True!
             user_preferences = userPreferences(dataset, x_ord)
 
             # explain instance x_ord using CARE
