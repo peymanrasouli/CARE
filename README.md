@@ -5,13 +5,13 @@ This repository contains the implementation source code of the following paper:
 CARE: Causality-preserved Actionable Recourse based on Sound Counterfactual Explanations
 
 # Setup
-1- Install the following package that contains GCC/g++ compilers and libraries:
-```
-sudo apt-get install build-essential
-```
-2- Clone the repository using HTTP/SSH:
+1- Clone the repository using HTTP/SSH:
 ```
 git clone https://github.com/peymanrasouli/CARE
+```
+2- Install the following package containing GCC/g++ compilers and libraries:
+```
+sudo apt-get install build-essential
 ```
 3- Create a conda virtual environment:
 ```
