@@ -10,7 +10,7 @@ def causalityObj(x_ord, cf_ord, cf_theta, feature_width, continuous_indices, dis
         inputs = m['inputs']
         score = m['score']
         if feature in delta:
-            cf_ord_[feature] = model.predict(cf_theta[inputs].reshape(1, -1))
+            cf_ord_[feature] = model.predict(cf_ord[inputs].reshape(1, -1))
             if feature in discrete_indices:
                 distance.append(score * int(cf_ord[feature] != cf_ord_[feature]))
             elif feature in continuous_indices:

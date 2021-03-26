@@ -251,10 +251,10 @@ class CARE():
                 outcome_cost = outcomeObj(cf_ohe, task, predict_fn, predict_proba_fn,
                                              probability_thresh, cf_class, cf_range)
                 # objective 2: proximity
-                proximity_fitness = proximityObj(cf_theta, proximity_model)
+                proximity_fitness = proximityObj(cf_ohe, proximity_model)
 
                 # objective 3: connectedness
-                connectedness_fitness = connectednessObj(cf_theta, connectedness_model)
+                connectedness_fitness = connectednessObj(cf_ohe, connectedness_model)
 
                 # objective 4: feature distance
                 distance_cost = distanceObj(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
@@ -290,10 +290,10 @@ class CARE():
                 outcome_cost = outcomeObj(cf_ohe, task, predict_fn, predict_proba_fn,
                                              probability_thresh, cf_class, cf_range)
                 # objective 2: proximity
-                proximity_fitness = proximityObj(cf_theta, proximity_model)
+                proximity_fitness = proximityObj(cf_ohe, proximity_model)
 
                 # objective 3: connectedness
-                connectedness_fitness = connectednessObj(cf_theta, connectedness_model)
+                connectedness_fitness = connectednessObj(cf_ohe, connectedness_model)
 
                 # objective 4: actionable recourse
                 actionability_cost = actionabilityObj(x_org, cf_org, user_preferences)
@@ -333,10 +333,10 @@ class CARE():
                 outcome_cost = outcomeObj(cf_ohe, task, predict_fn, predict_proba_fn,
                                              probability_thresh, cf_class, cf_range)
                 # objective 2: proximity
-                proximity_fitness = proximityObj(cf_theta, proximity_model)
+                proximity_fitness = proximityObj(cf_ohe, proximity_model)
 
                 # objective 3: connectedness
-                connectedness_fitness = connectednessObj(cf_theta, connectedness_model)
+                connectedness_fitness = connectednessObj(cf_ohe, connectedness_model)
 
                 # objective 4: causality
                 causality_cost = causalityObj(x_ord, cf_ord, cf_theta, feature_width,
@@ -378,10 +378,10 @@ class CARE():
                 outcome_cost = outcomeObj(cf_ohe, task, predict_fn, predict_proba_fn,
                                              probability_thresh, cf_class, cf_range)
                 # objective 2: proximity
-                proximity_fitness = proximityObj(cf_theta, proximity_model)
+                proximity_fitness = proximityObj(cf_ohe, proximity_model)
 
                 # objective 3: connectedness
-                connectedness_fitness = connectednessObj(cf_theta, connectedness_model)
+                connectedness_fitness = connectednessObj(cf_ohe, connectedness_model)
 
                 # objective 4: causality
                 causality_cost = causalityObj(x_ord, cf_ord, cf_theta, feature_width,
@@ -465,9 +465,11 @@ class CARE():
         # creating Local Outlier Factor models for modeling proximity
         lof_models = {}
         for key, data in self.groundtruthData.items():
-            lof_model = LocalOutlierFactor(n_neighbors=1, novelty=True)
-            data_theta = self.featureScaler.transform(data)
-            lof_model.fit(data_theta)
+            # data_theta = self.featureScaler.transform(data)
+            data_ohe = ord2ohe(data, self.dataset)
+            lof_model = LocalOutlierFactor(n_neighbors=1, novelty=True, metric='minkowski', p=2)
+            lof_model.fit(data_ohe)
+
             lof_models[key] = lof_model
         return lof_models
 
@@ -478,9 +480,10 @@ class CARE():
         # creating HDBSCAN models for modeling connectedness
         hdbscan_models = {}
         for key, data in self.groundtruthData.items():
-            data_theta = self.featureScaler.transform(data)
+            # data_theta = self.featureScaler.transform(data)
+            data_ohe = ord2ohe(data, self.dataset)
             hdbscan_model = hdbscan.HDBSCAN(min_samples=2, metric='minkowski', p=2, prediction_data=True,
-                                            approx_min_span_tree=False, gen_min_span_tree=True).fit(data_theta)
+                                            approx_min_span_tree=False, gen_min_span_tree=True).fit(data_ohe)
             hdbscan_models[key] = hdbscan_model
         return hdbscan_models
 
@@ -506,7 +509,7 @@ class CARE():
 
         ## creating correlation models
         val_point = int(self.corr_model_train_percent * len(self.X_train))
-        X_train_theta = self.featureScaler.transform(self.X_train)
+        # X_train_theta =  self.featureScaler.transform(self.X_train)
         scores = []
         correlation_models = []
         for f in range(len(corr_)):
@@ -514,15 +517,15 @@ class CARE():
             if len(inputs) > 0:
                 if f in self.discrete_indices:
                     model = DecisionTreeClassifier()
-                    model.fit(X_train_theta[0:val_point, inputs], self.X_train[0:val_point, f])
-                    score = f1_score(self.X_train[val_point:, f], model.predict(X_train_theta[val_point:, inputs]),
+                    model.fit(self.X_train[0:val_point, inputs], self.X_train[0:val_point, f])
+                    score = f1_score(self.X_train[val_point:, f], model.predict(self.X_train[val_point:, inputs]),
                                      average='weighted')
                     scores.append(score)
                     correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
                 elif f in self.continuous_indices:
                     model = Ridge()
-                    model.fit(X_train_theta[0:val_point, inputs], self.X_train[0:val_point, f])
-                    score = r2_score(self.X_train[val_point:, f], model.predict(X_train_theta[val_point:, inputs]))
+                    model.fit(self.X_train[0:val_point, inputs], self.X_train[0:val_point, f])
+                    score = r2_score(self.X_train[val_point:, f], model.predict(self.X_train[val_point:, inputs]))
                     scores.append(score)
                     correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
 
@@ -543,10 +546,11 @@ class CARE():
 
         neighborhood_models = {}
         for key, data in self.groundtruthData.items():
-            data_theta = self.featureScaler.transform(data)
-            K_nbrs = min(self.K_nbrs, len(data_theta))
-            neighborhood_model = NearestNeighbors(n_neighbors=K_nbrs, algorithm='kd_tree')
-            neighborhood_model.fit(data_theta)
+            # data_theta = self.featureScaler.transform(data)
+            data_ohe = ord2ohe(data, self.dataset)
+            K_nbrs = min(self.K_nbrs, len(data_ohe))
+            neighborhood_model = NearestNeighbors(n_neighbors=K_nbrs, algorithm='kd_tree', metric='minkowski', p=2)
+            neighborhood_model.fit(data_ohe)
             neighborhood_models[key] = neighborhood_model
         return neighborhood_models
 
@@ -707,7 +711,8 @@ class CARE():
                 cf_range = self.response_ranges[cf_target]
 
         # finding the neighborhood data of the counterfactual instance
-        distances, indices = self.neighborhoodModel[cf_target].kneighbors(x_theta.reshape(1, -1))
+        # distances, indices = self.neighborhoodModel[cf_target].kneighbors(x_theta.reshape(1, -1))
+        distances, indices = self.neighborhoodModel[cf_target].kneighbors(x_ohe.reshape(1, -1))
         neighbor_data = self.groundtruthData[cf_target][indices[0]].copy()
         neighbor_theta = self.featureScaler.transform(neighbor_data)
 
