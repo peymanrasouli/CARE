@@ -467,7 +467,7 @@ class CARE():
         for key, data in self.groundtruthData.items():
             # data_theta = self.featureScaler.transform(data)
             data_ohe = ord2ohe(data, self.dataset)
-            lof_model = LocalOutlierFactor(n_neighbors=1, novelty=True, metric='minkowski', p=2)
+            lof_model = LocalOutlierFactor(n_neighbors=1, novelty=True, algorithm='ball_tree', metric='minkowski', p=2)
             lof_model.fit(data_ohe)
 
             lof_models[key] = lof_model
@@ -549,7 +549,7 @@ class CARE():
             # data_theta = self.featureScaler.transform(data)
             data_ohe = ord2ohe(data, self.dataset)
             K_nbrs = min(self.K_nbrs, len(data_ohe))
-            neighborhood_model = NearestNeighbors(n_neighbors=K_nbrs, algorithm='kd_tree', metric='minkowski', p=2)
+            neighborhood_model = NearestNeighbors(n_neighbors=K_nbrs, algorithm='ball_tree', metric='minkowski', p=2)
             neighborhood_model.fit(data_ohe)
             neighborhood_models[key] = neighborhood_model
         return neighborhood_models
