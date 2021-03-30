@@ -4,14 +4,16 @@ from recover_originals import recoverOriginals
 
 def CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn, explainer=None,
                   SOUNDNESS=False, CAUSALITY=False, ACTIONABILITY=False, user_preferences=None,
-                  cf_class='opposite', probability_thresh=0.5, cf_quantile='neighbor', n_cf=5):
+                  n_population=200, n_generation=20, cf_class='opposite', probability_thresh=0.5,
+                  cf_quantile='neighbor', n_cf=5):
 
     # creating an explainer instance in case it is not pre-created
     if explainer is None:
 
         # creating an instance of CARE explainer
         explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                         SOUNDNESS=SOUNDNESS, CAUSALITY=CAUSALITY, ACTIONABILITY=ACTIONABILITY, n_cf=n_cf)
+                         SOUNDNESS=SOUNDNESS, CAUSALITY=CAUSALITY, ACTIONABILITY=ACTIONABILITY,
+                         n_population=n_population, n_generation=n_generation, n_cf=n_cf)
 
         # fitting the explainer on the training data
         explainer.fit(X_train, Y_train)

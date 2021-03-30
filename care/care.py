@@ -36,8 +36,8 @@ class CARE():
                  corr_thresh=0.1,
                  corr_model_train_percent=0.8,
                  corr_model_score_thresh='median',
-                 n_generation=10,
                  n_population='adaptive',
+                 n_generation=20,
                  hof_size=100,
                  x_init=0.3,
                  neighbor_init=0.6,
@@ -65,8 +65,8 @@ class CARE():
         self.corr_thresh = corr_thresh
         self.corr_model_train_percent = corr_model_train_percent
         self.corr_model_score_thresh = corr_model_score_thresh
-        self.n_generation = n_generation
         self.n_population = n_population
+        self.n_generation = n_generation
         self.hof_size = hof_size
         self.init_probability = [x_init, neighbor_init, random_init] / np.sum([x_init, neighbor_init, random_init])
         self.crossover_perc = crossover_perc
@@ -173,8 +173,8 @@ class CARE():
                                              probability_thresh, cf_class, cf_range)
 
                 # objective 2: causality
-                causality_cost = causalityObj(x_ord, cf_ord, cf_theta, feature_width,
-                                               continuous_indices, discrete_indices, correlationModel)
+                causality_cost = causalityObj(x_ord, cf_ord, feature_width, continuous_indices,
+                                              discrete_indices, correlationModel)
 
                 # objective 3: feature distance
                 distance_cost = distanceObj(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
@@ -211,8 +211,8 @@ class CARE():
                                              probability_thresh, cf_class, cf_range)
 
                 # objective 2: causality
-                causality_cost = causalityObj(x_ord, cf_ord, cf_theta, feature_width,
-                                               continuous_indices, discrete_indices, correlationModel)
+                causality_cost = causalityObj(x_ord, cf_ord, feature_width, continuous_indices,
+                                              discrete_indices, correlationModel)
 
                 # objective 3: actionable recourse
                 actionability_cost = actionabilityObj(x_org, cf_org, user_preferences)
@@ -339,8 +339,8 @@ class CARE():
                 connectedness_fitness = connectednessObj(cf_ohe, connectedness_model)
 
                 # objective 4: causality
-                causality_cost = causalityObj(x_ord, cf_ord, cf_theta, feature_width,
-                                           continuous_indices, discrete_indices, correlationModel)
+                causality_cost = causalityObj(x_ord, cf_ord, feature_width, continuous_indices,
+                                              discrete_indices, correlationModel)
 
                 # objective 5: feature distance
                 distance_cost = distanceObj(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
@@ -384,8 +384,8 @@ class CARE():
                 connectedness_fitness = connectednessObj(cf_ohe, connectedness_model)
 
                 # objective 4: causality
-                causality_cost = causalityObj(x_ord, cf_ord, cf_theta, feature_width,
-                                           continuous_indices, discrete_indices, correlationModel)
+                causality_cost = causalityObj(x_ord, cf_ord, feature_width, continuous_indices,
+                                              discrete_indices, correlationModel)
 
                 # objective 5: actionable recourse
                 actionability_cost = actionabilityObj(x_org, cf_org, user_preferences)
@@ -465,7 +465,6 @@ class CARE():
         # creating Local Outlier Factor models for modeling proximity
         lof_models = {}
         for key, data in self.groundtruthData.items():
-            # data_theta = self.featureScaler.transform(data)
             data_ohe = ord2ohe(data, self.dataset)
             lof_model = LocalOutlierFactor(n_neighbors=1, novelty=True, algorithm='ball_tree', metric='minkowski', p=2)
             lof_model.fit(data_ohe)
@@ -480,7 +479,6 @@ class CARE():
         # creating HDBSCAN models for modeling connectedness
         hdbscan_models = {}
         for key, data in self.groundtruthData.items():
-            # data_theta = self.featureScaler.transform(data)
             data_ohe = ord2ohe(data, self.dataset)
             hdbscan_model = hdbscan.HDBSCAN(min_samples=2, metric='minkowski', p=2, prediction_data=True,
                                             approx_min_span_tree=False, gen_min_span_tree=True).fit(data_ohe)
@@ -509,7 +507,6 @@ class CARE():
 
         ## creating correlation models
         val_point = int(self.corr_model_train_percent * len(self.X_train))
-        # X_train_theta =  self.featureScaler.transform(self.X_train)
         scores = []
         correlation_models = []
         for f in range(len(corr_)):
@@ -711,7 +708,6 @@ class CARE():
                 cf_range = self.response_ranges[cf_target]
 
         # finding the neighborhood data of the counterfactual instance
-        # distances, indices = self.neighborhoodModel[cf_target].kneighbors(x_theta.reshape(1, -1))
         distances, indices = self.neighborhoodModel[cf_target].kneighbors(x_ohe.reshape(1, -1))
         neighbor_data = self.groundtruthData[cf_target][indices[0]].copy()
         neighbor_theta = self.featureScaler.transform(neighbor_data)

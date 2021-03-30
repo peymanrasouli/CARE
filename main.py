@@ -67,9 +67,9 @@ def main():
 
             # explain instance x_ord using CARE
             output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                   SOUNDNESS=True, CAUSALITY=False, ACTIONABILITY=False,
-                                   user_preferences=user_preferences, cf_class='neighbor',
-                                   probability_thresh=0.5, cf_quantile='neighbor', n_cf=n_cf)
+                                   SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=True,
+                                   user_preferences=user_preferences, n_population=200, n_generation=20,
+                                   cf_class='neighbor', probability_thresh=0.5, cf_quantile='neighbor', n_cf=n_cf)
 
             # print counterfactuals and their corresponding objective values
             print('\n')
