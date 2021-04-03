@@ -543,7 +543,6 @@ class CARE():
 
         neighborhood_models = {}
         for key, data in self.groundtruthData.items():
-            # data_theta = self.featureScaler.transform(data)
             data_ohe = ord2ohe(data, self.dataset)
             K_nbrs = min(self.K_nbrs, len(data_ohe))
             neighborhood_model = NearestNeighbors(n_neighbors=K_nbrs, algorithm='ball_tree', metric='minkowski', p=2)
