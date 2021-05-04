@@ -572,7 +572,7 @@ def PrepareIris(dataset_path, dataset_name, usage='counterfactual_generation'):
 def PrepareMoon(dataset_path, dataset_name, usage='soundness_validation'):
 
     ## Creating moon data
-    data = make_moons(n_samples=500)
+    data = make_moons(n_samples=500, random_state=42)
     df = pd.DataFrame(data=np.c_[data[0],data[1]], columns=['x1', 'x2','class'])
 
     ## Recognizing inputs
