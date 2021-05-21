@@ -12,11 +12,6 @@ def PrepareAdult(dataset_path, dataset_name):
     ## Handling missing values
     df = df.dropna().reset_index(drop=True)
 
-    ## Reducing data
-    np.random.seed(42)
-    ind = np.random.choice(range(df.shape[0]), size=3000, replace=False)
-    df = df.iloc[ind,:]
-
     ## Recognizing inputs
     class_name = 'class'
     df_X_org = df.loc[:, df.columns!=class_name]
