@@ -132,7 +132,7 @@ def main():
             # creating explainer instances
             # CARE with {validity, soundness} config
             care_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                  SOUNDNESS=True, CAUSALITY=False, ACTIONABILITY=False, n_cf=n_cf)
+                                  SOUNDNESS=True, COHERENCY=False, ACTIONABILITY=False, n_cf=n_cf)
             care_explainer.fit(X_train, Y_train)
 
             # CFPrototype

@@ -14,7 +14,7 @@ from user_preferences import userPreferences
 from care.care import CARE
 from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
-from care.causality_obj import causalityObj
+from care.coherency_obj import coherencyObj
 from utils import ord2theta
 from itertools import permutations
 
@@ -80,7 +80,7 @@ def main():
 
             # creating an instance of CARE explainer
             explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                             SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=True, n_cf=n_cf)
+                             SOUNDNESS=True, COHERENCY=True, ACTIONABILITY=True, n_cf=n_cf)
 
             # fitting the explainer on the training data
             explainer.fit(X_train, Y_train)
@@ -127,7 +127,7 @@ def main():
                         for f in list(o):
                             cf_ord[f] = cfs_ord.iloc[i, f]
                             cf_theta = ord2theta(cf_ord, explainer.featureScaler)
-                            corr = causalityObj(x_ord, cf_ord, cf_theta, dataset['feature_width'],
+                            corr = coherencyObj(x_ord, cf_ord, cf_theta, dataset['feature_width'],
                                                 dataset['continuous_indices'], dataset['discrete_indices'],
                                                 explainer.correlationModel)
                             corr_cost.append(corr)
@@ -154,7 +154,7 @@ def main():
                 print(x_cfs_eval)
                 print('\n')
 
-                # finding best and worst action orders for every counterfactual using the causality model
+                # finding best and worst action orders for every counterfactual using the coherency model
                 print('Best action series:')
                 best_action_series = []
                 best_action_series.append([None,None])

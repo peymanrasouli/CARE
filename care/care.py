@@ -9,7 +9,7 @@ from care.sparsity_obj import sparsityObj
 from care.proximity_obj import proximityObj
 from care.connectedness_obj import connectednessObj
 from care.actionability_obj import actionabilityObj
-from care.causality_obj import causalityObj
+from care.coherency_obj import coherencyObj
 from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import f1_score, r2_score
 from dython import nominal
@@ -28,7 +28,7 @@ class CARE():
                  predict_fn=None,
                  predict_proba_fn=None,
                  SOUNDNESS=False,
-                 CAUSALITY=False,
+                 COHERENCY=False,
                  ACTIONABILITY=False,
                  n_cf=5,
                  response_quantile=4,
@@ -57,7 +57,7 @@ class CARE():
         self.predict_fn = predict_fn
         self.predict_proba_fn = predict_proba_fn
         self.SOUNDNESS = SOUNDNESS
-        self.CAUSALITY = CAUSALITY
+        self.COHERENCY = COHERENCY
         self.ACTIONABILITY = ACTIONABILITY
         self.n_cf = n_cf
         self.response_quantile = response_quantile
@@ -76,9 +76,9 @@ class CARE():
 
     def constructObjectiveFunction(self):
 
-        print('Constructing objective function according to SOUNDNESS, CAUSALITY, and ACTIONABILITY hyper-parameters ...')
+        print('Constructing objective function according to SOUNDNESS, COHERENCY, and ACTIONABILITY hyper-parameters ...')
 
-        if self.SOUNDNESS == False and self.CAUSALITY == False and self.ACTIONABILITY == False:
+        if self.SOUNDNESS == False and self.COHERENCY == False and self.ACTIONABILITY == False:
             # objective names
             self.objective_names = ['outcome', 'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
@@ -111,7 +111,7 @@ class CARE():
 
             return objectiveFunction
 
-        elif self.SOUNDNESS == False and self.CAUSALITY == False and self.ACTIONABILITY == True:
+        elif self.SOUNDNESS == False and self.COHERENCY == False and self.ACTIONABILITY == True:
             # objective names
             self.objective_names = ['outcome', 'actionability', 'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
@@ -148,9 +148,9 @@ class CARE():
 
             return objectiveFunction
 
-        elif self.SOUNDNESS == False and self.CAUSALITY == True and self.ACTIONABILITY == False:
+        elif self.SOUNDNESS == False and self.COHERENCY == True and self.ACTIONABILITY == False:
             # objective names
-            self.objective_names = ['outcome', 'causality', 'distance', 'sparsity']
+            self.objective_names = ['outcome', 'coherency', 'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
             self.objective_weights = (-1.0, -1.0, -1.0, -1.0)
             # number of objectives
@@ -172,8 +172,8 @@ class CARE():
                 outcome_cost = outcomeObj(cf_ohe, task, predict_fn, predict_proba_fn,
                                              probability_thresh, cf_class, cf_range)
 
-                # objective 2: causality
-                causality_cost = causalityObj(x_ord, cf_ord, feature_width, continuous_indices,
+                # objective 2: coherency
+                coherency_cost = coherencyObj(x_ord, cf_ord, feature_width, continuous_indices,
                                               discrete_indices, correlationModel)
 
                 # objective 3: feature distance
@@ -182,13 +182,13 @@ class CARE():
                 # objective 4: sparsity
                 sparsity_cost = sparsityObj(x_org, cf_org)
 
-                return outcome_cost, causality_cost, distance_cost, sparsity_cost
+                return outcome_cost, coherency_cost, distance_cost, sparsity_cost
 
             return objectiveFunction
 
-        elif self.SOUNDNESS == False and self.CAUSALITY == True and self.ACTIONABILITY == True:
+        elif self.SOUNDNESS == False and self.COHERENCY == True and self.ACTIONABILITY == True:
             # objective names
-            self.objective_names = ['outcome', 'causality', 'actionability', 'distance', 'sparsity']
+            self.objective_names = ['outcome', 'coherency', 'actionability', 'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
             self.objective_weights = (-1.0, -1.0, -1.0, -1.0, -1.0)
             # number of objectives
@@ -210,8 +210,8 @@ class CARE():
                 outcome_cost = outcomeObj(cf_ohe, task, predict_fn, predict_proba_fn,
                                              probability_thresh, cf_class, cf_range)
 
-                # objective 2: causality
-                causality_cost = causalityObj(x_ord, cf_ord, feature_width, continuous_indices,
+                # objective 2: coherency
+                coherency_cost = coherencyObj(x_ord, cf_ord, feature_width, continuous_indices,
                                               discrete_indices, correlationModel)
 
                 # objective 3: actionable recourse
@@ -223,11 +223,11 @@ class CARE():
                 # objective 5: sparsity
                 sparsity_cost = sparsityObj(x_org, cf_org)
 
-                return outcome_cost, causality_cost, actionability_cost, distance_cost, sparsity_cost
+                return outcome_cost, coherency_cost, actionability_cost, distance_cost, sparsity_cost
 
             return objectiveFunction
 
-        elif self.SOUNDNESS == True and self.CAUSALITY == False and self.ACTIONABILITY == False:
+        elif self.SOUNDNESS == True and self.COHERENCY == False and self.ACTIONABILITY == False:
             # objective names
             self.objective_names = ['outcome', 'proximity', 'connectedness', 'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
@@ -266,7 +266,7 @@ class CARE():
 
             return objectiveFunction
 
-        elif self.SOUNDNESS == True and self.CAUSALITY == False and self.ACTIONABILITY == True:
+        elif self.SOUNDNESS == True and self.COHERENCY == False and self.ACTIONABILITY == True:
             # objective names
             self.objective_names = ['outcome', 'proximity', 'connectedness', 'actionability', 'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
@@ -309,9 +309,9 @@ class CARE():
 
             return objectiveFunction
 
-        elif self.SOUNDNESS == True and self.CAUSALITY == True and self.ACTIONABILITY == False:
+        elif self.SOUNDNESS == True and self.COHERENCY == True and self.ACTIONABILITY == False:
             # objective names
-            self.objective_names = ['outcome', 'proximity', 'connectedness', 'causality', 'distance', 'sparsity']
+            self.objective_names = ['outcome', 'proximity', 'connectedness', 'coherency', 'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
             self.objective_weights = (-1.0, 1.0, 1.0, -1.0, -1.0, -1.0)
             # number of objectives
@@ -338,8 +338,8 @@ class CARE():
                 # objective 3: connectedness
                 connectedness_fitness = connectednessObj(cf_ohe, connectedness_model)
 
-                # objective 4: causality
-                causality_cost = causalityObj(x_ord, cf_ord, feature_width, continuous_indices,
+                # objective 4: coherency
+                coherency_cost = coherencyObj(x_ord, cf_ord, feature_width, continuous_indices,
                                               discrete_indices, correlationModel)
 
                 # objective 5: feature distance
@@ -348,14 +348,14 @@ class CARE():
                 # objective 6: sparsity
                 sparsity_cost = sparsityObj(x_org, cf_org)
 
-                return outcome_cost, proximity_fitness, connectedness_fitness, causality_cost, \
+                return outcome_cost, proximity_fitness, connectedness_fitness, coherency_cost, \
                        distance_cost, sparsity_cost
 
             return objectiveFunction
 
-        elif self.SOUNDNESS == True and self.CAUSALITY == True and self.ACTIONABILITY == True:
+        elif self.SOUNDNESS == True and self.COHERENCY == True and self.ACTIONABILITY == True:
             # objective names
-            self.objective_names = ['outcome', 'proximity', 'connectedness', 'causality', 'actionability',
+            self.objective_names = ['outcome', 'proximity', 'connectedness', 'coherency', 'actionability',
                                     'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
             self.objective_weights = (-1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0)
@@ -383,8 +383,8 @@ class CARE():
                 # objective 3: connectedness
                 connectedness_fitness = connectednessObj(cf_ohe, connectedness_model)
 
-                # objective 4: causality
-                causality_cost = causalityObj(x_ord, cf_ord, feature_width, continuous_indices,
+                # objective 4: coherency
+                coherency_cost = coherencyObj(x_ord, cf_ord, feature_width, continuous_indices,
                                               discrete_indices, correlationModel)
 
                 # objective 5: actionable recourse
@@ -396,7 +396,7 @@ class CARE():
                 # objective 7: sparsity
                 sparsity_cost = sparsityObj(x_org, cf_org)
 
-                return outcome_cost, proximity_fitness, connectedness_fitness, causality_cost, \
+                return outcome_cost, proximity_fitness, connectedness_fitness, coherency_cost, \
                        actionability_cost, distance_cost, sparsity_cost
 
             return objectiveFunction
@@ -487,7 +487,7 @@ class CARE():
 
     def correlationModel(self):
 
-        print('Creating correlation models for causality-preservation ...')
+        print('Creating correlation models for coherency-preservation ...')
 
         ## Feature correlation modeling
         # Calculate the correlation/strength-of-association of features in data-set

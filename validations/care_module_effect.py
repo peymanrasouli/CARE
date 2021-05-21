@@ -88,9 +88,9 @@ def main():
             header += feature_space
             header += ['Validity+Soundness']
             header += feature_space
-            header += ['Validity+Soundness+Causality']
+            header += ['Validity+Soundness+Coherency']
             header += feature_space
-            header += ['Validity+Soundness+Causality+Actionability']
+            header += ['Validity+Soundness+Coherency+Actionability']
             header = ','.join(header)
             cfs_results_csv.write('%s\n' % (header))
             cfs_results_csv.flush()
@@ -107,19 +107,19 @@ def main():
                      '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                      ('Validity', '', '', '', '', '', '', '', '', '', '', '',
                       'Validity+Soundness', '', '', '', '', '', '', '', '', '', '', '',
-                      'Validity+Soundness+Causality', '', '', '', '', '', '', '', '', '', '', '',
-                      'Validity+Soundness+Causality+Actionability', '', '', '', '', '', '', '', '', '', '', '')
+                      'Validity+Soundness+Coherency', '', '', '', '', '', '', '', '', '', '', '',
+                      'Validity+Soundness+Coherency+Actionability', '', '', '', '', '', '', '', '', '', '', '')
             eval_results_csv.write(header)
 
             header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,' \
                      '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                     ('Outcome', 'Proximity', 'Connectedness', 'Causality', 'Actionability', 'Distance',
+                     ('Outcome', 'Proximity', 'Connectedness', 'Coherency', 'Actionability', 'Distance',
                       'Sparsity', 'i-Validity', 's-Validity', 'f-Diversity', 'v-Diversity', 'd-Diversity',
-                      'Outcome', 'Proximity', 'Connectedness', 'Causality', 'Actionability', 'Distance',
+                      'Outcome', 'Proximity', 'Connectedness', 'Coherency', 'Actionability', 'Distance',
                       'Sparsity', 'i-Validity', 's-Validity', 'f-Diversity', 'v-Diversity', 'd-Diversity',
-                      'Outcome', 'Proximity', 'Connectedness', 'Causality', 'Actionability', 'Distance',
+                      'Outcome', 'Proximity', 'Connectedness', 'Coherency', 'Actionability', 'Distance',
                       'Sparsity', 'i-Validity', 's-Validity', 'f-Diversity', 'v-Diversity', 'd-Diversity',
-                      'Outcome', 'Proximity', 'Connectedness', 'Causality', 'Actionability', 'Distance',
+                      'Outcome', 'Proximity', 'Connectedness', 'Coherency', 'Actionability', 'Distance',
                       'Sparsity', 'i-Validity', 's-Validity', 'f-Diversity', 'v-Diversity', 'd-Diversity')
             eval_results_csv.write(header)
 
@@ -158,22 +158,22 @@ def main():
 
             # CARE with {validity} config
             care_config_1 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                 SOUNDNESS=False, CAUSALITY=False, ACTIONABILITY=False, n_cf=n_cf)
+                                 SOUNDNESS=False, COHERENCY=False, ACTIONABILITY=False, n_cf=n_cf)
             care_config_1.fit(X_train, Y_train)
 
             # CARE with {validity, soundness} config
             care_config_12 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                  SOUNDNESS=True, CAUSALITY=False, ACTIONABILITY=False, n_cf=n_cf)
+                                  SOUNDNESS=True, COHERENCY=False, ACTIONABILITY=False, n_cf=n_cf)
             care_config_12.fit(X_train, Y_train)
 
-            # CARE with {validity, soundness, causality} config
+            # CARE with {validity, soundness, coherency} config
             care_config_123 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                   SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=False, n_cf=n_cf)
+                                   SOUNDNESS=True, COHERENCY=True, ACTIONABILITY=False, n_cf=n_cf)
             care_config_123.fit(X_train, Y_train)
 
-            # CARE with {validity, soundness, causality, actionability} config
+            # CARE with {validity, soundness, coherency, actionability} config
             care_config_1234 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                    SOUNDNESS=True, CAUSALITY=True, ACTIONABILITY=True, n_cf=n_cf)
+                                    SOUNDNESS=True, COHERENCY=True, ACTIONABILITY=True, n_cf=n_cf)
             care_config_1234.fit(X_train, Y_train)
 
             # explaining instances from test set
@@ -219,7 +219,7 @@ def main():
                     x_cfs_highlight_config_12 = recoverOriginals(x_ord, cfs_ord_config_12, dataset, feature_names)
 
 
-                    # evaluating and recovering counterfactuals of {validity, soundness, causality} config
+                    # evaluating and recovering counterfactuals of {validity, soundness, coherency} config
                     cfs_ord_config_123, \
                     cfs_eval_config_123, \
                     x_cfs_ord_config_123, \
@@ -233,7 +233,7 @@ def main():
                     x_cfs_highlight_config_123 = recoverOriginals(x_ord, cfs_ord_config_123, dataset, feature_names)
 
 
-                    # evaluating and recovering counterfactuals of {validity, soundness, causality, actionability} config
+                    # evaluating and recovering counterfactuals of {validity, soundness, coherency, actionability} config
                     cfs_ord_config_1234, \
                     cfs_eval_config_1234, \
                     x_cfs_ord_config_1234, \

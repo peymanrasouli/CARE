@@ -51,12 +51,12 @@ def main():
 
             # CARE with {validity} config
             care_config_1 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                 SOUNDNESS=False, CAUSALITY=False, ACTIONABILITY=False)
+                                 SOUNDNESS=False, COHERENCY=False, ACTIONABILITY=False)
             care_config_1.fit(X_train, Y_train)
 
             # CARE with {validity, soundness} config
             care_config_12 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                  SOUNDNESS=True, CAUSALITY=False, ACTIONABILITY=False)
+                                  SOUNDNESS=True, COHERENCY=False, ACTIONABILITY=False)
             care_config_12.fit(X_train, Y_train)
 
             # setting size of the experiment
