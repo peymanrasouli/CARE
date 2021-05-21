@@ -2,7 +2,7 @@
 
 This repository contains the implementation source code of the following paper:
 
-CARE: Causality-preserved Actionable Recourse based on Sound Counterfactual Explanations
+CARE: Coherent Actionable Recourse based on Sound Counterfactual Explanations
 
 # Setup
 1- Clone the repository using HTTP/SSH:
@@ -51,7 +51,7 @@ python care_action_series.py
 ```
 4- To reproduce the results of causality-preservation validation run:
 ```
-python care_causality_preservation.py
+python care_coherency_preservation.py
 ```
 
 # Reproducing the benchmark results
@@ -63,15 +63,15 @@ python benchmark_validity.py
 ```
 python benchmark_validity_soundness.py
 ```
-3- To reproduce the results of CARE with {validity, soundness, causality} config vs. CFPrototype and DiCE run:
+3- To reproduce the results of CARE with {validity, soundness, coherency} config vs. CFPrototype and DiCE run:
 ```
-python benchmark_validity_soundness_causality.py
+python benchmark_validity_soundness_coherency.py
 ```
-4- To reproduce the results of CARE with {validity, soundness, causality, actionability} config vs. CFPrototype and DiCE run:
+4- To reproduce the results of CARE with {validity, soundness, coherency, actionability} config vs. CFPrototype and DiCE run:
 ```
-python benchmark_validity_soundness_causality_actionability.py
+python benchmark_validity_soundness_coherency_actionability.py
 ```
-5- To reproduce the results of causality-preservation benchmark of CARE vs. CFPrototype and DiCE run:
+5- To reproduce the results of coherency-preservation benchmark of CARE vs. CFPrototype and DiCE run:
 ```
-python benchmark_causality_preservation.py
+python benchmark_coherency_preservation.py
 ```
