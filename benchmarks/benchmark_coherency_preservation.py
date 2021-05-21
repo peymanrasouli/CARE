@@ -14,6 +14,7 @@ from sklearn.model_selection import train_test_split
 from create_model import CreateModel, MLPClassifier
 from care.care import CARE
 from alibi.explainers import CounterFactualProto
+from alibi.utils.mapping import ord_to_ohe
 import dice_ml
 from care_explainer import CAREExplainer
 from cfprototype_explainer import CFPrototypeExplainer
@@ -91,6 +92,10 @@ def main():
             care_explainer.fit(X_train, Y_train)
 
             # CFPrototype
+            cat_vars_ord = {}
+            for i, d in enumerate(dataset['discrete_indices']):
+                cat_vars_ord[d] = dataset['n_cat_discrete'][i]
+            cat_vars_ohe = ord_to_ohe(X_train, cat_vars_ord)[1]
             x_ohe = ord2ohe(X_train[0], dataset)
             x_ohe = x_ohe.reshape((1,) + x_ohe.shape)
             shape = x_ohe.shape
@@ -102,7 +107,7 @@ def main():
                              (np.ones(rng_shape) * rng[1]).astype(np.float32))
             cfprototype_explainer = CounterFactualProto(predict=predict_proba_fn, shape=shape,
                                                         feature_range=feature_range,
-                                                        ohe=False, beta=0.1, theta=10,
+                                                        cat_vars=cat_vars_ohe, ohe=True, beta=0.1, theta=10,
                                                         use_kdtree=True, max_iterations=500, c_init=1.0, c_steps=5)
             X_train_ohe = ord2ohe(X_train, dataset)
             cfprototype_explainer.fit(X_train_ohe, d_type='abdm', disc_perc=[25, 50, 75])
@@ -110,8 +115,10 @@ def main():
             # DiCE
             feature_names = dataset['feature_names']
             continuous_features = dataset['continuous_features']
+            discrete_features = dataset['discrete_features']
             data_frame = pd.DataFrame(data=np.c_[X_train, Y_train], columns=feature_names + ['class'])
             data_frame[continuous_features] = (data_frame[continuous_features]).astype(float)
+            data_frame[discrete_features] = (data_frame[discrete_features]).astype(int)
             data = dice_ml.Data(dataframe=data_frame,
                                 continuous_features=continuous_features,
                                 outcome_name='class')
@@ -140,57 +147,59 @@ def main():
             explained = 0
             for x_ord in X_test:
 
-                # explain instance x_ord using CARE
-                CARE_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
-                                            predict_proba_fn, explainer=care_explainer,
-                                            cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
-                care_cfs_ord = CARE_output['cfs_ord']
-                education_num = care_cfs_ord['education-num'].to_numpy().astype(int)
-                education = care_cfs_ord['education'].to_numpy().astype(int)
-                preserved_care = 1 if correlations[education_num[0]][1] == education[0] else 0
+                try:
+                    # explain instance x_ord using CARE
+                    CARE_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
+                                                predict_proba_fn, explainer=care_explainer,
+                                                cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
+                    care_cfs_ord = CARE_output['cfs_ord']
+                    education_num = care_cfs_ord['education-num'].to_numpy().astype(int)
+                    education = care_cfs_ord['education'].to_numpy().astype(int)
+                    preserved_care = 1 if correlations[education_num[0]][1] == education[0] else 0
 
-                # explain instance x_ord using CFPrototype
-                CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset,
-                                                          task, CARE_output, explainer=cfprototype_explainer,
-                                                          target_class=None, n_cf=n_cf)
-                cfprototype_cfs_ord = CFPrototype_output['cfs_ord']
-                education_num = cfprototype_cfs_ord['education-num'].to_numpy().astype(int)
-                education = cfprototype_cfs_ord['education'].to_numpy().astype(int)
-                preserved_cfprototype = 1 if correlations[education_num[0]][1] == education[0] else 0
+                    # explain instance x_ord using CFPrototype
+                    CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset,
+                                                              task, CARE_output, explainer=cfprototype_explainer,
+                                                              target_class=None, n_cf=n_cf)
+                    cfprototype_cfs_ord = CFPrototype_output['cfs_ord']
+                    education_num = cfprototype_cfs_ord['education-num'].to_numpy().astype(int)
+                    education = cfprototype_cfs_ord['education'].to_numpy().astype(int)
+                    preserved_cfprototype = 1 if correlations[education_num[0]][1] == education[0] else 0
 
-                # explain instance x_ord using DiCE
-                DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train,
-                                            dataset, task, CARE_output, explainer=dice_explainer, ACTIONABILITY=False,
-                                            user_preferences=None, n_cf=n_cf, desired_class="opposite",
-                                            probability_thresh=0.5, proximity_weight=1.0, diversity_weight=1.0)
-                dice_cfs_ord = DiCE_output['cfs_ord']
-                education_num = dice_cfs_ord['education-num'].to_numpy().astype(int)
-                education = dice_cfs_ord['education'].to_numpy().astype(int)
-                preserved_dice =  1 if correlations[education_num[0]][1] == education[0] else 0
+                    # explain instance x_ord using DiCE
+                    DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train,
+                                                dataset, task, CARE_output, explainer=dice_explainer, ACTIONABILITY=False,
+                                                user_preferences=None, n_cf=n_cf, desired_class="opposite",
+                                                probability_thresh=0.5, proximity_weight=1.0, diversity_weight=1.0)
+                    dice_cfs_ord = DiCE_output['cfs_ord']
+                    education_num = dice_cfs_ord['education-num'].to_numpy().astype(int)
+                    education = dice_cfs_ord['education'].to_numpy().astype(int)
+                    preserved_dice =  1 if correlations[education_num[0]][1] == education[0] else 0
 
 
-                print('\n')
-                print('-------------------------------')
-                print("%s | %s: %d/%d explained" % (dataset['name'], blackbox_name, explained, N))
-                print('\n')
-                print(care_cfs_ord)
-                print(cfprototype_cfs_ord)
-                print(dice_cfs_ord)
-                print('\n')
-                print("preserved coherency | CARE: %0.3f - CFPrototype: %0.3f - "
-                      "DiCE: %0.3f" %
-                      (preserved_care, preserved_cfprototype, preserved_dice))
-                print('-----------------------------------------------------------------------'
-                      '--------------------------------------------------------------')
+                    print('\n')
+                    print('-------------------------------')
+                    print("%s | %s: %d/%d explained" % (dataset['name'], blackbox_name, explained, N))
+                    print('\n')
+                    print(care_cfs_ord)
+                    print(cfprototype_cfs_ord)
+                    print(dice_cfs_ord)
+                    print('\n')
+                    print("preserved coherency | CARE: %0.3f - CFPrototype: %0.3f - DiCE: %0.3f" %
+                          (preserved_care, preserved_cfprototype, preserved_dice))
+                    print('-----------------------------------------------------------------------')
 
-                # storing the evaluation of the best counterfactual found by methods
-                eval_results = np.r_[preserved_care, preserved_cfprototype, preserved_dice]
-                eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
-                eval_results = ','.join(eval_results)
-                eval_results_csv.write('%s\n' % (eval_results))
-                eval_results_csv.flush()
+                    # storing the evaluation of the best counterfactual found by methods
+                    eval_results = np.r_[preserved_care, preserved_cfprototype, preserved_dice]
+                    eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
+                    eval_results = ','.join(eval_results)
+                    eval_results_csv.write('%s\n' % (eval_results))
+                    eval_results_csv.flush()
 
-                explained += 1
+                    explained += 1
+
+                except Exception:
+                    pass
 
                 if explained == N:
                     break
