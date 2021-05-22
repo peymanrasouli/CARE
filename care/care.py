@@ -37,7 +37,7 @@ class CARE():
                  corr_model_train_percent=0.8,
                  corr_model_score_thresh='median',
                  n_population='adaptive',
-                 n_generation=20,
+                 n_generation=10,
                  hof_size=100,
                  x_init=0.3,
                  neighbor_init=0.6,
