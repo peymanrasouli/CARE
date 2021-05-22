@@ -28,11 +28,11 @@ def main():
     # defining the list of black-boxes
     blackbox_list = {
         'nn-c': MLPClassifier,
-        # 'gb-c': GradientBoostingClassifier
+        'gb-c': GradientBoostingClassifier
     }
 
     experiment_size = {
-        'adult': (500, 5),
+        'adult': (500, 10),
     }
 
     for dataset_kw in datsets_list:
