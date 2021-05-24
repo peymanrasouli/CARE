@@ -72,12 +72,11 @@ def main():
 
             header = ['Validity',
                       'Validity+Soundness',
-                      'Validity+Coherency',
                       'Validity+Soundness+Coherency']
             header = ','.join(header)
             eval_results_csv.write('%s\n' % (header))
-            average = '%s,%s,%s,%s\n' % \
-                     ('=average(A3:A1000)', '=average(B3:B1000)', '=average(C3:C1000)', '=average(D3:D1000)')
+            average = '%s,%s,%s\n' % \
+                     ('=average(A3:A1000)', '=average(B3:B1000)', '=average(C3:C1000)')
             eval_results_csv.write(average)
             eval_results_csv.flush()
 
@@ -90,11 +89,6 @@ def main():
             care_config_12 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                   SOUNDNESS=True, COHERENCY=False, ACTIONABILITY=False, n_cf=n_cf)
             care_config_12.fit(X_train, Y_train)
-
-            # CARE with {validity, coherency} config
-            care_config_13 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                   SOUNDNESS=False, COHERENCY=True, ACTIONABILITY=False, n_cf=n_cf)
-            care_config_13.fit(X_train, Y_train)
 
             # CARE with {validity, soundness, coherency} config
             care_config_123 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
@@ -124,7 +118,6 @@ def main():
 
                 explanation_config_1 = care_config_1.explain(x_ord)
                 explanation_config_12 = care_config_12.explain(x_ord)
-                explanation_config_13 = care_config_13.explain(x_ord)
                 explanation_config_123 = care_config_123.explain(x_ord)
 
                 # evaluating counterfactuals based on all objectives results
@@ -161,22 +154,6 @@ def main():
                     preserved_config_12 += 1 if correlations[education_num[n]][1] == education[n] else 0
                 preserved_config_12 = preserved_config_12 / n_cf
 
-
-                # evaluating and recovering counterfactuals of {validity, coherency} config
-                cfs_ord_config_13, \
-                cfs_eval_config_13, \
-                x_cfs_ord_config_13, \
-                x_cfs_eval_config_13 = evaluateCounterfactuals(x_ord, explanation_config_13['cfs_ord'],
-                                                                dataset, predict_fn, predict_proba_fn, task,
-                                                                toolbox, objective_names, featureScaler,
-                                                                feature_names)
-                education_num = cfs_ord_config_13['education-num'].to_numpy().astype(int)
-                education = cfs_ord_config_13['education'].to_numpy().astype(int)
-                preserved_config_13 = 0
-                for n in range(n_cf):
-                    preserved_config_13 += 1 if correlations[education_num[n]][1] == education[n] else 0
-                preserved_config_13 = preserved_config_13 / n_cf
-
                 # evaluating and recovering counterfactuals of {validity, soundness, coherency} config
                 cfs_ord_config_123, \
                 cfs_eval_config_123, \
@@ -199,17 +176,16 @@ def main():
                 print('\n')
                 print(cfs_ord_config_1)
                 print(cfs_ord_config_12)
-                print(cfs_ord_config_13)
                 print(cfs_ord_config_123)
                 print('\n')
                 print("preserved coherency | Validity: %0.3f - Validity+Soundness: %0.3f - "
-                      "Validity+Coherency: %0.3f - Validity+Soundness+Coherency: %0.3f" %
-                      (preserved_config_1, preserved_config_12, preserved_config_13, preserved_config_123))
+                      "Validity+Soundness+Coherency: %0.3f" %
+                      (preserved_config_1, preserved_config_12, preserved_config_123))
                 print('-----------------------------------------------------------------------'
-                      '--------------------------------------------------------------')
+                      '--------------------------------')
 
                 # storing the evaluation of the best counterfactual found by methods
-                eval_results = np.r_[preserved_config_1, preserved_config_12, preserved_config_13, preserved_config_123]
+                eval_results = np.r_[preserved_config_1, preserved_config_12, preserved_config_123]
                 eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
                 eval_results = ','.join(eval_results)
                 eval_results_csv.write('%s\n' % (eval_results))
