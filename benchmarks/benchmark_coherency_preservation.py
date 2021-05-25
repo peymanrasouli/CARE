@@ -69,19 +69,27 @@ def main():
 
             # creating/opening a csv file for storing results
             exists = os.path.isfile(
-                experiment_path + 'benchmark_coherency_preservation_education_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
+                experiment_path + 'benchmark_coherency_preservation_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
             if exists:
-                os.remove(experiment_path + 'benchmark_coherency_preservation_education_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
+                os.remove(experiment_path + 'benchmark_coherency_preservation_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
             eval_results_csv = open(
-                experiment_path + 'benchmark_coherency_preservation_education_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
+                experiment_path + 'benchmark_coherency_preservation_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
 
+            header = ['Education','','',
+                      'Relationship', '', '']
+            header = ','.join(header)
+            eval_results_csv.write('%s\n' % (header))
             header = ['CARE',
+                      'CFPrototype',
+                      'DiCE',
+                      'CARE',
                       'CFPrototype',
                       'DiCE']
             header = ','.join(header)
             eval_results_csv.write('%s\n' % (header))
-            average = '%s,%s,%s\n' % \
-                     ('=average(A3:A1000)', '=average(B3:B1000)', '=average(C3:C1000)')
+            average = '%s,%s,%s,%s,%s,%s\n' % \
+                     ('=average(A4:A1000)', '=average(B4:B1000)', '=average(C4:C1000)',
+                      '=average(D4:D1000)', '=average(E4:E1000)', '=average(F4:F1000)')
             eval_results_csv.write(average)
             eval_results_csv.flush()
 
@@ -153,18 +161,44 @@ def main():
                                                 predict_proba_fn, explainer=care_explainer,
                                                 cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
                     care_cfs_ord = CARE_output['cfs_ord']
+
+                    # Education correlation set
                     education_num = care_cfs_ord['education-num'].to_numpy().astype(int)
                     education = care_cfs_ord['education'].to_numpy().astype(int)
-                    preserved_care = 1 if correlations[education_num[0]][1] == education[0] else 0
+                    education_preserved_care = 1 if correlations[education_num[0]][1] == education[0] else 0
+
+                    # Relationship correlation set
+                    relationship = care_cfs_ord['relationship'].to_numpy().astype(int)
+                    marital_status = care_cfs_ord['marital-status'].to_numpy().astype(int)
+                    sex = care_cfs_ord['sex'].to_numpy().astype(int)
+                    if relationship[0] == 0:
+                        relationship_preserved_care = 1 if sex[0] == 1 and marital_status[0] == 2 else 0
+                    elif relationship[0] == 5:
+                        relationship_preserved_care = 1 if sex[0] == 0 and marital_status[0] == 2 else 0
+                    else:
+                        relationship_preserved_care = 1
 
                     # explain instance x_ord using CFPrototype
                     CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset,
                                                               task, CARE_output, explainer=cfprototype_explainer,
                                                               target_class=None, n_cf=n_cf)
                     cfprototype_cfs_ord = CFPrototype_output['cfs_ord']
+
+                    # Education correlation set
                     education_num = cfprototype_cfs_ord['education-num'].to_numpy().astype(int)
                     education = cfprototype_cfs_ord['education'].to_numpy().astype(int)
-                    preserved_cfprototype = 1 if correlations[education_num[0]][1] == education[0] else 0
+                    education_preserved_cfprototype = 1 if correlations[education_num[0]][1] == education[0] else 0
+
+                    # Relationship correlation set
+                    relationship = cfprototype_cfs_ord['relationship'].to_numpy().astype(int)
+                    marital_status = cfprototype_cfs_ord['marital-status'].to_numpy().astype(int)
+                    sex = cfprototype_cfs_ord['sex'].to_numpy().astype(int)
+                    if relationship[0] == 0:
+                        relationship_preserved_cfprototype = 1 if sex[0] == 1 and marital_status[0] == 2 else 0
+                    elif relationship[0] == 5:
+                        relationship_preserved_cfprototype = 1 if sex[0] == 0 and marital_status[0] == 2 else 0
+                    else:
+                        relationship_preserved_cfprototype = 1
 
                     # explain instance x_ord using DiCE
                     DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train,
@@ -172,25 +206,42 @@ def main():
                                                 user_preferences=None, n_cf=n_cf, desired_class="opposite",
                                                 probability_thresh=0.5, proximity_weight=1.0, diversity_weight=1.0)
                     dice_cfs_ord = DiCE_output['cfs_ord']
+
+                    # Education correlation set
                     education_num = dice_cfs_ord['education-num'].to_numpy().astype(int)
                     education = dice_cfs_ord['education'].to_numpy().astype(int)
-                    preserved_dice =  1 if correlations[education_num[0]][1] == education[0] else 0
+                    education_preserved_dice =  1 if correlations[education_num[0]][1] == education[0] else 0
 
+                    # Relationship correlation set
+                    relationship = dice_cfs_ord['relationship'].to_numpy().astype(int)
+                    marital_status = dice_cfs_ord['marital-status'].to_numpy().astype(int)
+                    sex = dice_cfs_ord['sex'].to_numpy().astype(int)
+                    if relationship[0] == 0:
+                        relationship_preserved_dice = 1 if sex[0] == 1 and marital_status[0] == 2 else 0
+                    elif relationship[0] == 5:
+                        relationship_preserved_dice = 1 if sex[0] == 0 and marital_status[0] == 2 else 0
+                    else:
+                        relationship_preserved_dice = 1
 
                     print('\n')
                     print('-------------------------------')
                     print("%s | %s: %d/%d explained" % (dataset['name'], blackbox_name, explained, N))
+
                     print('\n')
                     print(care_cfs_ord)
                     print(cfprototype_cfs_ord)
                     print(dice_cfs_ord)
+
                     print('\n')
-                    print("preserved coherency | CARE: %0.3f - CFPrototype: %0.3f - DiCE: %0.3f" %
-                          (preserved_care, preserved_cfprototype, preserved_dice))
-                    print('-----------------------------------------------------------------------')
+                    print("Preserved Education    coherency | CARE: %0.3f - CFPrototype: %0.3f - DiCE: %0.3f" %
+                          (education_preserved_care, education_preserved_cfprototype, education_preserved_dice))
+                    print("Preserved Relationship coherency | CARE: %0.3f - CFPrototype: %0.3f - DiCE: %0.3f" %
+                          (relationship_preserved_care, relationship_preserved_cfprototype, relationship_preserved_dice))
+                    print('--------------------------------------------------------------------------------------------')
 
                     # storing the evaluation of the best counterfactual found by methods
-                    eval_results = np.r_[preserved_care, preserved_cfprototype, preserved_dice]
+                    eval_results = np.r_[education_preserved_care, education_preserved_cfprototype, education_preserved_dice,
+                                         relationship_preserved_care, relationship_preserved_cfprototype, relationship_preserved_dice]
                     eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
                     eval_results = ','.join(eval_results)
                     eval_results_csv.write('%s\n' % (eval_results))
