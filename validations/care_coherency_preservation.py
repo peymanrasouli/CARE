@@ -194,7 +194,6 @@ def main():
                         relationship_preserved_config_12 += 1
                 relationship_preserved_config_12 = relationship_preserved_config_12 / n_cf
 
-
                 # evaluating and recovering counterfactuals of {validity, soundness, coherency} config
                 cfs_ord_config_123, \
                 cfs_eval_config_123, \
@@ -225,7 +224,6 @@ def main():
                     else:
                         relationship_preserved_config_123 += 1
                 relationship_preserved_config_123 = relationship_preserved_config_123 / n_cf
-
 
                 print('\n')
                 print('-------------------------------')
