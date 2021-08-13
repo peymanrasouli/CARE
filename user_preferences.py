@@ -107,6 +107,37 @@ def userPreferences(dataset, x_ord):
             importance[index] = constraints[p][1]
             print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
 
+
+    ## COMPAS data set
+    elif dataset['name'] == 'compas-scores-two-years':
+        ## Feature names and their possible values
+        ## Features with range [] values are continuous (e.g., LIMIT_BAL) and features with set {} values (e.g., SEX) are discrete
+
+        # {'age': [18, 96]}
+        # {'priors_count': [0, 38]}
+        # {'days_b_screening_arrest': [0, 1057]}
+        # {'length_of_stay': [0, 799]}
+        # {'is_recid': {0, 1}}
+        # {'age_cat': {'25 - 45', 'Greater than 45', 'Less than 25'}}
+        # {'c_charge_degree': {'F', 'M'}}
+        # {'is_violent_recid': {0, 1}}
+        # {'two_year_recid': {0, 1}}
+        # {'sex': {0, 1}}
+        # {'race': {'African-American', 'Asian', 'Caucasian', 'Hispanic', 'Native American', 'Other'}}
+
+        print('\n')
+        print('----- user-specified constraints -----')
+        constraints = {'sex': ('fix', 1),
+                       'race': ('fix', 1)}
+
+        constraint = [None] * len(x_ord)
+        importance = [None] * len(x_ord)
+        for p in constraints:
+            index = dataset['feature_names'].index(p)
+            constraint[index] = constraints[p][0]
+            importance[index] = constraints[p][1]
+            print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
+
     ## Heart disease data set
     elif dataset['name'] == 'heart-disease':
         ## Feature names and their possible values

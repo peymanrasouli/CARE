@@ -23,6 +23,7 @@ def main():
     datsets_list = {
         'adult': ('adult.csv', PrepareAdult, 'classification'),
         # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        # 'compas-scores-two-years': ('compas-scores-two-years.csv', PrepareCOMPAS, 'classification'),
         # 'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
     }
 
