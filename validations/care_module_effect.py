@@ -42,7 +42,7 @@ def main():
     experiment_size = {
         'adult': (500, 10),
         'credit-card_default': (500, 10),
-        'compas-scores-two-years': (500, 10),
+        'compas-scores-two-years': (300, 10),
         'heart-disease': (50, 10),
         'diabetes': (80, 10),
         'boston-house-prices': (100, 10)
