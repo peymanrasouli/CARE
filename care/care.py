@@ -44,7 +44,7 @@ class CARE():
                  random_init=1.0,
                  crossover_perc=0.6,
                  mutation_perc=0.3,
-                 division_factor=6,
+                 division_factor=5,
                  ):
 
         self.dataset = dataset
