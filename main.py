@@ -18,8 +18,8 @@ def main():
     # defining the list of data sets
     datsets_list = {
         'adult': ('adult.csv', PrepareAdult, 'classification'), # use 'nn-c' or 'gb-c'
-        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'), # use 'nn-c' or 'gb-c'
         # 'compas-scores-two-years': ('compas-scores-two-years.csv', PrepareCOMPAS, 'classification'), # use 'nn-c' or 'gb-c'
+        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'), # use 'nn-c' or 'gb-c'
         # 'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),  # use 'nn-c' or 'gb-c'
         # 'iris': ('iris-sklearn', PrepareIris, 'classification'),  # use 'gb-c'
         # 'diabetes': ('diabetes-sklearn', PrepareDiabetes, 'regression') # use 'nn-r' or 'gb-r'
