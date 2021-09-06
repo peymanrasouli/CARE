@@ -9,6 +9,7 @@ from create_model import CreateModel, MLPClassifier, MLPRegressor
 from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
 from user_preferences import userPreferences
 from care_explainer import CAREExplainer
+from generate_text_explanations import GenerateTextExplanations
 
 def main():
     # defining path of data sets and experiment results
@@ -76,6 +77,11 @@ def main():
             print('\n')
             print(output['x_cfs_highlight'])
             print(output['x_cfs_eval'])
+
+            # generate text explanations
+            print('\n')
+            input, text_explanation = GenerateTextExplanations(output, dataset)
+            print(input, '\n \n', text_explanation)
 
             print('\n')
             print('Done!')
