@@ -31,14 +31,18 @@ def GenerateTextExplanations(explanation, dataset):
         input_class = 'RECEIVING' + str(input_class) + ' SALARY'
         cf_class = 'RECEIVING' + str(cf_class) + ' SALARY'
 
+    elif dataset['name'] == 'compas-scores-two-years':
+        input_class = str(input_class) + ' RECIDIVISM RISK'
+        cf_class = str(cf_class) + ' RECIDIVISM RISK'
+
     elif dataset['name'] == 'credit-card-default':
         labels = ['No', 'Yes']
         input_class = labels[input_class] + ' DEFAULT'
         cf_class = labels[cf_class] + ' DEFAULT'
 
-    elif dataset['name'] == 'compas-scores-two-years':
-        input_class = str(input_class) + ' RECIDIVISM RISK'
-        cf_class = str(cf_class) + ' RECIDIVISM RISK'
+    elif dataset['name'] == 'heloc':
+        input_class = str(input_class) + ' RISK'
+        cf_class = str(cf_class) + ' RISK'
 
     elif dataset['name'] == 'heart-disease':
         input_class = 'TYPE '+ str(input_class) + ' DIAGNOSIS'

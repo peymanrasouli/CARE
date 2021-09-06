@@ -24,7 +24,8 @@ def main():
     datsets_list = {
         'adult': ('adult.csv', PrepareAdult, 'classification'),
         # 'compas-scores-two-years': ('compas-scores-two-years.csv', PrepareCOMPAS, 'classification'),
-        # 'credit-card_default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        # 'credit-card-default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        # 'heloc': ('heloc_dataset_v1.csv', PrepareHELOC, 'classification'),
         # 'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
     }
 
@@ -63,7 +64,7 @@ def main():
 
             # explain instance x_ord using CARE
             CARE_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                        SOUNDNESS=True, COHERENCY=False, ACTIONABILITY=False,
+                                        SOUNDNESS=True, COHERENCY=True, ACTIONABILITY=True,
                                         user_preferences=user_preferences, cf_class='opposite',
                                         probability_thresh=0.5, n_cf=n_cf)
 
@@ -73,7 +74,7 @@ def main():
 
             # explain instance x_ord using DiCE
             DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset,
-                                        task, CARE_output, ACTIONABILITY=False, user_preferences=user_preferences,
+                                        task, CARE_output, ACTIONABILITY=True, user_preferences=user_preferences,
                                         n_cf=n_cf, desired_class="opposite", probability_thresh=0.5,
                                         proximity_weight=1.0, diversity_weight=1.0)
 
@@ -93,9 +94,6 @@ def main():
             print(DiCE_output['x_cfs_highlight'])
             print(DiCE_output['x_cfs_eval'])
 
-            print('\n')
-            print('Done!')
-
 
             # generate text explanations
             print('\n')
@@ -112,6 +110,9 @@ def main():
             print('DiCE text explanation')
             input, text_explanation = GenerateTextExplanations(DiCE_output, dataset)
             print(input, '\n \n', text_explanation)
+
+            print('\n')
+            print('Done!')
 
 
 if __name__ == '__main__':

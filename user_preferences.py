@@ -65,6 +65,36 @@ def userPreferences(dataset, x_ord):
             importance[index] = constraints[p][1]
             print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
 
+    ## COMPAS data set
+    elif dataset['name'] == 'compas-scores-two-years':
+        ## Feature names and their possible values
+        ## Features with range [] values are continuous (e.g., LIMIT_BAL) and features with set {} values (e.g., SEX) are discrete
+
+        # {'age': [18, 96]}
+        # {'priors_count': [0, 38]}
+        # {'days_b_screening_arrest': [0, 1057]}
+        # {'length_of_stay': [0, 799]}
+        # {'is_recid': {0, 1}}
+        # {'age_cat': {'25 - 45', 'Greater than 45', 'Less than 25'}}
+        # {'c_charge_degree': {'F', 'M'}}
+        # {'is_violent_recid': {0, 1}}
+        # {'two_year_recid': {0, 1}}
+        # {'sex': {0, 1}}
+        # {'race': {'African-American', 'Asian', 'Caucasian', 'Hispanic', 'Native American', 'Other'}}
+
+        print('\n')
+        print('----- user-specified constraints -----')
+        constraints = {'sex': ('fix', 1),
+                       'race': ('fix', 1)}
+
+        constraint = [None] * len(x_ord)
+        importance = [None] * len(x_ord)
+        for p in constraints:
+            index = dataset['feature_names'].index(p)
+            constraint[index] = constraints[p][0]
+            importance[index] = constraints[p][1]
+            print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
+
     ## Credit card default data set
     elif dataset['name'] == 'credit-card-default':
         ## Feature names and their possible values
@@ -97,7 +127,7 @@ def userPreferences(dataset, x_ord):
         print('\n')
         print('----- user-specified constraints -----')
         constraints = {'AGE': ('ge', 1),
-                   'SEX': ('fix', 1)}
+                       'SEX': ('fix', 1)}
 
         constraint = [None] * len(x_ord)
         importance = [None] * len(x_ord)
@@ -108,27 +138,38 @@ def userPreferences(dataset, x_ord):
             print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
 
 
-    ## COMPAS data set
-    elif dataset['name'] == 'compas-scores-two-years':
+    ## HELOC data set
+    elif dataset['name'] == 'heloc':
         ## Feature names and their possible values
-        ## Features with range [] values are continuous (e.g., LIMIT_BAL) and features with set {} values (e.g., SEX) are discrete
+        ## Features with range [] values are continuous (e.g., ExternalRiskEstimate) and features with set {} values (e.g., SEX) are discrete
 
-        # {'age': [18, 96]}
-        # {'priors_count': [0, 38]}
-        # {'days_b_screening_arrest': [0, 1057]}
-        # {'length_of_stay': [0, 799]}
-        # {'is_recid': {0, 1}}
-        # {'age_cat': {'25 - 45', 'Greater than 45', 'Less than 25'}}
-        # {'c_charge_degree': {'F', 'M'}}
-        # {'is_violent_recid': {0, 1}}
-        # {'two_year_recid': {0, 1}}
-        # {'sex': {0, 1}}
-        # {'race': {'African-American', 'Asian', 'Caucasian', 'Hispanic', 'Native American', 'Other'}}
+        # {'ExternalRiskEstimate': [33, 94]},
+        # {'MSinceOldestTradeOpen': [2, 803]},
+        # {'MSinceMostRecentTradeOpen': [0, 227]},
+        # {'AverageMInFile': [4, 322]},
+        # {'NumSatisfactoryTrades': [0, 79]},
+        # {'NumTrades60Ever2DerogPubRec': [0, 19]},
+        # {'NumTrades90Ever2DerogPubRec': [0, 19]},
+        # {'PercentTradesNeverDelq': [0, 100]},
+        # {'MSinceMostRecentDelq': [0, 83]},
+        # {'MaxDelq2PublicRecLast12M': [0, 9]},
+        # {'MaxDelqEver': [2, 8]},
+        # {'NumTotalTrades': [0, 104]},
+        # {'NumTradesOpeninLast12M': [0, 19]},
+        # {'PercentInstallTrades': [0, 100]},
+        # {'MSinceMostRecentInqexcl7days': [0, 24]},
+        # {'NumInqLast6M': [0, 66]},
+        # {'NumInqLast6Mexcl7days': [0, 66]},
+        # {'NetFractionRevolvingBurden': [0, 232]},
+        # {'NetFractionInstallBurden': [0, 471]},
+        # {'NumRevolvingTradesWBalance': [0, 32]},
+        # {'NumInstallTradesWBalance': [1, 23]},
+        # {'NumBank2NatlTradesWHighUtilization': [0, 18]},
+        # {'PercentTradesWBalance': [0, 100]}
 
         print('\n')
         print('----- user-specified constraints -----')
-        constraints = {'sex': ('fix', 1),
-                       'race': ('fix', 1)}
+        constraints = {}
 
         constraint = [None] * len(x_ord)
         importance = [None] * len(x_ord)
@@ -137,6 +178,7 @@ def userPreferences(dataset, x_ord):
             constraint[index] = constraints[p][0]
             importance[index] = constraints[p][1]
             print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
+
 
     ## Heart disease data set
     elif dataset['name'] == 'heart-disease':
