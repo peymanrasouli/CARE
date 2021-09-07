@@ -20,7 +20,7 @@ def CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset, 
         for i, d in enumerate(dataset['discrete_indices']):
             cat_vars_ord[d] = dataset['n_cat_discrete'][i]
         cat_vars_ohe = ord_to_ohe(X_train, cat_vars_ord)[1]
-        ohe = False if dataset['discrete_indices'] == [] else True
+        ohe = True if dataset['discrete_availability'] else False
         shape = x_ohe.shape
         rng_min = np.min(X_train, axis=0)
         rng_max = np.max(X_train, axis=0)
