@@ -44,7 +44,7 @@ python main.py
 ```
 2- To simultaneously explain a particular instance using CARE, CFPrototype, DiCE, and CERTIFAI run:
 ```
-python care_cfprototype_dice.py
+python care_cfprototype_dice_certifai.py
 ```
 
 # Reproducing the validation results
