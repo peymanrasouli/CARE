@@ -42,7 +42,7 @@ pip install -r requirements.txt
 ```
 python main.py
 ```
-2- To explain a particular instance using CARE, CFPrototype, and DiCE run:
+2- To simultaneously explain a particular instance using CARE, CFPrototype, DiCE, and CERTIFAI run:
 ```
 python care_cfprototype_dice.py
 ```
