@@ -66,23 +66,23 @@ python care_coherency_preservation.py
 ```
 
 # Reproducing the benchmark results
-1- To reproduce the results of CARE with {validity} config vs. CFPrototype and DiCE run:
+1- To reproduce the results of CARE with {validity} config vs. baselines run:
 ```
 python benchmark_validity.py
 ```
-2- To reproduce the results of CARE with {validity, soundness} config vs. CFPrototype and DiCE run:
+2- To reproduce the results of CARE with {validity, soundness} config vs. baselines run:
 ```
 python benchmark_validity_soundness.py
 ```
-3- To reproduce the results of CARE with {validity, soundness, coherency} config vs. CFPrototype and DiCE run:
+3- To reproduce the results of CARE with {validity, soundness, coherency} config vs. baselines run:
 ```
 python benchmark_validity_soundness_coherency.py
 ```
-4- To reproduce the results of CARE with {validity, soundness, coherency, actionability} config vs. CFPrototype and DiCE run:
+4- To reproduce the results of CARE with {validity, soundness, coherency, actionability} config vs. baselines run:
 ```
 python benchmark_validity_soundness_coherency_actionability.py
 ```
-5- To reproduce the results of coherency-preservation benchmark of CARE vs. CFPrototype and DiCE run:
+5- To reproduce the results of coherency-preservation benchmark of CARE vs. baselines run:
 ```
 python benchmark_coherency_preservation.py
 ```
