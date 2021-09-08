@@ -13,6 +13,7 @@ from user_preferences import userPreferences
 from care_explainer import CAREExplainer
 from cfprototype_explainer import CFPrototypeExplainer
 from dice_explainer import DiCEExplainer
+from certifai_explainer import CERTIFAIExplainer
 from generate_text_explanations import GenerateTextExplanations
 
 def main():
@@ -64,7 +65,7 @@ def main():
 
             # explain instance x_ord using CARE
             CARE_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                        SOUNDNESS=True, COHERENCY=True, ACTIONABILITY=True,
+                                        SOUNDNESS=False, COHERENCY=False, ACTIONABILITY=False,
                                         user_preferences=user_preferences, cf_class='opposite',
                                         probability_thresh=0.5, n_cf=n_cf)
 
@@ -74,9 +75,13 @@ def main():
 
             # explain instance x_ord using DiCE
             DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train, dataset,
-                                        task, CARE_output, ACTIONABILITY=True, user_preferences=user_preferences,
+                                        task, CARE_output, ACTIONABILITY=False, user_preferences=user_preferences,
                                         n_cf=n_cf, desired_class="opposite", probability_thresh=0.5,
                                         proximity_weight=1.0, diversity_weight=1.0)
+
+            CERTIFAI_output = CERTIFAIExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
+                                                CARE_output, ACTIONABILITY=False, user_preferences=user_preferences,
+                                                cf_class='opposite', n_cf=n_cf)
 
             # print counterfactuals and their corresponding objective values
             print('\n')
@@ -94,6 +99,10 @@ def main():
             print(DiCE_output['x_cfs_highlight'])
             print(DiCE_output['x_cfs_eval'])
 
+            print('\n')
+            print('CERTIFAI counterfactuals')
+            print(CERTIFAI_output['x_cfs_highlight'])
+            print(CERTIFAI_output['x_cfs_eval'])
 
             # generate text explanations
             print('\n')
@@ -109,6 +118,11 @@ def main():
             print('\n')
             print('DiCE text explanation')
             input, text_explanation = GenerateTextExplanations(DiCE_output, dataset)
+            print(input, '\n \n', text_explanation)
+
+            print('\n')
+            print('CERTIFAI text explanation')
+            input, text_explanation = GenerateTextExplanations(CERTIFAI_output, dataset)
             print(input, '\n \n', text_explanation)
 
             print('\n')
