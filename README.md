@@ -66,19 +66,19 @@ python care_coherency_preservation.py
 ```
 
 # Reproducing the benchmark results
-1- To reproduce the results of CARE with {VALIDITY} config vs. baselines run:
+1- To reproduce the results of CARE<sub>{VALIDITY}<\sub> config vs. baselines run:
 ```
 python benchmark_validity.py
 ```
-2- To reproduce the results of CARE with {VALIDITY, SOUNDNESS} config vs. baselines run:
+2- To reproduce the results of CARE<sub>{VALIDITY, SOUNDNESS}<\sub> config vs. baselines run:
 ```
 python benchmark_validity_soundness.py
 ```
-3- To reproduce the results of CARE with {VALIDITY, SOUNDNESS, COHERENCY} config vs. baselines run:
+3- To reproduce the results of CARE<sub>{VALIDITY, SOUNDNESS, COHERENCY}<\sub> config vs. baselines run:
 ```
 python benchmark_validity_soundness_coherency.py
 ```
-4- To reproduce the results of CARE with {VALIDITY, SOUNDNESS, COHERENCY, ACTIONABILITY} config vs. baselines run:
+4- To reproduce the results of CARE<sub>{VALIDITY, SOUNDNESS, COHERENCY, ACTIONABILITY}<\sub> config vs. baselines run:
 ```
 python benchmark_validity_soundness_coherency_actionability.py
 ```
