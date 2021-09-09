@@ -46,10 +46,8 @@ class CERTIFAI():
 
         if  self.continuous_indices is not None:
             diff_continuous = np.linalg.norm(cf_ord[self.continuous_indices] - self.x_ord[self.continuous_indices])
-
         if  self.discrete_indices is not None:
             diff_discrete = sum(cf_ord[self.discrete_indices] != self.x_ord[self.discrete_indices])
-
         distance = (len(self.continuous_indices)/self.n_features * diff_continuous) + \
                   (len(self.discrete_indices)/self.n_features * diff_discrete)
 
@@ -65,6 +63,7 @@ class CERTIFAI():
 
         cf_pred =  self.predict_fn(cf_ohe.reshape(1, -1))
         feasibility = True if cf_pred ==  self.cf_class else False
+
         return feasibility
 
     def actionabilityConstraint(self, cf_theta):
@@ -91,25 +90,16 @@ class CERTIFAI():
                 cost.append(int(not (cf_org[i] in constraint[i])))
             elif type(constraint[i]) == list:
                 cost.append(int(not (constraint[i][0] <= cf_org[i] <= constraint[i][1])))
-        feasibility = True if sum(cost) == 0 else False
-        return feasibility
+        distance = sum(cost)
 
-    def checkFeasiblity(self, cf_theta):
-
-        # checking the feasibility of counterfactuals w.r.t. outcome and actionability constraints
-        if self.ACTIONABILITY:
-            feasibility_outcome = self.outcomeConstraint(cf_theta)
-            feasibility_actionability = self.actionabilityConstraint(cf_theta)
-            feasibility = np.logical_and(feasibility_outcome, feasibility_actionability)
-        else:
-            feasibility = self.outcomeConstraint(cf_theta)
-        return feasibility
+        return distance
 
     def featureScaler(self):
 
         # creating a scaler for mapping features in equal range
         feature_scaler = MinMaxScaler(feature_range=(0, 1))
         feature_scaler.fit(self.X_train)
+
         return feature_scaler
 
 
@@ -132,14 +122,14 @@ class CERTIFAI():
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
         creator.create("Individual",  array.array, typecode='d', fitness=creator.FitnessMin)
         toolbox.register("evaluate", self.objectiveFunction)
-        n_constraint = sum([self.user_preferences['constraint'][i]!=None for i in range(self.n_features)])
-        toolbox.decorate("evaluate", tools.DeltaPenalty(self.checkFeasiblity, n_constraint))
+        toolbox.decorate("evaluate", tools.DeltaPenalty(self.outcomeConstraint, np.inf, self.actionabilityConstraint))
         toolbox.register("attr_float", initialization, self.n_features)
         toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
         toolbox.register("mate", tools.cxTwoPoint)
         toolbox.register("mutate", tools.mutPolynomialBounded, low=0, up=1, eta=20.0, indpb=1.0 / self.n_features)
         toolbox.register("select", tools.selTournament,  tournsize=3)
+
         return toolbox
 
     # executing the optimization algorithm
