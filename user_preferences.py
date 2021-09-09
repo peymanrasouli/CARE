@@ -84,7 +84,8 @@ def userPreferences(dataset, x_ord):
 
         print('\n')
         print('----- user-specified constraints -----')
-        constraints = {'sex': ('fix', 1),
+        constraints = {'age': ('ge',1),
+                       'sex': ('fix', 1),
                        'race': ('fix', 1)}
 
         constraint = [None] * len(x_ord)

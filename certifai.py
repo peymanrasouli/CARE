@@ -48,10 +48,11 @@ class CERTIFAI():
             diff_continuous = np.linalg.norm(cf_ord[self.continuous_indices] - self.x_ord[self.continuous_indices])
         if  self.discrete_indices is not None:
             diff_discrete = sum(cf_ord[self.discrete_indices] != self.x_ord[self.discrete_indices])
-        distance = (len(self.continuous_indices)/self.n_features * diff_continuous) + \
-                  (len(self.discrete_indices)/self.n_features * diff_discrete)
 
-        return [distance]
+        feature_distance = (len(self.continuous_indices)/self.n_features * diff_continuous) + \
+                           (len(self.discrete_indices)/self.n_features * diff_discrete)
+
+        return [feature_distance]
 
     def outcomeConstraint(self, cf_theta):
 
@@ -62,9 +63,8 @@ class CERTIFAI():
         cf_ohe = ord2ohe(cf_ord, self.dataset)
 
         cf_pred =  self.predict_fn(cf_ohe.reshape(1, -1))
-        feasibility = True if cf_pred ==  self.cf_class else False
 
-        return feasibility
+        return cf_pred
 
     def actionabilityConstraint(self, cf_theta):
 
@@ -90,7 +90,38 @@ class CERTIFAI():
                 cost.append(int(not (cf_org[i] in constraint[i])))
             elif type(constraint[i]) == list:
                 cost.append(int(not (constraint[i][0] <= cf_org[i] <= constraint[i][1])))
-        distance = sum(cost)
+        actionability_distance = sum(cost)
+
+        return actionability_distance
+
+    def checkFeasibility(self, cf_theta):
+
+        # checking the feasibility of counterfactuals w.r.t. outcome and actionability constraints
+        if self.ACTIONABILITY:
+            cf_pred = self.outcomeConstraint(cf_theta)
+            actionability_distance = self.actionabilityConstraint(cf_theta)
+            outcome_feasibility = True if cf_pred == self.cf_class else False
+            actionability_feasibility = True if actionability_distance == 0 else False
+            feasibility = np.logical_and(outcome_feasibility, actionability_feasibility)
+        else:
+            cf_pred = self.outcomeConstraint(cf_theta)
+            feasibility = True if cf_pred == self.cf_class else False
+
+        return feasibility
+
+    def feasibilityDistance(self, cf_theta):
+
+        # measuring the distance of counterfactuals to the feasible solution region
+        if self.ACTIONABILITY:
+            cf_pred = self.outcomeConstraint(cf_theta)
+            actionability_distance = self.actionabilityConstraint(cf_theta)
+            if cf_pred != self.cf_class:
+                distance = np.inf
+            else:
+                distance = actionability_distance
+        else:
+            cf_pred = self.outcomeConstraint(cf_theta)
+            distance = np.inf if cf_pred != self.cf_class else 0.0
 
         return distance
 
@@ -122,7 +153,7 @@ class CERTIFAI():
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
         creator.create("Individual",  array.array, typecode='d', fitness=creator.FitnessMin)
         toolbox.register("evaluate", self.objectiveFunction)
-        toolbox.decorate("evaluate", tools.DeltaPenalty(self.outcomeConstraint, np.inf, self.actionabilityConstraint))
+        toolbox.decorate("evaluate", tools.DeltaPenalty(self.checkFeasibility, np.inf, self.feasibilityDistance))
         toolbox.register("attr_float", initialization, self.n_features)
         toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
