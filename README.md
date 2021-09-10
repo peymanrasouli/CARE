@@ -84,9 +84,9 @@ python care_soundness.py
 ```
 python care_action_series.py
 ```
-4- To reproduce the results of coherency-preservation validation run:
+4- To reproduce the results of coherency validation run:
 ```
-python care_coherency_preservation.py
+python care_coherency.py
 ```
 
 # Reproducing the benchmark results
@@ -106,7 +106,7 @@ python benchmark_validity_soundness_coherency.py
 ```
 python benchmark_validity_soundness_coherency_actionability.py
 ```
-5- To reproduce the results of coherency-preservation benchmark run:
+5- To reproduce the results of coherency benchmark of CARE vs. baselines run:
 ```
-python benchmark_coherency_preservation.py
+python benchmark_coherency.py
 ```
