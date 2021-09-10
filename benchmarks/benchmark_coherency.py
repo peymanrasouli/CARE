@@ -22,7 +22,6 @@ from care_explainer import CAREExplainer
 from cfprototype_explainer import CFPrototypeExplainer
 from dice_explainer import DiCEExplainer
 from certifai_explainer import CERTIFAIExplainer
-import seaborn as sns
 
 def main():
     # defining path of data sets and experiment results
