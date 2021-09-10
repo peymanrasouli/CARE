@@ -1,4 +1,4 @@
-from certifai import CERTIFAI
+from certifai.certifai import CERTIFAI
 from evaluate_counterfactuals import evaluateCounterfactuals
 from recover_originals import recoverOriginals
 
