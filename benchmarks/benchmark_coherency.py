@@ -160,7 +160,6 @@ def main():
                                                          cf_class='opposite', n_cf=n_cf)
                     certifai_best_cf = CERTIFAI_output['best_cf_ord']
 
-
                     original_data.append(x_ord)
                     care_cfs.append(care_best_cf)
                     cfprototype_cfs.append(cfprototype_best_cf)
@@ -199,7 +198,6 @@ def main():
             original_corr.to_csv(experiment_path + '%s_%s_original_correlation.csv' % (dataset_kw, blackbox_name))
 
             for method, cfs in cf_data.items():
-
                 counterfactual_data = np.r_[original_data, cfs]
                 counterfactual_data_df = pd.DataFrame(columns=dataset['feature_names'], data=counterfactual_data)
                 counterfactual_corr = nominal.associations(counterfactual_data_df, nominal_columns=dataset['discrete_features'])['corr']
@@ -211,7 +209,6 @@ def main():
                 correlation_diff.to_csv(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name), mode='a')
 
             print('Done!')
-
 
 if __name__ == '__main__':
     main()
