@@ -79,6 +79,7 @@ def main():
                                         n_cf=n_cf, desired_class="opposite", probability_thresh=0.5,
                                         proximity_weight=1.0, diversity_weight=1.0)
 
+            # explain instance x_ord using CERTIFAI
             CERTIFAI_output = CERTIFAIExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
                                                 CARE_output, ACTIONABILITY=False, user_preferences=user_preferences,
                                                 cf_class='opposite', n_cf=n_cf)
