@@ -10,15 +10,19 @@ pd.set_option('max_columns', None)
 pd.set_option('display.width', 1000)
 from prepare_datasets import *
 from utils import *
+from dython import nominal
 from sklearn.model_selection import train_test_split
 from create_model import CreateModel, MLPClassifier
 from care.care import CARE
 from alibi.explainers import CounterFactualProto
 from alibi.utils.mapping import ord_to_ohe
 import dice_ml
+from certifai.certifai import CERTIFAI
 from care_explainer import CAREExplainer
 from cfprototype_explainer import CFPrototypeExplainer
 from dice_explainer import DiCEExplainer
+from certifai_explainer import CERTIFAIExplainer
+import seaborn as sns
 
 def main():
     # defining path of data sets and experiment results
@@ -29,6 +33,10 @@ def main():
     # defining the list of data sets
     datsets_list = {
         'adult': ('adult.csv', PrepareAdult, 'classification'),
+        'compas-scores-two-years': ('compas-scores-two-years.csv', PrepareCOMPAS, 'classification'),
+        'credit-card-default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        'heloc': ('heloc_dataset_v1.csv', PrepareHELOC, 'classification'),
+        'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
     }
 
     # defining the list of black-boxes
@@ -37,8 +45,13 @@ def main():
     }
 
     experiment_size = {
-        'adult': (500, 1),
+        'adult': (500, 10),
+        'compas-scores-two-years': (500, 10),
+        'credit-card-default': (500, 10),
+        'heloc': (500,10),
+        'heart-disease': (50, 10),
     }
+
 
     for dataset_kw in datsets_list:
         print('dataset=', dataset_kw)
@@ -67,36 +80,10 @@ def main():
             # setting experiment size for the data set
             N, n_cf = experiment_size[dataset_kw]
 
-            # creating/opening a csv file for storing results
-            exists = os.path.isfile(
-                experiment_path + 'benchmark_coherency_preservation_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
-            if exists:
-                os.remove(experiment_path + 'benchmark_coherency_preservation_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
-            eval_results_csv = open(
-                experiment_path + 'benchmark_coherency_preservation_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
-
-            header = ['Education','','',
-                      'Relationship', '', '']
-            header = ','.join(header)
-            eval_results_csv.write('%s\n' % (header))
-            header = ['CARE',
-                      'CFPrototype',
-                      'DiCE',
-                      'CARE',
-                      'CFPrototype',
-                      'DiCE']
-            header = ','.join(header)
-            eval_results_csv.write('%s\n' % (header))
-            average = '%s,%s,%s,%s,%s,%s\n' % \
-                     ('=average(A4:A1000)', '=average(B4:B1000)', '=average(C4:C1000)',
-                      '=average(D4:D1000)', '=average(E4:E1000)', '=average(F4:F1000)')
-            eval_results_csv.write(average)
-            eval_results_csv.flush()
-
             # creating explainer instances
             # CARE
             care_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                  SOUNDNESS=True, COHERENCY=True, ACTIONABILITY=False, n_cf=n_cf)
+                                  SOUNDNESS=False, COHERENCY=True, ACTIONABILITY=False, n_population=200, n_cf=n_cf)
             care_explainer.fit(X_train, Y_train)
 
             # CFPrototype
@@ -134,25 +121,17 @@ def main():
             model = dice_ml.Model(model=blackbox, backend=backend)
             dice_explainer = dice_ml.Dice(data, model)
 
-            # explaining instances from test set
-            # correlation between education-num and education features
-            correlations = [(0,13),
-                            (1,3),
-                            (2,4),
-                            (3,5),
-                            (4,6),
-                            (5,0),
-                            (6,1),
-                            (7,2),
-                            (8,11),
-                            (9,15),
-                            (10,8),
-                            (11,7),
-                            (12,9),
-                            (13,12),
-                            (14,14),
-                            (15,10)]
+            # CERTIFAI
+            certifai_explainer = CERTIFAI(dataset, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
+                                          ACTIONABILITY=False, n_population=100, n_generation=50, n_cf=n_cf)
+            certifai_explainer.fit(X_train, Y_train)
+
             explained = 0
+            original_data = []
+            care_cfs = []
+            cfprototype_cfs = []
+            dice_cfs = []
+            certifai_cfs = []
             for x_ord in X_test:
 
                 try:
@@ -160,92 +139,34 @@ def main():
                     CARE_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
                                                 predict_proba_fn, explainer=care_explainer,
                                                 cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
-                    care_cfs_ord = CARE_output['cfs_ord']
-
-                    # Education correlation set
-                    education_num = care_cfs_ord['education-num'].to_numpy().astype(int)
-                    education = care_cfs_ord['education'].to_numpy().astype(int)
-                    education_preserved_care = 1 if correlations[education_num[0]][1] == education[0] else 0
-
-                    # Relationship correlation set
-                    relationship = care_cfs_ord['relationship'].to_numpy().astype(int)
-                    marital_status = care_cfs_ord['marital-status'].to_numpy().astype(int)
-                    sex = care_cfs_ord['sex'].to_numpy().astype(int)
-                    if relationship[0] == 0:
-                        relationship_preserved_care = 1 if sex[0] == 1 and marital_status[0] == 2 else 0
-                    elif relationship[0] == 5:
-                        relationship_preserved_care = 1 if sex[0] == 0 and marital_status[0] == 2 else 0
-                    else:
-                        relationship_preserved_care = 1
+                    care_best_cf = CARE_output['best_cf_ord']
 
                     # explain instance x_ord using CFPrototype
                     CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset,
                                                               task, CARE_output, explainer=cfprototype_explainer,
                                                               target_class=None, n_cf=n_cf)
-                    cfprototype_cfs_ord = CFPrototype_output['cfs_ord']
+                    cfprototype_best_cf = CFPrototype_output['best_cf_ord']
 
-                    # Education correlation set
-                    education_num = cfprototype_cfs_ord['education-num'].to_numpy().astype(int)
-                    education = cfprototype_cfs_ord['education'].to_numpy().astype(int)
-                    education_preserved_cfprototype = 1 if correlations[education_num[0]][1] == education[0] else 0
-
-                    # Relationship correlation set
-                    relationship = cfprototype_cfs_ord['relationship'].to_numpy().astype(int)
-                    marital_status = cfprototype_cfs_ord['marital-status'].to_numpy().astype(int)
-                    sex = cfprototype_cfs_ord['sex'].to_numpy().astype(int)
-                    if relationship[0] == 0:
-                        relationship_preserved_cfprototype = 1 if sex[0] == 1 and marital_status[0] == 2 else 0
-                    elif relationship[0] == 5:
-                        relationship_preserved_cfprototype = 1 if sex[0] == 0 and marital_status[0] == 2 else 0
-                    else:
-                        relationship_preserved_cfprototype = 1
 
                     # explain instance x_ord using DiCE
                     DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train,
                                                 dataset, task, CARE_output, explainer=dice_explainer, ACTIONABILITY=False,
                                                 user_preferences=None, n_cf=n_cf, desired_class="opposite",
                                                 probability_thresh=0.5, proximity_weight=1.0, diversity_weight=1.0)
-                    dice_cfs_ord = DiCE_output['cfs_ord']
+                    dice_best_cf = DiCE_output['best_cf_ord']
 
-                    # Education correlation set
-                    education_num = dice_cfs_ord['education-num'].to_numpy().astype(int)
-                    education = dice_cfs_ord['education'].to_numpy().astype(int)
-                    education_preserved_dice =  1 if correlations[education_num[0]][1] == education[0] else 0
+                    # explain instance x_ord using CERTIFAI
+                    CERTIFAI_output = CERTIFAIExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
+                                                         predict_proba_fn, CARE_output, explainer=certifai_explainer,
+                                                         cf_class='opposite', n_cf=n_cf)
+                    certifai_best_cf = CERTIFAI_output['best_cf_ord']
 
-                    # Relationship correlation set
-                    relationship = dice_cfs_ord['relationship'].to_numpy().astype(int)
-                    marital_status = dice_cfs_ord['marital-status'].to_numpy().astype(int)
-                    sex = dice_cfs_ord['sex'].to_numpy().astype(int)
-                    if relationship[0] == 0:
-                        relationship_preserved_dice = 1 if sex[0] == 1 and marital_status[0] == 2 else 0
-                    elif relationship[0] == 5:
-                        relationship_preserved_dice = 1 if sex[0] == 0 and marital_status[0] == 2 else 0
-                    else:
-                        relationship_preserved_dice = 1
 
-                    print('\n')
-                    print('-------------------------------')
-                    print("%s | %s: %d/%d explained" % (dataset['name'], blackbox_name, explained, N))
-
-                    print('\n')
-                    print(care_cfs_ord)
-                    print(cfprototype_cfs_ord)
-                    print(dice_cfs_ord)
-
-                    print('\n')
-                    print("Preserved Education    coherency | CARE: %0.3f - CFPrototype: %0.3f - DiCE: %0.3f" %
-                          (education_preserved_care, education_preserved_cfprototype, education_preserved_dice))
-                    print("Preserved Relationship coherency | CARE: %0.3f - CFPrototype: %0.3f - DiCE: %0.3f" %
-                          (relationship_preserved_care, relationship_preserved_cfprototype, relationship_preserved_dice))
-                    print('--------------------------------------------------------------------------------------------')
-
-                    # storing the evaluation of the best counterfactual found by methods
-                    eval_results = np.r_[education_preserved_care, education_preserved_cfprototype, education_preserved_dice,
-                                         relationship_preserved_care, relationship_preserved_cfprototype, relationship_preserved_dice]
-                    eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
-                    eval_results = ','.join(eval_results)
-                    eval_results_csv.write('%s\n' % (eval_results))
-                    eval_results_csv.flush()
+                    original_data.append(x_ord)
+                    care_cfs.append(care_best_cf)
+                    cfprototype_cfs.append(cfprototype_best_cf)
+                    dice_cfs.append(dice_best_cf)
+                    certifai_cfs.append(certifai_best_cf)
 
                     explained += 1
 
@@ -255,7 +176,43 @@ def main():
                 if explained == N:
                     break
 
-            eval_results_csv.close()
+            # calculating the coherency presenvation rate
+            original_data = np.vstack(original_data)
+            cf_data = {
+                'care': np.vstack(care_cfs),
+                'cfprototype': np.vstack(cfprototype_cfs),
+                'dice': np.vstack(dice_cfs),
+                'certifai': np.vstack(certifai_cfs)
+                }
+
+            if os.path.isfile(experiment_path + '%s_%s_original_correlation.csv' % (dataset_kw, blackbox_name)):
+                os.remove(experiment_path + '%s_%s_original_correlation.csv' % (dataset_kw, blackbox_name))
+
+            if os.path.isfile(experiment_path + '%s_%s_counterfactual_correlation.csv' % (dataset_kw, blackbox_name)):
+                os.remove(experiment_path + '%s_%s_counterfactual_correlation.csv' % (dataset_kw, blackbox_name))
+
+            if os.path.isfile(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name)):
+                os.remove(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name))
+
+            original_data_df = pd.DataFrame(columns=dataset['feature_names'], data=original_data)
+            original_corr = nominal.associations(original_data_df, nominal_columns=dataset['discrete_features'])['corr']
+            original_corr = original_corr.round(decimals=3)
+            original_corr.to_csv(experiment_path + '%s_%s_original_correlation.csv' % (dataset_kw, blackbox_name))
+
+            for method, cfs in cf_data.items():
+
+                counterfactual_data = np.r_[original_data, cfs]
+                counterfactual_data_df = pd.DataFrame(columns=dataset['feature_names'], data=counterfactual_data)
+                counterfactual_corr = nominal.associations(counterfactual_data_df, nominal_columns=dataset['discrete_features'])['corr']
+                counterfactual_corr = counterfactual_corr.round(decimals=3)
+                counterfactual_corr.to_csv(experiment_path + '%s_%s_counterfactual_correlation.csv' % (dataset_kw, blackbox_name), mode='a')
+
+                correlation_diff = np.abs(original_corr-counterfactual_corr)
+                correlation_diff = correlation_diff.round(decimals=3)
+                correlation_diff.to_csv(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name), mode='a')
+
+            print('Done!')
+
 
 if __name__ == '__main__':
     main()
