@@ -31,11 +31,11 @@ def main():
 
     # defining the list of data sets
     datsets_list = {
-        'adult': ('adult.csv', PrepareAdult, 'classification'),
-        'compas-scores-two-years': ('compas-scores-two-years.csv', PrepareCOMPAS, 'classification'),
-        'credit-card-default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        # 'adult': ('adult.csv', PrepareAdult, 'classification'),
+        # 'compas-scores-two-years': ('compas-scores-two-years.csv', PrepareCOMPAS, 'classification'),
+        # 'credit-card-default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
         'heloc': ('heloc_dataset_v1.csv', PrepareHELOC, 'classification'),
-        'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
+        # 'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
     }
 
     # defining the list of black-boxes
@@ -47,7 +47,7 @@ def main():
         'adult': (500, 10),
         'compas-scores-two-years': (500, 10),
         'credit-card-default': (500, 10),
-        'heloc': (500,10),
+        'heloc': (50,10),
         'heart-disease': (50, 10),
     }
 
@@ -90,6 +90,7 @@ def main():
             for i, d in enumerate(dataset['discrete_indices']):
                 cat_vars_ord[d] = dataset['n_cat_discrete'][i]
             cat_vars_ohe = ord_to_ohe(X_train, cat_vars_ord)[1]
+            ohe = True if dataset['discrete_availability'] else False
             x_ohe = ord2ohe(X_train[0], dataset)
             x_ohe = x_ohe.reshape((1,) + x_ohe.shape)
             shape = x_ohe.shape
@@ -101,7 +102,7 @@ def main():
                              (np.ones(rng_shape) * rng[1]).astype(np.float32))
             cfprototype_explainer = CounterFactualProto(predict=predict_proba_fn, shape=shape,
                                                         feature_range=feature_range,
-                                                        cat_vars=cat_vars_ohe, ohe=True, beta=0.1, theta=10,
+                                                        cat_vars=cat_vars_ohe, ohe=ohe, beta=0.1, theta=10,
                                                         use_kdtree=True, max_iterations=500, c_init=1.0, c_steps=5)
             X_train_ohe = ord2ohe(X_train, dataset)
             cfprototype_explainer.fit(X_train_ohe, d_type='abdm', disc_perc=[25, 50, 75])
@@ -198,15 +199,33 @@ def main():
             original_corr.to_csv(experiment_path + '%s_%s_original_correlation.csv' % (dataset_kw, blackbox_name))
 
             for method, cfs in cf_data.items():
+
+                with open(experiment_path + '%s_%s_counterfactual_correlation.csv' % (dataset_kw, blackbox_name), 'a') as f:
+                    f.write(method)
+                    f.write('\n')
                 counterfactual_data = np.r_[original_data, cfs]
                 counterfactual_data_df = pd.DataFrame(columns=dataset['feature_names'], data=counterfactual_data)
                 counterfactual_corr = nominal.associations(counterfactual_data_df, nominal_columns=dataset['discrete_features'])['corr']
                 counterfactual_corr = counterfactual_corr.round(decimals=3)
                 counterfactual_corr.to_csv(experiment_path + '%s_%s_counterfactual_correlation.csv' % (dataset_kw, blackbox_name), mode='a')
+                with open(experiment_path + '%s_%s_counterfactual_correlation.csv' % (dataset_kw, blackbox_name), 'a') as f:
+                    f.write('\n')
 
+                with open(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name), 'a') as f:
+                    f.write(method)
+                    f.write('\n')
                 correlation_diff = np.abs(original_corr-counterfactual_corr)
                 correlation_diff = correlation_diff.round(decimals=3)
                 correlation_diff.to_csv(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name), mode='a')
+
+                with open(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name), 'a') as f:
+                    f.write('Feature-wise MAE:')
+                correlation_diff.mean().round(3).to_csv(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name), mode='a')
+
+                with open(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name), 'a') as f:
+                    f.write('Total MAE: ' + str(np.round(correlation_diff.mean().mean(),3)))
+                    f.write('\n \n')
+
 
             print('Done!')
 
