@@ -226,7 +226,6 @@ def main():
                     f.write('Total MAE: ' + str(np.round(correlation_diff.mean().mean(),3)))
                     f.write('\n \n')
 
-
             print('Done!')
 
 if __name__ == '__main__':
