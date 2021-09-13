@@ -8,6 +8,7 @@ pd.set_option('max_columns', None)
 pd.set_option('display.width', 1000)
 from prepare_datasets import *
 from utils import *
+from dython import nominal
 from sklearn.model_selection import train_test_split
 from create_model import CreateModel, MLPClassifier
 from sklearn.ensemble import GradientBoostingClassifier
@@ -24,6 +25,10 @@ def main():
     # defining the list of data sets
     datsets_list = {
         'adult': ('adult.csv', PrepareAdult, 'classification'),
+        'compas-scores-two-years': ('compas-scores-two-years.csv', PrepareCOMPAS, 'classification'),
+        'credit-card-default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
+        'heloc': ('heloc_dataset_v1.csv', PrepareHELOC, 'classification'),
+        'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
     }
 
     # defining the list of black-boxes
@@ -34,6 +39,10 @@ def main():
 
     experiment_size = {
         'adult': (500, 10),
+        'compas-scores-two-years': (500, 10),
+        'credit-card-default': (500, 10),
+        'heloc': (500,10),
+        'heart-disease': (50, 10),
     }
 
     for dataset_kw in datsets_list:
@@ -63,34 +72,6 @@ def main():
             # setting experiment size for the data set
             N, n_cf = experiment_size[dataset_kw]
 
-            # creating/opening a csv file for storing results
-            exists = os.path.isfile(
-                experiment_path + 'care_coherency_preservation_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
-            if exists:
-                os.remove(experiment_path + 'care_coherency_preservation_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
-            eval_results_csv = open(
-                experiment_path + 'care_coherency_preservation_%s_%s_eval_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
-
-            header = ['Education','','', '',
-                      'Relationship', '', '', '']
-            header = ','.join(header)
-            eval_results_csv.write('%s\n' % (header))
-            header = ['Validity',
-                      'Validity+Soundness',
-                      'Validity+Soundness+Coherency',
-                      'Validity+Soundness+Coherency+Actionability',
-                      'Validity',
-                      'Validity+Soundness',
-                      'Validity+Soundness+Coherency',
-                      'Validity+Soundness+Coherency+Actionability']
-            header = ','.join(header)
-            eval_results_csv.write('%s\n' % (header))
-            average = '%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                     ('=average(A4:A1000)', '=average(B4:B1000)', '=average(C4:C1000)', '=average(D4:D1000)',
-                      '=average(E4:E1000)', '=average(F4:F1000)', '=average(G4:G1000)', '=average(H4:H1000)')
-            eval_results_csv.write(average)
-            eval_results_csv.flush()
-
             # CARE with {validity} config
             care_config_1 = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
                                  SOUNDNESS=False, COHERENCY=False, ACTIONABILITY=False, n_cf=n_cf)
@@ -111,200 +92,90 @@ def main():
                                     SOUNDNESS=True, COHERENCY=True, ACTIONABILITY=True, n_cf=n_cf)
             care_config_1234.fit(X_train, Y_train)
 
-            # explaining instances from test set
-            # correlation between education-num and education features
-            correlations = [(0,13),
-                            (1,3),
-                            (2,4),
-                            (3,5),
-                            (4,6),
-                            (5,0),
-                            (6,1),
-                            (7,2),
-                            (8,11),
-                            (9,15),
-                            (10,8),
-                            (11,7),
-                            (12,9),
-                            (13,12),
-                            (14,14),
-                            (15,10)]
             explained = 0
+            original_data = []
+            care_config_1_cfs = []
+            care_config_12_cfs = []
+            care_config_123_cfs = []
+            care_config_1234_cfs = []
             for x_ord in X_test:
 
+                # explaining instances
                 explanation_config_1 = care_config_1.explain(x_ord)
                 explanation_config_12 = care_config_12.explain(x_ord)
                 explanation_config_123 = care_config_123.explain(x_ord)
                 user_preferences = userPreferences(dataset, x_ord)
                 explanation_config_1234 = care_config_1234.explain(x_ord, user_preferences=user_preferences)
 
-                # evaluating counterfactuals based on all objectives results
-                toolbox = explanation_config_1234['toolbox']
-                objective_names = explanation_config_1234['objective_names']
-                featureScaler = explanation_config_1234['featureScaler']
-                feature_names = dataset['feature_names']
+                # extracting the best counterfactual
+                care_config_1_best_cf = explanation_config_1['best_cf_ord']
+                care_config_12_best_cf = explanation_config_12['best_cf_ord']
+                care_config_123_best_cf = explanation_config_123['best_cf_ord']
+                care_config_1234_best_cf = explanation_config_1234['best_cf_ord']
 
-                # evaluating and recovering counterfactuals of {validity} config
-                cfs_ord_config_1, \
-                cfs_eval_config_1, \
-                x_cfs_ord_config_1, \
-                x_cfs_eval_config_1 = evaluateCounterfactuals(x_ord, explanation_config_1['cfs_ord'], dataset,
-                                                              predict_fn, predict_proba_fn, task, toolbox,
-                                                              objective_names, featureScaler, feature_names)
-
-                # Education correlation set
-                education_num = cfs_ord_config_1['education-num'].to_numpy().astype(int)
-                education = cfs_ord_config_1['education'].to_numpy().astype(int)
-                education_preserved_config_1 = 0
-                for n in range(n_cf):
-                    education_preserved_config_1 += 1 if correlations[education_num[n]][1] == education[n] else 0
-                education_preserved_config_1 = education_preserved_config_1 / n_cf
-
-                # Relationship correlation set
-                relationship = cfs_ord_config_1['relationship'].to_numpy().astype(int)
-                marital_status = cfs_ord_config_1['marital-status'].to_numpy().astype(int)
-                sex = cfs_ord_config_1['sex'].to_numpy().astype(int)
-                relationship_preserved_config_1 = 0
-                for n in range(n_cf):
-                    if relationship[n] == 0:
-                        relationship_preserved_config_1 += 1 if sex[n]==1 and marital_status[n]==2  else 0
-                    elif relationship[n] == 5:
-                        relationship_preserved_config_1 += 1 if sex[n]==0 and marital_status[n]==2  else 0
-                    else:
-                        relationship_preserved_config_1 += 1
-                relationship_preserved_config_1 = relationship_preserved_config_1 / n_cf
-
-                # evaluating and recovering counterfactuals of {validity, soundness} config
-                cfs_ord_config_12, \
-                cfs_eval_config_12, \
-                x_cfs_ord_config_12, \
-                x_cfs_eval_config_12 = evaluateCounterfactuals(x_ord, explanation_config_12['cfs_ord'], dataset,
-                                                               predict_fn, predict_proba_fn, task, toolbox,
-                                                               objective_names, featureScaler, feature_names)
-
-                # Education correlation set
-                education_num = cfs_ord_config_12['education-num'].to_numpy().astype(int)
-                education = cfs_ord_config_12['education'].to_numpy().astype(int)
-                education_preserved_config_12 = 0
-                for n in range(n_cf):
-                    education_preserved_config_12 += 1 if correlations[education_num[n]][1] == education[n] else 0
-                education_preserved_config_12 = education_preserved_config_12 / n_cf
-
-                # Relationship correlation set
-                relationship = cfs_ord_config_12['relationship'].to_numpy().astype(int)
-                marital_status = cfs_ord_config_12['marital-status'].to_numpy().astype(int)
-                sex = cfs_ord_config_12['sex'].to_numpy().astype(int)
-                relationship_preserved_config_12 = 0
-                for n in range(n_cf):
-                    if relationship[n] == 0:
-                        relationship_preserved_config_12 += 1 if sex[n]==1 and marital_status[n]==2  else 0
-                    elif relationship[n] == 5:
-                        relationship_preserved_config_12 += 1 if sex[n]==0 and marital_status[n]==2  else 0
-                    else:
-                        relationship_preserved_config_12 += 1
-                relationship_preserved_config_12 = relationship_preserved_config_12 / n_cf
-
-                # evaluating and recovering counterfactuals of {validity, soundness, coherency} config
-                cfs_ord_config_123, \
-                cfs_eval_config_123, \
-                x_cfs_ord_config_123, \
-                x_cfs_eval_config_123 = evaluateCounterfactuals(x_ord, explanation_config_123['cfs_ord'],
-                                                                 dataset, predict_fn, predict_proba_fn, task,
-                                                                 toolbox, objective_names, featureScaler,
-                                                                 feature_names)
-
-                # Education correlation set
-                education_num = cfs_ord_config_123['education-num'].to_numpy().astype(int)
-                education = cfs_ord_config_123['education'].to_numpy().astype(int)
-                education_preserved_config_123 = 0
-                for n in range(n_cf):
-                    education_preserved_config_123 += 1 if correlations[education_num[n]][1] == education[n] else 0
-                education_preserved_config_123 = education_preserved_config_123 / n_cf
-
-                # Relationship correlation set
-                relationship = cfs_ord_config_123['relationship'].to_numpy().astype(int)
-                marital_status = cfs_ord_config_123['marital-status'].to_numpy().astype(int)
-                sex = cfs_ord_config_123['sex'].to_numpy().astype(int)
-                relationship_preserved_config_123 = 0
-                for n in range(n_cf):
-                    if relationship[n] == 0:
-                        relationship_preserved_config_123 += 1 if sex[n]==1 and marital_status[n]==2  else 0
-                    elif relationship[n] == 5:
-                        relationship_preserved_config_123 += 1 if sex[n]==0 and marital_status[n]==2  else 0
-                    else:
-                        relationship_preserved_config_123 += 1
-                relationship_preserved_config_123 = relationship_preserved_config_123 / n_cf
-
-                # evaluating and recovering counterfactuals of {validity, soundness, coherency, actionability} config
-                cfs_ord_config_1234, \
-                cfs_eval_config_1234, \
-                x_cfs_ord_config_1234, \
-                x_cfs_eval_config_1234 = evaluateCounterfactuals(x_ord, explanation_config_1234['cfs_ord'],
-                                                                 dataset, predict_fn, predict_proba_fn, task,
-                                                                 toolbox, objective_names, featureScaler,
-                                                                 feature_names)
-
-                # Education correlation set
-                education_num = cfs_ord_config_1234['education-num'].to_numpy().astype(int)
-                education = cfs_ord_config_1234['education'].to_numpy().astype(int)
-                education_preserved_config_1234 = 0
-                for n in range(n_cf):
-                    education_preserved_config_1234 += 1 if correlations[education_num[n]][1] == education[n] else 0
-                education_preserved_config_1234 = education_preserved_config_1234 / n_cf
-
-                # Relationship correlation set
-                relationship = cfs_ord_config_1234['relationship'].to_numpy().astype(int)
-                marital_status = cfs_ord_config_1234['marital-status'].to_numpy().astype(int)
-                sex = cfs_ord_config_1234['sex'].to_numpy().astype(int)
-                relationship_preserved_config_1234 = 0
-                for n in range(n_cf):
-                    if relationship[n] == 0:
-                        relationship_preserved_config_1234 += 1 if sex[n]==1 and marital_status[n]==2  else 0
-                    elif relationship[n] == 5:
-                        relationship_preserved_config_1234 += 1 if sex[n]==0 and marital_status[n]==2  else 0
-                    else:
-                        relationship_preserved_config_1234 += 1
-                relationship_preserved_config_1234 = relationship_preserved_config_1234 / n_cf
-
-
-                print('\n')
-                print('-------------------------------')
-                print("%s | %s: %d/%d explained" % (dataset['name'], blackbox_name, explained, N))
-
-                print('\n')
-                print(cfs_ord_config_1)
-                print(cfs_ord_config_12)
-                print(cfs_ord_config_123)
-                print(cfs_ord_config_1234)
-
-                print('\n')
-                print("Preserved Education    coherency | Validity: %0.3f - Validity+Soundness: %0.3f - "
-                      "Validity+Soundness+Coherency: %0.3f - Validity+Soundness+Coherency+Actionability: %0.3f" %
-                      (education_preserved_config_1, education_preserved_config_12,
-                       education_preserved_config_123, education_preserved_config_1234))
-                print("Preserved Relationship coherency | Validity: %0.3f - Validity+Soundness: %0.3f - "
-                      "Validity+Soundness+Coherency: %0.3f - Validity+Soundness+Coherency+Actionability: %0.3f" %
-                      (relationship_preserved_config_1, relationship_preserved_config_12,
-                       relationship_preserved_config_123, relationship_preserved_config_1234))
-                print('-------------------------------------------------------------------------------------'
-                      '-------------------------------------------------------------------------------------')
-
-                # storing the evaluation of the best counterfactual found by methods
-                eval_results = np.r_[education_preserved_config_1, education_preserved_config_12,
-                                     education_preserved_config_123, education_preserved_config_1234,
-                                     relationship_preserved_config_1, relationship_preserved_config_12,
-                                     relationship_preserved_config_123, relationship_preserved_config_1234]
-                eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
-                eval_results = ','.join(eval_results)
-                eval_results_csv.write('%s\n' % (eval_results))
-                eval_results_csv.flush()
+                original_data.append(x_ord)
+                care_config_1_cfs.append(care_config_1_best_cf)
+                care_config_12_cfs.append(care_config_12_best_cf)
+                care_config_123_cfs.append(care_config_123_best_cf)
+                care_config_1234_cfs.append(care_config_1234_best_cf)
 
                 explained += 1
 
                 if explained == N:
                     break
 
-            eval_results_csv.close()
+            # calculating the coherency presenvation rate
+            original_data = np.vstack(original_data)
+            cf_data = {
+                'care_config_1': np.vstack(care_config_1_cfs),
+                'care_config_12': np.vstack(care_config_12_cfs),
+                'care_config_123': np.vstack(care_config_123_cfs),
+                'care_config_1234': np.vstack(care_config_1234_cfs)
+            }
+
+            if os.path.isfile(experiment_path + '%s_%s_original_correlation.csv' % (dataset_kw, blackbox_name)):
+                os.remove(experiment_path + '%s_%s_original_correlation.csv' % (dataset_kw, blackbox_name))
+
+            if os.path.isfile(experiment_path + '%s_%s_counterfactual_correlation.csv' % (dataset_kw, blackbox_name)):
+                os.remove(experiment_path + '%s_%s_counterfactual_correlation.csv' % (dataset_kw, blackbox_name))
+
+            if os.path.isfile(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name)):
+                os.remove(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name))
+
+            original_data_df = pd.DataFrame(columns=dataset['feature_names'], data=original_data)
+            original_corr = nominal.associations(original_data_df, nominal_columns=dataset['discrete_features'])['corr']
+            original_corr = original_corr.round(decimals=3)
+            original_corr.to_csv(experiment_path + '%s_%s_original_correlation.csv' % (dataset_kw, blackbox_name))
+
+            for method, cfs in cf_data.items():
+
+                with open(experiment_path + '%s_%s_counterfactual_correlation.csv' % (dataset_kw, blackbox_name), 'a') as f:
+                    f.write(method)
+                    f.write('\n')
+                counterfactual_data = np.r_[original_data, cfs]
+                counterfactual_data_df = pd.DataFrame(columns=dataset['feature_names'], data=counterfactual_data)
+                counterfactual_corr = nominal.associations(counterfactual_data_df, nominal_columns=dataset['discrete_features'])['corr']
+                counterfactual_corr = counterfactual_corr.round(decimals=3)
+                counterfactual_corr.to_csv(experiment_path + '%s_%s_counterfactual_correlation.csv' % (dataset_kw, blackbox_name), mode='a')
+                with open(experiment_path + '%s_%s_counterfactual_correlation.csv' % (dataset_kw, blackbox_name), 'a') as f:
+                    f.write('\n')
+
+                with open(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name),'a') as f:
+                    f.write(method)
+                    f.write('\n')
+                correlation_diff = np.abs(original_corr - counterfactual_corr)
+                correlation_diff = correlation_diff.round(decimals=3)
+                correlation_diff.to_csv(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name), mode='a')
+
+                with open(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name), 'a') as f:
+                    f.write('Feature-wise MAE:')
+                correlation_diff.mean().round(3).to_csv(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name), mode='a')
+
+                with open(experiment_path + '%s_%s_correlation_difference.csv' % (dataset_kw, blackbox_name), 'a') as f:
+                    f.write('Total MAE: ' + str(np.round(correlation_diff.mean().mean(), 3)))
+                    f.write('\n \n')
+
+            print('Done!')
 
 if __name__ == '__main__':
     main()
