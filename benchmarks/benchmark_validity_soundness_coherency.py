@@ -16,9 +16,11 @@ from care.care import CARE
 from alibi.explainers import CounterFactualProto
 from alibi.utils.mapping import ord_to_ohe
 import dice_ml
+from certifai.certifai import CERTIFAI
 from care_explainer import CAREExplainer
 from cfprototype_explainer import CFPrototypeExplainer
 from dice_explainer import DiCEExplainer
+from certifai_explainer import CERTIFAIExplainer
 
 def main():
     # defining path of data sets and experiment results
@@ -88,6 +90,8 @@ def main():
             header += ['CFPrototype']
             header += feature_space
             header += ['DiCE']
+            header += feature_space
+            header += ['CERTIFAI']
             header = ','.join(header)
             cfs_results_csv.write('%s\n' % (header))
             cfs_results_csv.flush()
@@ -101,14 +105,19 @@ def main():
             eval_results_csv = open(experiment_path + 'benchmark_validity_soundness_coherency_%s_eval_%s_%s.csv'%
                                     (dataset['name'], N, n_cf), 'a')
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,' \
+                     '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                       ('CARE', '', '', '', '', '', '', '', '', '', '',
                        'CFPrototype', '', '', '', '', '', '', '', '', '', '',
-                       'DiCE', '', '', '', '', '', '','', '', '', '')
+                       'DiCE', '', '', '', '', '', '','', '', '', '',
+                       'CERTIFAI', '', '', '', '', '', '', '', '', '', '')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,' \
+                     '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                       ('Outcome', 'Proximity', 'Connectedness', 'Coherency', 'Distance', 'Sparsity', 'i-Validity',
+                       's-Validity', 'f-Diversity', 'v-Diversity', 'd-Diversity',
+                       'Outcome', 'Proximity', 'Connectedness', 'Coherency', 'Distance', 'Sparsity', 'i-Validity',
                        's-Validity', 'f-Diversity', 'v-Diversity', 'd-Diversity',
                        'Outcome', 'Proximity', 'Connectedness', 'Coherency', 'Distance', 'Sparsity', 'i-Validity',
                        's-Validity', 'f-Diversity', 'v-Diversity', 'd-Diversity',
@@ -116,7 +125,8 @@ def main():
                        's-Validity', 'f-Diversity', 'v-Diversity', 'd-Diversity')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,' \
+                     '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                      ('=average(A5:A1000)', '=average(B5:B1000)', '=average(C5:C1000)', '=average(D5:D1000)',
                       '=average(E5:E1000)', '=average(F5:F1000)', '=average(G5:G1000)', '=average(H5:H1000)',
                       '=average(I5:I1000)', '=average(J5:J1000)', '=average(K5:K1000)', '=average(L5:L1000)',
@@ -125,10 +135,13 @@ def main():
                       '=average(U5:U1000)', '=average(V5:V1000)', '=average(W5:W1000)', '=average(X5:X1000)',
                       '=average(Y5:Y1000)', '=average(Z5:Z1000)', '=average(AA5:AA1000)', '=average(AB5:AB1000)',
                       '=average(AC5:AC1000)', '=average(AD5:AD1000)', '=average(AE5:AE1000)', '=average(AF5:AF1000)',
-                      '=average(AG5:AG1000)')
+                      '=average(AG5:AG1000)', '=average(AH5:AH1000)', '=average(AI5:AI1000)', '=average(AJ5:AJ1000)',
+                      '=average(AK5:AK1000)', '=average(AL5:AL1000)', '=average(AM5:AM1000)', '=average(AN5:AN1000)',
+                      '=average(AO5:AO1000)', '=average(AP5:AP1000)', '=average(AQ5:AQ1000)', '=average(AR5:AR1000)')
             eval_results_csv.write(header)
 
-            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
+            header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,' \
+                     '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
                      ('=stdev(A5:A1000)', '=stdev(B5:B1000)', '=stdev(C5:C1000)', '=stdev(D5:D1000)',
                       '=stdev(E5:E1000)', '=stdev(F5:F1000)', '=stdev(G5:G1000)', '=stdev(H5:H1000)',
                       '=stdev(I5:I1000)', '=stdev(J5:J1000)', '=stdev(K5:K1000)', '=stdev(L5:L1000)',
@@ -137,7 +150,9 @@ def main():
                       '=stdev(U5:U1000)', '=stdev(V5:V1000)', '=stdev(W5:W1000)', '=stdev(X5:X1000)',
                       '=stdev(Y5:Y1000)', '=stdev(Z5:Z1000)', '=stdev(AA5:AA1000)', '=stdev(AB5:AB1000)',
                       '=stdev(AC5:AC1000)', '=stdev(AD5:AD1000)', '=stdev(AE5:AE1000)', '=stdev(AF5:AF1000)',
-                      '=stdev(AG5:AG1000)')
+                      '=stdev(AG5:AG1000)', '=stdev(AH5:AH1000)', '=stdev(AI5:AI1000)', '=stdev(AJ5:AJ1000)',
+                      '=stdev(AK5:AK1000)', '=stdev(AL5:AL1000)', '=stdev(AM5:AM1000)', '=stdev(AN5:AN1000)',
+                      '=stdev(AO5:AO1000)', '=stdev(AP5:AP1000)', '=stdev(AQ5:AQ1000)', '=stdev(AR5:AR1000)')
             eval_results_csv.write(header)
             eval_results_csv.flush()
 
@@ -152,6 +167,7 @@ def main():
             for i, d in enumerate(dataset['discrete_indices']):
                 cat_vars_ord[d] = dataset['n_cat_discrete'][i]
             cat_vars_ohe = ord_to_ohe(X_train, cat_vars_ord)[1]
+            ohe = True if dataset['discrete_availability'] else False
             x_ohe = ord2ohe(X_train[0], dataset)
             x_ohe = x_ohe.reshape((1,) + x_ohe.shape)
             shape = x_ohe.shape
@@ -163,7 +179,7 @@ def main():
                              (np.ones(rng_shape) * rng[1]).astype(np.float32))
             cfprototype_explainer = CounterFactualProto(predict=predict_proba_fn, shape=shape,
                                                         feature_range=feature_range,
-                                                        cat_vars=cat_vars_ohe, ohe=True, beta=0.1, theta=10,
+                                                        cat_vars=cat_vars_ohe, ohe=ohe, beta=0.1, theta=10,
                                                         use_kdtree=True, max_iterations=500, c_init=1.0, c_steps=5)
             X_train_ohe = ord2ohe(X_train, dataset)
             cfprototype_explainer.fit(X_train_ohe, d_type='abdm', disc_perc=[25, 50, 75])
@@ -181,6 +197,11 @@ def main():
             backend = 'TF1'
             model = dice_ml.Model(model=blackbox, backend=backend)
             dice_explainer = dice_ml.Dice(data, model)
+
+            # CERTIFAI
+            certifai_explainer = CERTIFAI(dataset, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
+                                          ACTIONABILITY=False, n_population=100, n_generation=50, n_cf=n_cf)
+            certifai_explainer.fit(X_train, Y_train)
 
             # explaining instances from test set
             explained = 0
@@ -212,10 +233,19 @@ def main():
                     dice_cfs_eval = DiCE_output['cfs_eval']
                     dice_x_cfs_eval = DiCE_output['x_cfs_eval']
 
+                    # explain instance x_ord using CERTIFAI
+                    CERTIFAI_output = CERTIFAIExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
+                                                        predict_proba_fn, CARE_output, explainer=certifai_explainer,
+                                                        cf_class='opposite', n_cf=n_cf)
+                    certifai_x_cfs_highlight = CERTIFAI_output['x_cfs_highlight']
+                    certifai_cfs_eval = CERTIFAI_output['cfs_eval']
+                    certifai_x_cfs_eval = CERTIFAI_output['x_cfs_eval']
+
                     # storing the best counterfactual found by methods
                     cfs_results = pd.concat([care_x_cfs_highlight.iloc[:2], care_x_cfs_eval.iloc[:2],
                                              cfprototype_x_cfs_highlight.iloc[:2], cfprototype_x_cfs_eval.iloc[:2],
-                                             dice_x_cfs_highlight.iloc[:2], dice_x_cfs_eval.iloc[:2]], axis=1)
+                                             dice_x_cfs_highlight.iloc[:2], dice_x_cfs_eval.iloc[:2],
+                                             certifai_x_cfs_highlight.iloc[:2], certifai_x_cfs_eval.iloc[:2]], axis=1)
                     cfs_results.to_csv(cfs_results_csv)
                     cfs_results_csv.write('\n')
                     cfs_results_csv.flush()
@@ -223,7 +253,8 @@ def main():
                     # storing the evaluation of the best counterfactual found by methods
                     eval_results = np.r_[care_cfs_eval.iloc[0, :-n_out],
                                          cfprototype_cfs_eval.iloc[0, :-n_out],
-                                         dice_cfs_eval.iloc[0, :-n_out]]
+                                         dice_cfs_eval.iloc[0, :-n_out],
+                                         certifai_cfs_eval.iloc[0, :-n_out]]
                     eval_results = ['%.3f' % (eval_results[i]) for i in range(len(eval_results))]
                     eval_results = ','.join(eval_results)
                     eval_results_csv.write('%s\n' % (eval_results))
