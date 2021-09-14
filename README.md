@@ -110,3 +110,7 @@ python benchmark_validity_soundness_coherency_actionability.py
 ```
 python benchmark_coherency.py
 ```
+6- To reproduce the template for user study of explanations of CARE vs. baselines, run:
+```
+python user_study.py
+```
