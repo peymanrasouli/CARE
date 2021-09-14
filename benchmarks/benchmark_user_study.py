@@ -1,7 +1,8 @@
 import os
 import sys
-sys.path.insert(0, "alibi")
-sys.path.insert(0, "DiCE")
+sys.path.append("../")
+sys.path.insert(0, "../alibi")
+sys.path.insert(0, "../DiCE")
 import warnings
 warnings.filterwarnings("ignore")
 import pandas as pd
@@ -24,7 +25,7 @@ from generate_text_explanations import GenerateTextExplanations
 
 def main():
     # defining path of data sets and experiment results
-    path = './'
+    path = '../'
     dataset_path = path + 'datasets/'
     experiment_path = path + 'experiments/'
 
@@ -60,10 +61,10 @@ def main():
             predict_proba_fn = lambda x: np.asarray([1-blackbox.predict(x).ravel(), blackbox.predict(x).ravel()]).transpose()
 
             # creating/opening a csv file for storing results
-            exists = os.path.isfile(experiment_path + 'user_study.csv')
+            exists = os.path.isfile(experiment_path + 'counterfactual_explanation_user_study.csv')
             if exists:
-                os.remove(experiment_path + 'user_study.csv')
-            user_study_csv = open(experiment_path + 'user_study.csv', 'a')
+                os.remove(experiment_path + 'counterfactual_explanation_user_study.csv')
+            user_study_csv = open(experiment_path + 'counterfactual_explanation_user_study.csv', 'a')
 
             # CARE with {validity, soundness, coherency, actionability} config
             care_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
