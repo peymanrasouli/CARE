@@ -116,12 +116,12 @@ class CERTIFAI():
             cf_pred = self.outcomeConstraint(cf_theta)
             actionability_distance = self.actionabilityConstraint(cf_theta)
             if cf_pred != self.cf_class:
-                distance = np.inf
+                distance = 10.0
             else:
                 distance = actionability_distance
         else:
             cf_pred = self.outcomeConstraint(cf_theta)
-            distance = np.inf if cf_pred != self.cf_class else 0.0
+            distance = 10.0 if cf_pred != self.cf_class else 0.0
 
         return distance
 
@@ -153,7 +153,7 @@ class CERTIFAI():
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
         creator.create("Individual",  array.array, typecode='d', fitness=creator.FitnessMin)
         toolbox.register("evaluate", self.objectiveFunction)
-        toolbox.decorate("evaluate", tools.DeltaPenalty(self.checkFeasibility, np.inf, self.feasibilityDistance))
+        toolbox.decorate("evaluate", tools.DeltaPenalty(self.checkFeasibility, 10.0, self.feasibilityDistance))
         toolbox.register("attr_float", initialization, self.n_features)
         toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
