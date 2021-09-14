@@ -28,25 +28,25 @@ def GenerateTextExplanations(explanation, dataset):
 
     # create text explanation template w.r.t different data sets
     if dataset['name'] == 'adult':
-        input_class = 'RECEIVING' + str(input_class) + ' SALARY'
-        cf_class = 'RECEIVING' + str(cf_class) + ' SALARY'
+        input_class = str(input_class) + ' income'
+        cf_class = str(cf_class) + ' income'
 
     elif dataset['name'] == 'compas-scores-two-years':
-        input_class = str(input_class) + ' RECIDIVISM RISK'
-        cf_class = str(cf_class) + ' RECIDIVISM RISK'
+        input_class = str(input_class) + ' recidivism risk'
+        cf_class = str(cf_class) + ' recidivism risk'
 
     elif dataset['name'] == 'credit-card-default':
         labels = ['No', 'Yes']
-        input_class = labels[input_class] + ' DEFAULT'
-        cf_class = labels[cf_class] + ' DEFAULT'
+        input_class = labels[input_class] + ' default'
+        cf_class = labels[cf_class] + ' default'
 
     elif dataset['name'] == 'heloc':
-        input_class = str(input_class) + ' RISK'
-        cf_class = str(cf_class) + ' RISK'
+        input_class = str(input_class) + ' risk'
+        cf_class = str(cf_class) + ' risk'
 
     elif dataset['name'] == 'heart-disease':
-        input_class = 'TYPE '+ str(input_class) + ' DIAGNOSIS'
-        cf_class = 'TYPE '+ str(cf_class) + ' DIAGNOSIS'
+        input_class = 'diagnosis type '+ str(input_class)
+        cf_class = 'diagnosis type '+ str(cf_class)
 
 
     text_explanation += ', THE PERSON WOULD BE CLASSIFIED AS ' +  '\'' +  cf_class  + '\'' + \
