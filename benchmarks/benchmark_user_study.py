@@ -61,10 +61,10 @@ def main():
             predict_proba_fn = lambda x: np.asarray([1-blackbox.predict(x).ravel(), blackbox.predict(x).ravel()]).transpose()
 
             # creating/opening a csv file for storing results
-            exists = os.path.isfile(experiment_path + 'counterfactual_explanation_user_study.csv')
+            exists = os.path.isfile(experiment_path + 'user_study_assessment.csv')
             if exists:
-                os.remove(experiment_path + 'counterfactual_explanation_user_study.csv')
-            user_study_csv = open(experiment_path + 'counterfactual_explanation_user_study.csv', 'a')
+                os.remove(experiment_path + 'user_study_assessment.csv')
+            user_study_csv = open(experiment_path + 'user_study_assessment.csv', 'a')
 
             # CARE with {validity, soundness, coherency, actionability} config
             care_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
