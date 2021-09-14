@@ -98,7 +98,7 @@ def main():
             certifai_explainer.fit(X_train, Y_train)
 
             # explaining instances from test set
-            N = 31
+            N = 21
             explained = 0
             for x_ord in X_test:
 
@@ -106,51 +106,47 @@ def main():
                     user_preferences = userPreferences(dataset, x_ord)
 
                     # explain instance x_ord using CARE
-                    while True:
-                        CARE_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
-                                                    predict_proba_fn, explainer=care_explainer,
-                                                    user_preferences=user_preferences,
-                                                    cf_class='opposite', probability_thresh=0.5, n_cf=1)
-                        care_x_cfs_highlight = CARE_output['x_cfs_highlight']
-                        _, care_text_explanation = GenerateTextExplanations(CARE_output, dataset)
-                        if int(CARE_output['x_cfs_eval']['Class'].loc['x']) != \
-                                int(CARE_output['x_cfs_eval']['Class'].loc['cf_0']):
-                            break
+                    CARE_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
+                                                predict_proba_fn, explainer=care_explainer,
+                                                user_preferences=user_preferences,
+                                                cf_class='opposite', probability_thresh=0.5, n_cf=1)
+                    care_x_cfs_highlight = CARE_output['x_cfs_highlight']
+                    _, care_text_explanation = GenerateTextExplanations(CARE_output, dataset)
+                    if int(CARE_output['x_cfs_eval']['Class'].loc['x']) == \
+                            int(CARE_output['x_cfs_eval']['Class'].loc['cf_0']):
+                        raise Exception
 
                     # explain instance x_ord using CFPrototype
-                    while True:
-                        CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset,
-                                                                  task, CARE_output, explainer=cfprototype_explainer,
-                                                                  target_class=None, n_cf=1)
-                        cfprototype_x_cfs_highlight = CFPrototype_output['x_cfs_highlight']
-                        _, cfprototype_text_explanation = GenerateTextExplanations(CFPrototype_output, dataset)
-                        if int(CFPrototype_output['x_cfs_eval']['Class'].loc['x']) != \
-                                int(CFPrototype_output['x_cfs_eval']['Class'].loc['cf_0']):
-                            break
+                    CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset,
+                                                              task, CARE_output, explainer=cfprototype_explainer,
+                                                              target_class=None, n_cf=1)
+                    cfprototype_x_cfs_highlight = CFPrototype_output['x_cfs_highlight']
+                    _, cfprototype_text_explanation = GenerateTextExplanations(CFPrototype_output, dataset)
+                    if int(CFPrototype_output['x_cfs_eval']['Class'].loc['x']) == \
+                            int(CFPrototype_output['x_cfs_eval']['Class'].loc['cf_0']):
+                        raise Exception
 
                     # explain instance x_ord using DiCE
-                    while True:
-                        DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train,
-                                                    dataset, task, CARE_output, explainer=None, ACTIONABILITY=True,
-                                                    user_preferences=user_preferences, n_cf=1, desired_class="opposite",
-                                                    probability_thresh=0.5, proximity_weight=1.0, diversity_weight=1.0)
-                        dice_x_cfs_highlight = DiCE_output['x_cfs_highlight']
-                        _, dice_text_explanation = GenerateTextExplanations(DiCE_output, dataset)
-                        if int(DiCE_output['x_cfs_eval']['Class'].loc['x']) != \
-                                int(DiCE_output['x_cfs_eval']['Class'].loc['cf_0']):
-                            break
+                    DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train,
+                                                dataset, task, CARE_output, explainer=None, ACTIONABILITY=True,
+                                                user_preferences=user_preferences, n_cf=1, desired_class="opposite",
+                                                probability_thresh=0.5, proximity_weight=1.0, diversity_weight=1.0)
+                    dice_x_cfs_highlight = DiCE_output['x_cfs_highlight']
+                    _, dice_text_explanation = GenerateTextExplanations(DiCE_output, dataset)
+                    if int(DiCE_output['x_cfs_eval']['Class'].loc['x']) == \
+                            int(DiCE_output['x_cfs_eval']['Class'].loc['cf_0']):
+                        raise Exception
 
                     # explain instance x_ord using CERTIFAI
-                    while True:
-                        CERTIFAI_output = CERTIFAIExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
-                                                            predict_proba_fn, CARE_output, explainer=certifai_explainer,
-                                                            user_preferences=user_preferences, cf_class='opposite',
-                                                            n_cf=1)
-                        certifai_x_cfs_highlight = CERTIFAI_output['x_cfs_highlight']
-                        _, certifai_text_explanation = GenerateTextExplanations(CERTIFAI_output, dataset)
-                        if int(CERTIFAI_output['x_cfs_eval']['Class'].loc['x']) != \
-                                int(CERTIFAI_output['x_cfs_eval']['Class'].loc['cf_0']):
-                            break
+                    CERTIFAI_output = CERTIFAIExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
+                                                        predict_proba_fn, CARE_output, explainer=certifai_explainer,
+                                                        user_preferences=user_preferences, cf_class='opposite',
+                                                        n_cf=1)
+                    certifai_x_cfs_highlight = CERTIFAI_output['x_cfs_highlight']
+                    _, certifai_text_explanation = GenerateTextExplanations(CERTIFAI_output, dataset)
+                    if int(CERTIFAI_output['x_cfs_eval']['Class'].loc['x']) == \
+                            int(CERTIFAI_output['x_cfs_eval']['Class'].loc['cf_0']):
+                        raise Exception
 
                     # storing the best counterfactual found by methods
                     x_class = dataset['labels'][int(CARE_output['x_cfs_eval']['Class'].loc['x'])]
