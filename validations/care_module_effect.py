@@ -34,7 +34,7 @@ def main():
 
     # defining the list of black-boxes
     blackbox_list = {
-        'nn-c': MLPClassifier,
+        # 'nn-c': MLPClassifier,
         'gb-c': GradientBoostingClassifier,
         # 'nn-r': MLPRegressor,
         # 'gb-r': GradientBoostingRegressor
@@ -117,13 +117,13 @@ def main():
 
             header = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,' \
                      '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % \
-                     ('Outcome', 'Proximity', 'Connectedness', 'Coherency', 'Actionability', 'Distance',
+                     ('Outcome', 'Actionability', 'Coherency', 'Proximity', 'Connectedness', 'Distance',
                       'Sparsity', 'i-Validity', 's-Validity', 'f-Diversity', 'v-Diversity', 'd-Diversity',
-                      'Outcome', 'Proximity', 'Connectedness', 'Coherency', 'Actionability', 'Distance',
+                      'Outcome', 'Actionability', 'Coherency', 'Proximity', 'Connectedness', 'Distance',
                       'Sparsity', 'i-Validity', 's-Validity', 'f-Diversity', 'v-Diversity', 'd-Diversity',
-                      'Outcome', 'Proximity', 'Connectedness', 'Coherency', 'Actionability', 'Distance',
+                      'Outcome', 'Actionability', 'Coherency', 'Proximity', 'Connectedness', 'Distance',
                       'Sparsity', 'i-Validity', 's-Validity', 'f-Diversity', 'v-Diversity', 'd-Diversity',
-                      'Outcome', 'Proximity', 'Connectedness', 'Coherency', 'Actionability', 'Distance',
+                      'Outcome', 'Actionability', 'Coherency', 'Proximity', 'Connectedness', 'Distance',
                       'Sparsity', 'i-Validity', 's-Validity', 'f-Diversity', 'v-Diversity', 'd-Diversity')
             eval_results_csv.write(header)
 
