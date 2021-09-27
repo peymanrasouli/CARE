@@ -28,12 +28,11 @@ def main():
         'compas-scores-two-years': ('compas-scores-two-years.csv', PrepareCOMPAS, 'classification'),
         'credit-card-default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
         'heloc': ('heloc_dataset_v1.csv', PrepareHELOC, 'classification'),
-        'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),
     }
 
     # defining the list of black-boxes
     blackbox_list = {
-        'nn-c': MLPClassifier,
+        # 'nn-c': MLPClassifier,
         'gb-c': GradientBoostingClassifier
     }
 
@@ -42,7 +41,6 @@ def main():
         'compas-scores-two-years': (500, 10),
         'credit-card-default': (500, 10),
         'heloc': (500,10),
-        'heart-disease': (50, 10),
     }
 
     for dataset_kw in datsets_list:
