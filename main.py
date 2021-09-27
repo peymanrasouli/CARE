@@ -24,6 +24,7 @@ def main():
         # 'heloc': ('heloc_dataset_v1.csv', PrepareHELOC, 'classification'), # use 'nn - c' or 'gb - c'
         # 'heart-disease': ('heart-disease.csv', PrepareHeartDisease, 'classification'),  # use 'nn-c' or 'gb-c'
         # 'iris': ('iris-sklearn', PrepareIris, 'classification'),  # use 'gb-c'
+        # 'wine': ('wine-sklearn', PrepareWine, 'classification'), # use 'gb-c'
         # 'diabetes': ('diabetes-sklearn', PrepareDiabetes, 'regression') # use 'nn-r' or 'gb-r'
         # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression') # use 'nn-r' or 'gb-r'
     }

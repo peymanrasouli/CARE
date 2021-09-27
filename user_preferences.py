@@ -138,11 +138,10 @@ def userPreferences(dataset, x_ord):
             importance[index] = constraints[p][1]
             print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
 
-
     ## HELOC data set
     elif dataset['name'] == 'heloc':
         ## Feature names and their possible values
-        ## Features with range [] values are continuous (e.g., ExternalRiskEstimate) and features with set {} values (e.g., SEX) are discrete
+        ## Features with range [] values are continuous (e.g., ExternalRiskEstimate) and features with set {} values are discrete
 
         # {'ExternalRiskEstimate': [33, 94]},
         # {'MSinceOldestTradeOpen': [2, 803]},
@@ -180,6 +179,36 @@ def userPreferences(dataset, x_ord):
             importance[index] = constraints[p][1]
             print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
 
+    ## Wine data set
+    elif dataset['name'] == 'wine':
+        ## Feature names and their possible values
+        ## Features with range [] values are continuous (e.g., alcohol) and features with set {} values are discrete
+
+        # {'alcohol': [11.03, 14.83]},
+        # {'malic_acid': [0.74, 5.8]},
+        # {'ash': [1.36, 3.23]},
+        # {'alcalinity_of_ash': [10.6, 30.0]},
+        # {'magnesium': [70.0, 162.0]},
+        # {'total_phenols': [0.98, 3.88]},
+        # {'flavanoids': [0.34, 5.08]},
+        # {'nonflavanoid_phenols': [0.13, 0.66]},
+        # {'proanthocyanins': [0.41, 3.58]},
+        # {'color_intensity': [1.28, 13.0]},
+        # {'hue': [0.48, 1.71]},
+        # {'od280/od315_of_diluted_wines': [1.27, 4.0]},
+        # {'proline': [278.0, 1680.0]}
+
+        print('\n')
+        print('----- user-specified constraints -----')
+        constraints = {}
+
+        constraint = [None] * len(x_ord)
+        importance = [None] * len(x_ord)
+        for p in constraints:
+            index = dataset['feature_names'].index(p)
+            constraint[index] = constraints[p][0]
+            importance[index] = constraints[p][1]
+            print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
 
     ## Heart disease data set
     elif dataset['name'] == 'heart-disease':

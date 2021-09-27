@@ -656,7 +656,7 @@ class CARE():
     # explain instance using multi-objective counterfactuals
     def explain(self,
                 x,
-                cf_class='opposite',
+                cf_class='neighbor',
                 probability_thresh=0.5,
                 cf_quantile='neighbor',
                 user_preferences=None
