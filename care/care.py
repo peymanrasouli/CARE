@@ -37,7 +37,7 @@ class CARE():
                  corr_model_train_percent=0.8,
                  corr_model_score_thresh='median',
                  n_population='adaptive',
-                 n_generation=10,
+                 n_generation=20,
                  hof_size=100,
                  x_init=0.3,
                  neighbor_init=0.6,
@@ -188,7 +188,7 @@ class CARE():
 
         elif self.SOUNDNESS == False and self.COHERENCY == True and self.ACTIONABILITY == True:
             # objective names
-            self.objective_names = ['outcome', 'coherency', 'actionability', 'distance', 'sparsity']
+            self.objective_names = ['outcome', 'actionability', 'coherency', 'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
             self.objective_weights = (-1.0, -1.0, -1.0, -1.0, -1.0)
             # number of objectives
@@ -210,12 +210,12 @@ class CARE():
                 outcome_cost = outcomeObj(cf_ohe, task, predict_fn, predict_proba_fn,
                                              probability_thresh, cf_class, cf_range)
 
-                # objective 2: coherency
+                # objective 2: actionable recourse
+                actionability_cost = actionabilityObj(x_org, cf_org, user_preferences)
+
+                # objective 3: coherency
                 coherency_cost = coherencyObj(x_ord, cf_ord, feature_width, continuous_indices,
                                               discrete_indices, correlationModel)
-
-                # objective 3: actionable recourse
-                actionability_cost = actionabilityObj(x_org, cf_org, user_preferences)
 
                 # objective 4: feature distance
                 distance_cost = distanceObj(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
@@ -223,7 +223,7 @@ class CARE():
                 # objective 5: sparsity
                 sparsity_cost = sparsityObj(x_org, cf_org)
 
-                return outcome_cost, coherency_cost, actionability_cost, distance_cost, sparsity_cost
+                return outcome_cost, actionability_cost, coherency_cost, distance_cost, sparsity_cost
 
             return objectiveFunction
 
@@ -268,9 +268,9 @@ class CARE():
 
         elif self.SOUNDNESS == True and self.COHERENCY == False and self.ACTIONABILITY == True:
             # objective names
-            self.objective_names = ['outcome', 'proximity', 'connectedness', 'actionability', 'distance', 'sparsity']
+            self.objective_names = ['outcome', 'actionability', 'proximity', 'connectedness', 'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
-            self.objective_weights = (-1.0, 1.0, 1.0, -1.0, -1.0, -1.0)
+            self.objective_weights = (-1.0, -1.0, 1.0, 1.0, -1.0, -1.0)
             # number of objectives
             self.n_objectives = 6
 
@@ -289,14 +289,15 @@ class CARE():
                 # objective 1: desired outcome
                 outcome_cost = outcomeObj(cf_ohe, task, predict_fn, predict_proba_fn,
                                              probability_thresh, cf_class, cf_range)
-                # objective 2: proximity
+
+                # objective 2: actionable recourse
+                actionability_cost = actionabilityObj(x_org, cf_org, user_preferences)
+
+                # objective 3: proximity
                 proximity_fitness = proximityObj(cf_ohe, proximity_model)
 
-                # objective 3: connectedness
+                # objective 4: connectedness
                 connectedness_fitness = connectednessObj(cf_ohe, connectedness_model)
-
-                # objective 4: actionable recourse
-                actionability_cost = actionabilityObj(x_org, cf_org, user_preferences)
 
                 # objective 5: feature distance
                 distance_cost = distanceObj(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
@@ -304,16 +305,16 @@ class CARE():
                 # objective 6: sparsity
                 sparsity_cost = sparsityObj(x_org, cf_org)
 
-                return outcome_cost, proximity_fitness, connectedness_fitness, actionability_cost, \
+                return outcome_cost, actionability_cost, proximity_fitness, connectedness_fitness, \
                        distance_cost, sparsity_cost
 
             return objectiveFunction
 
         elif self.SOUNDNESS == True and self.COHERENCY == True and self.ACTIONABILITY == False:
             # objective names
-            self.objective_names = ['outcome', 'proximity', 'connectedness', 'coherency', 'distance', 'sparsity']
+            self.objective_names = ['outcome', 'coherency', 'proximity', 'connectedness', 'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
-            self.objective_weights = (-1.0, 1.0, 1.0, -1.0, -1.0, -1.0)
+            self.objective_weights = (-1.0, -1.0, 1.0, 1.0, -1.0, -1.0)
             # number of objectives
             self.n_objectives = 6
 
@@ -332,15 +333,16 @@ class CARE():
                 # objective 1: desired outcome
                 outcome_cost = outcomeObj(cf_ohe, task, predict_fn, predict_proba_fn,
                                              probability_thresh, cf_class, cf_range)
-                # objective 2: proximity
-                proximity_fitness = proximityObj(cf_ohe, proximity_model)
 
-                # objective 3: connectedness
-                connectedness_fitness = connectednessObj(cf_ohe, connectedness_model)
-
-                # objective 4: coherency
+                # objective 2: coherency
                 coherency_cost = coherencyObj(x_ord, cf_ord, feature_width, continuous_indices,
                                               discrete_indices, correlationModel)
+
+                # objective 3: proximity
+                proximity_fitness = proximityObj(cf_ohe, proximity_model)
+
+                # objective 4: connectedness
+                connectedness_fitness = connectednessObj(cf_ohe, connectedness_model)
 
                 # objective 5: feature distance
                 distance_cost = distanceObj(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
@@ -348,17 +350,17 @@ class CARE():
                 # objective 6: sparsity
                 sparsity_cost = sparsityObj(x_org, cf_org)
 
-                return outcome_cost, proximity_fitness, connectedness_fitness, coherency_cost, \
+                return outcome_cost, coherency_cost, proximity_fitness, connectedness_fitness, \
                        distance_cost, sparsity_cost
 
             return objectiveFunction
 
         elif self.SOUNDNESS == True and self.COHERENCY == True and self.ACTIONABILITY == True:
             # objective names
-            self.objective_names = ['outcome', 'proximity', 'connectedness', 'coherency', 'actionability',
+            self.objective_names = ['outcome', 'actionability', 'coherency', 'proximity', 'connectedness',
                                     'distance', 'sparsity']
             # objective weights, -1.0: cost function, 1.0: fitness function
-            self.objective_weights = (-1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0)
+            self.objective_weights = (-1.0, -1.0, -1.0, 1.0, 1.0, -1.0, -1.0)
             # number of objectives
             self.n_objectives = 7
 
@@ -377,18 +379,19 @@ class CARE():
                 # objective 1: desired outcome
                 outcome_cost = outcomeObj(cf_ohe, task, predict_fn, predict_proba_fn,
                                              probability_thresh, cf_class, cf_range)
-                # objective 2: proximity
-                proximity_fitness = proximityObj(cf_ohe, proximity_model)
 
-                # objective 3: connectedness
-                connectedness_fitness = connectednessObj(cf_ohe, connectedness_model)
+                # objective 2: actionable recourse
+                actionability_cost = actionabilityObj(x_org, cf_org, user_preferences)
 
-                # objective 4: coherency
+                # objective 3: coherency
                 coherency_cost = coherencyObj(x_ord, cf_ord, feature_width, continuous_indices,
                                               discrete_indices, correlationModel)
 
-                # objective 5: actionable recourse
-                actionability_cost = actionabilityObj(x_org, cf_org, user_preferences)
+                # objective 4: proximity
+                proximity_fitness = proximityObj(cf_ohe, proximity_model)
+
+                # objective 5: connectedness
+                connectedness_fitness = connectednessObj(cf_ohe, connectedness_model)
 
                 # objective 6: feature distance
                 distance_cost = distanceObj(x_ord, cf_ord, feature_width, continuous_indices, discrete_indices)
@@ -396,8 +399,8 @@ class CARE():
                 # objective 7: sparsity
                 sparsity_cost = sparsityObj(x_org, cf_org)
 
-                return outcome_cost, proximity_fitness, connectedness_fitness, coherency_cost, \
-                       actionability_cost, distance_cost, sparsity_cost
+                return outcome_cost, actionability_cost, coherency_cost, proximity_fitness, connectedness_fitness,\
+                       distance_cost, sparsity_cost
 
             return objectiveFunction
 
