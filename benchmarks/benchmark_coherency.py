@@ -140,13 +140,18 @@ def main():
                                                 predict_proba_fn, explainer=care_explainer,
                                                 cf_class='opposite', probability_thresh=0.5, n_cf=n_cf)
                     care_best_cf = CARE_output['best_cf_ord']
+                    if int(CARE_output['x_cfs_eval']['Class'].loc['x']) == \
+                            int(CARE_output['x_cfs_eval']['Class'].loc['cf_0']):
+                        raise Exception
 
                     # explain instance x_ord using CFPrototype
                     CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset,
                                                               task, CARE_output, explainer=cfprototype_explainer,
                                                               target_class=None, n_cf=n_cf)
                     cfprototype_best_cf = CFPrototype_output['best_cf_ord']
-
+                    if int(CFPrototype_output['x_cfs_eval']['Class'].loc['x']) == \
+                            int(CFPrototype_output['x_cfs_eval']['Class'].loc['cf_0']):
+                        raise Exception
 
                     # explain instance x_ord using DiCE
                     DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train,
@@ -154,12 +159,18 @@ def main():
                                                 user_preferences=None, n_cf=n_cf, desired_class="opposite",
                                                 probability_thresh=0.5, proximity_weight=1.0, diversity_weight=1.0)
                     dice_best_cf = DiCE_output['best_cf_ord']
+                    if int(DiCE_output['x_cfs_eval']['Class'].loc['x']) == \
+                            int(DiCE_output['x_cfs_eval']['Class'].loc['cf_0']):
+                        raise Exception
 
                     # explain instance x_ord using CERTIFAI
                     CERTIFAI_output = CERTIFAIExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
                                                          predict_proba_fn, CARE_output, explainer=certifai_explainer,
                                                          cf_class='opposite', n_cf=n_cf)
                     certifai_best_cf = CERTIFAI_output['best_cf_ord']
+                    if int(CERTIFAI_output['x_cfs_eval']['Class'].loc['x']) == \
+                            int(CERTIFAI_output['x_cfs_eval']['Class'].loc['cf_0']):
+                        raise Exception
 
                     original_data.append(x_ord)
                     care_cfs.append(care_best_cf)
