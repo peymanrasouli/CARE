@@ -14,8 +14,10 @@ from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import f1_score, r2_score
 from dython import nominal
 import hdbscan
+from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import Ridge
+from sklearn.feature_selection import RFECV
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib
 matplotlib.use('Agg')
@@ -35,7 +37,7 @@ class CARE():
                  K_nbrs=500,
                  corr_thresh=0.1,
                  corr_model_train_percent=0.8,
-                 corr_model_score_thresh='median',
+                 corr_model_score_thresh=0.8,
                  n_population='adaptive',
                  n_generation=20,
                  hof_size=100,
@@ -492,42 +494,85 @@ class CARE():
 
         print('Creating correlation models for coherency-preservation ...')
 
-        ## Feature correlation modeling
-        # Calculate the correlation/strength-of-association of features in data-set
-        # with both categorical and continuous features using:
-        # Pearson's R for continuous-continuous cases
-        # Correlation Ratio for categorical-continuous cases
-        # Cramer's V for categorical-categorical cases
-        corr = nominal.associations(self.X_train, nominal_columns=self.discrete_indices, plot=False)['corr']
-        plt.close('all')
+        # ## Feature correlation modeling
+        # # Calculate the correlation/strength-of-association of features in data-set
+        # # with both categorical and continuous features using:
+        # # Pearson's R for continuous-continuous cases
+        # # Correlation Ratio for categorical-continuous cases
+        # # Cramer's V for categorical-categorical cases
+        # corr = nominal.associations(self.X_train, nominal_columns=self.discrete_indices, plot=False)['corr']
+        # plt.close('all')
+        #
+        # # only consider the features that have correlation above the threshold
+        # corr = corr.to_numpy()
+        # corr[np.diag_indices(corr.shape[0])] = 0.0
+        # corr_features = np.where(abs(corr) > self.corr_thresh)
+        # corr_ = np.zeros(corr.shape)
+        # corr_[corr_features] = 1
+        #
+        # ## creating correlation models
+        # val_point = int(self.corr_model_train_percent * len(self.X_train))
+        # scores = []
+        # correlation_models = []
+        # for f in range(len(corr_)):
+        #     inputs = np.where(corr_[f, :] == 1)[0]
+        #     if len(inputs) > 0:
+        #         if f in self.discrete_indices:
+        #             model = DecisionTreeClassifier()
+        #             model.fit(self.X_train[0:val_point, inputs], self.X_train[0:val_point, f])
+        #             score = f1_score(self.X_train[val_point:, f], model.predict(self.X_train[val_point:, inputs]),
+        #                              average='weighted')
+        #             scores.append(score)
+        #             correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
+        #         elif f in self.continuous_indices:
+        #             model = Ridge()
+        #             model.fit(self.X_train[0:val_point, inputs], self.X_train[0:val_point, f])
+        #             score = r2_score(self.X_train[val_point:, f], model.predict(self.X_train[val_point:, inputs]))
+        #             scores.append(score)
+        #             correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
 
-        # only consider the features that have correlation above the threshold
-        corr = corr.to_numpy()
-        corr[np.diag_indices(corr.shape[0])] = 0.0
-        corr_features = np.where(abs(corr) > self.corr_thresh)
-        corr_ = np.zeros(corr.shape)
-        corr_[corr_features] = 1
-
-        ## creating correlation models
-        val_point = int(self.corr_model_train_percent * len(self.X_train))
+        # splitting training data for validating the correlation models
+        X_train, X_val, Y_train, Y_val = train_test_split(self.X_train, self.Y_train,
+                                                          train_size=self.corr_model_train_percent,
+                                                          random_state=42)
         scores = []
         correlation_models = []
-        for f in range(len(corr_)):
-            inputs = np.where(corr_[f, :] == 1)[0]
-            if len(inputs) > 0:
-                if f in self.discrete_indices:
-                    model = DecisionTreeClassifier()
-                    model.fit(self.X_train[0:val_point, inputs], self.X_train[0:val_point, f])
-                    score = f1_score(self.X_train[val_point:, f], model.predict(self.X_train[val_point:, inputs]),
-                                     average='weighted')
-                    scores.append(score)
-                    correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
-                elif f in self.continuous_indices:
-                    model = Ridge()
-                    model.fit(self.X_train[0:val_point, inputs], self.X_train[0:val_point, f])
-                    score = r2_score(self.X_train[val_point:, f], model.predict(self.X_train[val_point:, inputs]))
-                    scores.append(score)
-                    correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
+        for f in range(X_train.shape[1]):
+            if f in self.discrete_indices:
+                # recursive feature selection
+                F = [i for i in range(X_train.shape[1])]
+                F.remove(f)
+                X_train_ = X_train[:,F]
+                rfecv = RFECV(estimator=DecisionTreeClassifier(), step=1, cv=5,
+                              scoring='f1_weighted',
+                              min_features_to_select=1)
+                rfecv.fit(X_train_, X_train[:, f])
+                inputs = rfecv.get_support(indices=True)
+                inputs[np.where(inputs >= f)] +=1
+                # correlation model construction
+                model = DecisionTreeClassifier()
+                model.fit(X_train[:, inputs], X_train[:, f])
+                score = f1_score(X_val[:, f], model.predict(X_val[:, inputs]), average='weighted')
+                scores.append(score)
+                correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
+
+            elif f in self.continuous_indices:
+                # recursive feature selection
+                F = [i for i in range(X_train.shape[1])]
+                F.remove(f)
+                X_train_ = X_train[:,F]
+                rfecv = RFECV(estimator=Ridge(), step=1, cv=3,
+                              scoring='r2',
+                              min_features_to_select=1)
+                rfecv.fit(X_train_, X_train[:, f])
+                inputs = rfecv.get_support(indices=True)
+                inputs[np.where(inputs >= f)] +=1
+                # correlation model construction
+                model = Ridge()
+                model.fit(X_train[:, inputs], X_train[:, f])
+                score = r2_score(X_val[:, f], model.predict(X_val[:, inputs]))
+                scores.append(score)
+                correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
 
         # select models that have prediction score above a threshold/median value
         if self.corr_model_score_thresh == 'median':
