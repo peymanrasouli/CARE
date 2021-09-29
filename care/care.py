@@ -561,7 +561,7 @@ class CARE():
                 F = [i for i in range(X_train.shape[1])]
                 F.remove(f)
                 X_train_ = X_train[:,F]
-                rfecv = RFECV(estimator=Ridge(), step=1, cv=3,
+                rfecv = RFECV(estimator=Ridge(), step=1, cv=5,
                               scoring='r2',
                               min_features_to_select=1)
                 rfecv.fit(X_train_, X_train[:, f])

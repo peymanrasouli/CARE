@@ -17,9 +17,9 @@ def PrepareAdult(dataset_path, dataset_name):
     df_X_org = df.loc[:, df.columns!=class_name]
     df_y = df.loc[:, class_name]
 
-    continuous_features = ['age', 'capital-gain', 'capital-loss', 'hours-per-week']
-    discrete_features = ['work-class', 'education', 'marital-status', 'occupation',
-                         'relationship', 'race', 'sex', 'native-country']
+    continuous_features = ['age', 'education-num', 'capital-gain', 'capital-loss', 'hours-per-week']
+    discrete_features = ['work-class', 'education', 'marital-status', 'occupation', 'relationship',
+                         'race', 'sex', 'native-country']
 
     continuous_availability = True
     discrete_availability = True
