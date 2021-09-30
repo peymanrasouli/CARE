@@ -40,6 +40,7 @@ def main():
         # 'gb-r': GradientBoostingRegressor
     }
 
+    # defining number of samples N and number of counterfactuals generated for every instance n_cf
     experiment_size = {
         'adult': (500, 10),
         'compas-scores-two-years': (500, 10),

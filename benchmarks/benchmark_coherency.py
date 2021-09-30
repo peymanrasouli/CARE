@@ -42,6 +42,7 @@ def main():
         'nn-c': MLPClassifier,
     }
 
+    # defining number of samples N and number of counterfactuals generated for every instance n_cf
     experiment_size = {
         'adult': (500, 1),
         'compas-scores-two-years': (500, 1),
