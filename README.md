@@ -106,11 +106,7 @@ python benchmark_validity_soundness_coherency.py
 ```
 python benchmark_validity_soundness_coherency_actionability.py
 ```
-5- To reproduce the results of coherency benchmark of CARE vs. baselines, run:
-```
-python benchmark_coherency.py
-```
-6- To reproduce the the results of user study benchmark of CARE vs. baselines, run:
+5- To reproduce the the results of user study benchmark of CARE vs. baselines, run:
 ```
 python benchmark_user_study.py
 ```
