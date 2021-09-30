@@ -20,7 +20,7 @@ def actionabilityObj(x_org, cf_org, user_preferences):
             cost.append(int(not(cf_org[i] in constraint[i])) * importance[i])
         elif type(constraint[i]) == list:
             cost.append(int(not(constraint[i][0] <= cf_org[i] <= constraint[i][1])) * importance[i])
-        # added for coherency evaluation
+        # is used for coherency validation experiment
         elif constraint[i] == 'change':
             cost.append(int(cf_org[i] == x_org[i]) * importance[i])
     return sum(cost)
