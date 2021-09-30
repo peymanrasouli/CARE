@@ -14,7 +14,6 @@ from create_model import CreateModel, MLPClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from care.care import CARE
 from user_preferences import userPreferences
-from evaluate_counterfactuals import evaluateCounterfactuals
 
 def main():
     # defining path of data sets and experiment results
