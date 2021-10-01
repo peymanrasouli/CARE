@@ -161,7 +161,7 @@ def main():
                     user_study_csv.write('Individual #%d:\n' % (explained))
                     user_study_csv.flush()
 
-                    cfs_results_df = pd.DataFrame(columns=['Original', 'CE #1', 'CE #2', 'CE #3', 'CE #4'],
+                    cfs_results_df = pd.DataFrame(columns=['Original', 'CE 1', 'CE 2', 'CE 3', 'CE 4'],
                                                   data= cfs_results,
                                                   index= dataset['feature_names']+['Class']).transpose()
                     cfs_results_df.to_csv(user_study_csv, sep='\t')
@@ -173,7 +173,9 @@ def main():
                     understandability = ['Understandable', '', '', '', '']
                     metrics = np.c_[np.asarray(actionability),np.asarray(consistency), np.asarray(understandability)].T
 
-                    metrics_df = pd.DataFrame(columns=['Metric', 'Least', '', '', 'Most'], data=metrics)
+                    user_study_csv.write('\nMetrics:\n')
+                    user_study_csv.flush()
+                    metrics_df = pd.DataFrame(columns=['', 'Least', '', '', 'Most'], data=metrics)
                     metrics_df.to_csv(user_study_csv, sep='\t', index=False)
                     user_study_csv.write('\n\n\n')
                     user_study_csv.flush()
