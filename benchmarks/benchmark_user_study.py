@@ -158,7 +158,7 @@ def main():
                                         np.r_[np.asarray(dice_x_cfs_highlight.iloc[1, :]), np.asarray(cf_class)],
                                         np.r_[np.asarray(certifai_x_cfs_highlight.iloc[1,: ]), np.asarray(cf_class)]]
 
-                    user_study_csv.write('Individual #%d:\n' % (explained))
+                    user_study_csv.write('Individual #%d\n' % (explained))
                     user_study_csv.flush()
 
                     cfs_results_df = pd.DataFrame(columns=['Original', 'CE 1', 'CE 2', 'CE 3', 'CE 4'],
@@ -173,7 +173,7 @@ def main():
                     understandability = ['Understandable', '', '', '', '']
                     metrics = np.c_[np.asarray(actionability),np.asarray(consistency), np.asarray(understandability)].T
 
-                    user_study_csv.write('\nMetrics:\n')
+                    user_study_csv.write('\nMetrics\n')
                     user_study_csv.flush()
                     metrics_df = pd.DataFrame(columns=['', 'Least', '', '', 'Most'], data=metrics)
                     metrics_df.to_csv(user_study_csv, sep='\t', index=False)
