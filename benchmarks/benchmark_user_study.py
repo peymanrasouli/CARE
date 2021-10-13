@@ -16,6 +16,7 @@ from user_preferences import userPreferences
 from care.care import CARE
 from alibi.explainers import CounterFactualProto
 from alibi.utils.mapping import ord_to_ohe
+import dice_ml
 from certifai.certifai import CERTIFAI
 from care_explainer import CAREExplainer
 from cfprototype_explainer import CFPrototypeExplainer
@@ -68,7 +69,7 @@ def main():
 
             # CARE with {validity, soundness, coherency, actionability} config
             care_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                  SOUNDNESS=True, COHERENCY=True, ACTIONABILITY=True, n_cf=1)
+                                  SOUNDNESS=True, COHERENCY=True, ACTIONABILITY=False, n_cf=1)
             care_explainer.fit(X_train, Y_train)
 
             # CFPrototype
@@ -93,13 +94,27 @@ def main():
             X_train_ohe = ord2ohe(X_train, dataset)
             cfprototype_explainer.fit(X_train_ohe, d_type='abdm', disc_perc=[25, 50, 75])
 
+            # DiCE
+            feature_names = dataset['feature_names']
+            continuous_features = dataset['continuous_features']
+            discrete_features = dataset['discrete_features']
+            data_frame = pd.DataFrame(data=np.c_[X_train, Y_train], columns=feature_names + ['class'])
+            data_frame[continuous_features] = (data_frame[continuous_features]).astype(float)
+            data_frame[discrete_features] = (data_frame[discrete_features]).astype(int)
+            data = dice_ml.Data(dataframe=data_frame,
+                                continuous_features=continuous_features,
+                                outcome_name='class')
+            backend = 'TF1'
+            model = dice_ml.Model(model=blackbox, backend=backend)
+            dice_explainer = dice_ml.Dice(data, model)
+
             # CERTIFAI
             certifai_explainer = CERTIFAI(dataset, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                          ACTIONABILITY=True, n_population=100, n_generation=50, n_cf=1)
+                                          ACTIONABILITY=False, n_population=100, n_generation=50, n_cf=1)
             certifai_explainer.fit(X_train, Y_train)
 
             # explaining instances from test set
-            N = 10
+            N = 50
             explained = 0
             for x_ord in X_test:
 
@@ -129,7 +144,7 @@ def main():
 
                     # explain instance x_ord using DiCE
                     DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train,
-                                                dataset, task, CARE_output, explainer=None, ACTIONABILITY=True,
+                                                dataset, task, CARE_output, explainer=dice_explainer, ACTIONABILITY=False,
                                                 user_preferences=user_preferences, n_cf=1, desired_class="opposite",
                                                 probability_thresh=0.5, proximity_weight=1.0, diversity_weight=1.0)
                     dice_x_cfs_highlight = DiCE_output['x_cfs_highlight']
@@ -141,8 +156,8 @@ def main():
                     # explain instance x_ord using CERTIFAI
                     CERTIFAI_output = CERTIFAIExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
                                                         predict_proba_fn, CARE_output, explainer=certifai_explainer,
-                                                        user_preferences=user_preferences, cf_class='opposite',
-                                                        n_cf=1)
+                                                        ACTIONABILITY=False, user_preferences=user_preferences,
+                                                        cf_class='opposite', n_cf=1)
                     certifai_x_cfs_highlight = CERTIFAI_output['x_cfs_highlight']
                     _, certifai_text_explanation = GenerateTextExplanations(CERTIFAI_output, dataset)
                     if int(CERTIFAI_output['x_cfs_eval']['Class'].loc['x']) == \
