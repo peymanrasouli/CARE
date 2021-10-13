@@ -33,7 +33,7 @@ def main():
 
     # defining the list of data sets
     datsets_list = {
-        'adult': ('adult.csv', PrepareAdult, 'classification'),
+        'adult': ('adult.csv', PrepareAdultReduced, 'classification'),
     }
 
     # defining the list of black-boxes
@@ -119,12 +119,10 @@ def main():
             for x_ord in X_test:
 
                 try:
-                    user_preferences = userPreferences(dataset, x_ord)
 
                     # explain instance x_ord using CARE
                     CARE_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
                                                 predict_proba_fn, explainer=care_explainer,
-                                                user_preferences=user_preferences,
                                                 cf_class='opposite', probability_thresh=0.5, n_cf=1)
                     care_x_cfs_highlight = CARE_output['x_cfs_highlight']
                     _, care_text_explanation = GenerateTextExplanations(CARE_output, dataset)
@@ -144,8 +142,8 @@ def main():
 
                     # explain instance x_ord using DiCE
                     DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train,
-                                                dataset, task, CARE_output, explainer=dice_explainer, ACTIONABILITY=False,
-                                                user_preferences=user_preferences, n_cf=1, desired_class="opposite",
+                                                dataset, task, CARE_output, explainer=dice_explainer,
+                                                ACTIONABILITY=False, desired_class="opposite", n_cf=1,
                                                 probability_thresh=0.5, proximity_weight=1.0, diversity_weight=1.0)
                     dice_x_cfs_highlight = DiCE_output['x_cfs_highlight']
                     _, dice_text_explanation = GenerateTextExplanations(DiCE_output, dataset)
@@ -156,8 +154,7 @@ def main():
                     # explain instance x_ord using CERTIFAI
                     CERTIFAI_output = CERTIFAIExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
                                                         predict_proba_fn, CARE_output, explainer=certifai_explainer,
-                                                        ACTIONABILITY=False, user_preferences=user_preferences,
-                                                        cf_class='opposite', n_cf=1)
+                                                        ACTIONABILITY=False, cf_class='opposite', n_cf=1)
                     certifai_x_cfs_highlight = CERTIFAI_output['x_cfs_highlight']
                     _, certifai_text_explanation = GenerateTextExplanations(CERTIFAI_output, dataset)
                     if int(CERTIFAI_output['x_cfs_eval']['Class'].loc['x']) == \
