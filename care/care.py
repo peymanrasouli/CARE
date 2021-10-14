@@ -531,49 +531,6 @@ class CARE():
                     scores.append(score)
                     correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
 
-        # # splitting training data for validating the correlation models
-        # X_train, X_val, Y_train, Y_val = train_test_split(self.X_train, self.Y_train,
-        #                                                   train_size=self.corr_model_train_percent,
-        #                                                   random_state=42)
-        # scores = []
-        # correlation_models = []
-        # for f in range(X_train.shape[1]):
-        #     if f in self.discrete_indices:
-        #         # recursive feature selection
-        #         F = [i for i in range(X_train.shape[1])]
-        #         F.remove(f)
-        #         X_train_ = X_train[:,F]
-        #         rfecv = RFECV(estimator=DecisionTreeClassifier(), step=1, cv=5,
-        #                       scoring='f1_weighted',
-        #                       min_features_to_select=1)
-        #         rfecv.fit(X_train_, X_train[:, f])
-        #         inputs = rfecv.get_support(indices=True)
-        #         inputs[np.where(inputs >= f)] +=1
-        #         # correlation model construction
-        #         model = DecisionTreeClassifier()
-        #         model.fit(X_train[:, inputs], X_train[:, f])
-        #         score = f1_score(X_val[:, f], model.predict(X_val[:, inputs]), average='weighted')
-        #         scores.append(score)
-        #         correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
-        #
-        #     elif f in self.continuous_indices:
-        #         # recursive feature selection
-        #         F = [i for i in range(X_train.shape[1])]
-        #         F.remove(f)
-        #         X_train_ = X_train[:,F]
-        #         rfecv = RFECV(estimator=Ridge(), step=1, cv=5,
-        #                       scoring='r2',
-        #                       min_features_to_select=1)
-        #         rfecv.fit(X_train_, X_train[:, f])
-        #         inputs = rfecv.get_support(indices=True)
-        #         inputs[np.where(inputs >= f)] +=1
-        #         # correlation model construction
-        #         model = Ridge()
-        #         model.fit(X_train[:, inputs], X_train[:, f])
-        #         score = r2_score(X_val[:, f], model.predict(X_val[:, inputs]))
-        #         scores.append(score)
-        #         correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
-
         # select models that have prediction score above a threshold/median value
         if self.corr_model_score_thresh == 'median':
             median = np.median(scores)
