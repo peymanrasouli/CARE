@@ -114,7 +114,7 @@ def main():
             certifai_explainer.fit(X_train, Y_train)
 
             # explaining instances from test set
-            N = 50
+            N = 10
             explained = 0
             for x_ord in X_test:
 
