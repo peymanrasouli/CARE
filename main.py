@@ -26,7 +26,7 @@ def main():
         # 'iris': ('iris-sklearn', PrepareIris, 'classification'),  # use 'gb-c'
         # 'wine': ('wine-sklearn', PrepareWine, 'classification'), # use 'gb-c'
         # 'diabetes': ('diabetes-sklearn', PrepareDiabetes, 'regression') # use 'nn-r' or 'gb-r'
-        # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression') # use 'nn-r' or 'gb-r'
+        # 'california-housing': ('california-housing-sklearn', PrepareCaliforniaHousing, 'regression') # use 'nn-r' or 'gb-r'
     }
 
     # defining the list of black-boxes
@@ -71,7 +71,7 @@ def main():
 
             # explain instance x_ord using CARE
             output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
-                                   SOUNDNESS=False, COHERENCY=False, ACTIONABILITY=False,
+                                   SOUNDNESS=True, COHERENCY=False, ACTIONABILITY=False,
                                    user_preferences=user_preferences, cf_class='neighbor',
                                    probability_thresh=0.5, cf_quantile='neighbor', n_cf=n_cf)
 
@@ -82,8 +82,9 @@ def main():
 
             # generate text explanations
             print('\n')
-            input, text_explanation = GenerateTextExplanations(output, dataset)
-            print(input, '\n \n', text_explanation)
+            if task is 'classification':
+                input, text_explanation = GenerateTextExplanations(output, dataset)
+                print(input, '\n \n', text_explanation)
 
             print('\n')
             print('Done!')

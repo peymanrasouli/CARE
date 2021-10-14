@@ -14,10 +14,8 @@ from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor
 from sklearn.metrics import f1_score, r2_score
 from dython import nominal
 import hdbscan
-from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import Ridge
-from sklearn.feature_selection import RFECV
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib
 matplotlib.use('Agg')

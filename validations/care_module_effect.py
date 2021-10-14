@@ -29,7 +29,7 @@ def main():
         'heloc': ('heloc_dataset_v1.csv', PrepareHELOC, 'classification'),
         'wine': ('wine-sklearn', PrepareWine, 'classification'),
         # 'diabetes': ('diabetes-sklearn', PrepareDiabetes, 'regression'),
-        # 'boston-house-prices': ('boston-house-prices.csv', PrepareBostonHousePrices, 'regression')
+        # 'california-housing': ('california-housing-sklearn', PrepareCaliforniaHousing, 'regression')
     }
 
     # defining the list of black-boxes
@@ -48,7 +48,7 @@ def main():
         'heloc': (500,10),
         'wine': (30, 10),
         'diabetes': (80, 10),
-        'boston-house-prices': (100, 10)
+        'california-housing': (400, 10)
     }
 
     for dataset_kw in datsets_list:

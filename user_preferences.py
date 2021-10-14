@@ -141,7 +141,7 @@ def userPreferences(dataset, x_ord):
     ## HELOC data set
     elif dataset['name'] == 'heloc':
         ## Feature names and their possible values
-        ## Features with range [] values are continuous (e.g., ExternalRiskEstimate) and features with set {} values are discrete
+        ## Features with range [] values are continuous (e.g., ExternalRiskEstimate)
 
         # {'ExternalRiskEstimate': [33, 94]},
         # {'MSinceOldestTradeOpen': [2, 803]},
@@ -182,7 +182,7 @@ def userPreferences(dataset, x_ord):
     ## Wine data set
     elif dataset['name'] == 'wine':
         ## Feature names and their possible values
-        ## Features with range [] values are continuous (e.g., alcohol) and features with set {} values are discrete
+        ## Features with range [] values are continuous (e.g., alcohol)
 
         # {'alcohol': [11.03, 14.83]},
         # {'malic_acid': [0.74, 5.8]},
@@ -245,7 +245,7 @@ def userPreferences(dataset, x_ord):
     ## Iris data set
     elif dataset['name'] == 'iris':
         ## Feature names and their possible values
-        ## Features with range [] values are continuous (e.g., CRIM) and features with set {} values (e.g., CHAS) are discrete
+        ## Features with range [] values are continuous (e.g., sepal length (cm))
 
         # {'sepal length (cm)': [4.3, 7.9]},
         # {'sepal width (cm)': [2.0, 4.4]},
@@ -267,7 +267,7 @@ def userPreferences(dataset, x_ord):
     ## Diabetes data set
     elif dataset['name'] == 'diabetes':
         ## Feature names and their possible values
-        ## Features with range [] values are continuous (e.g., CRIM) and features with set {} values (e.g., CHAS) are discrete
+        ## Features with range [] values are continuous (e.g., age)
 
         # {'age': [-0.107225631607358, 0.110726675453815]},
         # {'sex': [-0.044641636506989, 0.0506801187398187]},
@@ -283,7 +283,7 @@ def userPreferences(dataset, x_ord):
         print('\n')
         print('----- user-specified constraints -----')
         constraints = {'age': ('ge', 1),
-                   'sex': ('fix', 1)}
+                       'sex': ('fix', 1)}
 
         constraint = [None] * len(x_ord)
         importance = [None] * len(x_ord)
@@ -293,28 +293,23 @@ def userPreferences(dataset, x_ord):
             importance[index] = constraints[p][1]
             print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
 
-    ## Boston house price data set
-    elif dataset['name'] == 'boston-house-prices':
+    ## California Housing data set
+    elif dataset['name'] == 'california-housing':
         ## Feature names and their possible values
         ## Features with range [] values are continuous (e.g., CRIM) and features with set {} values (e.g., CHAS) are discrete
 
-        # {'CRIM': [0.00632, 88.9762]}
-        # {'ZN': [0.0, 100.0]}
-        # {'INDUS': [0.46, 27.74]}
-        # {'NOX': [0.385, 0.871]}
-        # {'RM': [3.5610000000000004, 8.78]}
-        # {'AGE': [2.9, 100.0]}
-        # {'DIS': [1.1296, 12.1265]}
-        # {'RAD': [1, 24]}
-        # {'TAX': [187, 711]}
-        # {'PTRATIO': [12.6, 22.0]}
-        # {'BLACK': [0.32, 396.9]}
-        # {'LSTAT': [1.73, 37.97]}
-        # {'CHAS': {0, 1}}
+        # {'MedInc': [0.4999, 15.0001]},
+        # {'HouseAge': [1.0, 52.0]},
+        # {'AveRooms': [0.8461538461538461, 141.9090909090909]},
+        # {'AveBedrms': [0.3333333333333333, 34.06666666666667]},
+        # {'Population': [3.0, 35682.0]},
+        # {'AveOccup': [0.6923076923076923, 1243.3333333333333]},
+        # {'Latitude': [32.54, 41.95]},
+        # {'Longitude': [-124.35, -114.31]}
 
         print('\n')
         print('----- user-specified constraints -----')
-        constraints = {'AGE': ('ge', 1)}
+        constraints = {}
 
         constraint = [None] * len(x_ord)
         importance = [None] * len(x_ord)

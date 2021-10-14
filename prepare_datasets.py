@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, LabelEncoder, StandardScaler
-from sklearn.datasets import load_diabetes, load_iris, make_moons, load_wine
+from sklearn.datasets import load_diabetes, load_iris, make_moons, load_wine, fetch_california_housing
 
 ## Preparing Adult dataset
 def PrepareAdult(dataset_path, dataset_name):
@@ -1299,33 +1299,35 @@ def PrepareDiabetes(dataset_path, dataset_name):
 
     return dataset
 
-## Preparing Boston House Prices dataset
-def PrepareBostonHousePrices(dataset_path, dataset_name):
 
-    ## Reading data from a csv file
-    df = pd.read_csv(dataset_path + dataset_name, delimiter=',', na_values=' ?')
+## Preparing Diabetes dataset
+def PrepareCaliforniaHousing(dataset_path, dataset_name):
+
+    ## Importing data from sklearn library
+    data = fetch_california_housing(data_home=None, download_if_missing=True, return_X_y=False, as_frame=False)
+    df = pd.DataFrame(data=np.c_[data.data,data.target], columns=data.feature_names+['MedHouseVal'])
 
     ## Recognizing inputs
-    target_name = 'MEDV'
+    target_name = 'MedHouseVal'
     df_X_org = df.loc[:, df.columns != target_name]
     df_y = df.loc[:, target_name]
 
-    continuous_features = ['CRIM', 'ZN', 'INDUS', 'NOX', 'RM', 'AGE', 'DIS', 'RAD', 'TAX', 'PTRATIO', 'BLACK', 'LSTAT']
-    discrete_features = ['CHAS']
+    continuous_features = ['MedInc', 'HouseAge', 'AveRooms', 'AveBedrms', 'Population', 'AveOccup',
+                           'Latitude', 'Longitude']
+
+    discrete_features = []
 
     continuous_availability = True
-    discrete_availability = True
+    discrete_availability = False
 
-    df_X_org = pd.concat([df_X_org[continuous_features], df_X_org[discrete_features]], axis=1)
+    df_X_org = df_X_org[continuous_features]
 
     continuous_indices = [df_X_org.columns.get_loc(f) for f in continuous_features]
-    discrete_indices = [df_X_org.columns.get_loc(f) for f in discrete_features]
+    discrete_indices = []
 
     feature_values = []
     for c in continuous_features:
-        feature_values.append({c:[min(df_X_org[c]),max(df_X_org[c])]})
-    for d in discrete_features:
-        feature_values.append({d: set(df_X_org[d].unique())})
+        feature_values.append({c: [min(df_X_org[c]), max(df_X_org[c])]})
 
     ## Extracting the precision of continuous features
     types = df_X_org[continuous_features].dtypes
@@ -1343,24 +1345,21 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
     precision = pd.Series(continuous_precision, index=continuous_features)
     df_X_org = df_X_org.round(precision)
 
-    # Scaling continuous features
+    ## Scaling continuous features
     num_feature_scaler = StandardScaler()
     scaled_data = num_feature_scaler.fit_transform(df_X_org.iloc[:, continuous_indices].to_numpy())
     scaled_data = pd.DataFrame(data=scaled_data, columns=continuous_features)
 
-    ## Ordinal feature transformation
-    ord_feature_encoder = OrdinalEncoder()
-    ord_encoded_data = ord_feature_encoder.fit_transform(df_X_org.iloc[:, discrete_indices].to_numpy())
-    ord_encoded_data = pd.DataFrame(data=ord_encoded_data, columns=discrete_features)
+    ## Encoding discrete features
+    # Ordinal feature transformation
+    ord_feature_encoder = None
 
-    ## One-hot feature transformation
-    ohe_feature_encoder = OneHotEncoder(sparse=False)
-    ohe_encoded_data = ohe_feature_encoder.fit_transform(ord_encoded_data.to_numpy())
-    ohe_encoded_data = pd.DataFrame(data=ohe_encoded_data)
+    # One-hot feature transformation
+    ohe_feature_encoder = None
 
     # Creating ordinal and one-hot data frames
-    df_X_ord = pd.concat([scaled_data, ord_encoded_data], axis=1)
-    df_X_ohe = pd.concat([scaled_data, ohe_encoded_data], axis=1)
+    df_X_ord = scaled_data.copy(deep=True)
+    df_X_ohe = scaled_data.copy(deep=True)
 
     ## Extracting raw data and labels
     X_org = df_X_org.values
@@ -1377,20 +1376,20 @@ def PrepareBostonHousePrices(dataset_path, dataset_name):
     feature_ranges = {feature_names[i]: [min(X_ord[:, i]), max(X_ord[:, i])] for i in range(X_ord.shape[1])}
     feature_width = np.max(X_ord, axis=0) - np.min(X_ord, axis=0)
 
-    n_cat_discrete = ord_encoded_data.nunique().to_list()
+    n_cat_discrete = []
 
     len_continuous_org = [0, df_X_org.iloc[:, continuous_indices].shape[1]]
-    len_discrete_org = [df_X_org.iloc[:, continuous_indices].shape[1], df_X_org.shape[1]]
+    len_discrete_org = []
 
     len_continuous_ord = [0, scaled_data.shape[1]]
-    len_discrete_ord = [scaled_data.shape[1], df_X_ord.shape[1]]
+    len_discrete_ord = []
 
     len_continuous_ohe = [0, scaled_data.shape[1]]
-    len_discrete_ohe = [scaled_data.shape[1], df_X_ohe.shape[1]]
+    len_discrete_ohe = []
 
     ## Returning dataset information
     dataset = {
-        'name': dataset_name.replace('.csv', ''),
+        'name': 'california-housing',
         'df': df,
         'df_y': df_y,
         'df_X_org': df_X_org,
