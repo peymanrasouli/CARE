@@ -45,8 +45,8 @@ def main():
 
     # defining the features that are used for coherency evaluation
     studied_features ={
-        'adult': [6, 7, 10, 11, 12],
-        'compas-scores-two-years': [4, 5, 7, 8],
+        'adult': [0, 1, 6, 7, 8, 9, 10, 11, 12],
+        'compas-scores-two-years': [0, 1, 2, 3, 4, 5, 7, 8],
         'credit-card-default': [2, 3, 4, 5, 6, 7, 18, 19, 20, 21, 22],
         'heloc': [0, 4, 5, 6, 15, 16],
     }
