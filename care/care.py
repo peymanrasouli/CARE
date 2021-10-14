@@ -35,7 +35,7 @@ class CARE():
                  n_cf=5,
                  response_quantile=4,
                  K_nbrs=500,
-                 corr_thresh=0.3,
+                 corr_thresh=0.2,
                  corr_model_train_percent=0.8,
                  corr_model_score_thresh=0.8,
                  n_population='adaptive',
@@ -503,12 +503,14 @@ class CARE():
         corr = nominal.associations(self.X_train, nominal_columns=self.discrete_indices, plot=False)['corr']
         plt.close('all')
 
-        # only consider the features that have correlation above the threshold
+        # only consider the features that have correlation above the correlation threshold / mean correlation
         corr = corr.to_numpy()
         corr[np.diag_indices(corr.shape[0])] = 0.0
-        corr_features = np.where(abs(corr) > self.corr_thresh)
         corr_ = np.zeros(corr.shape)
-        corr_[corr_features] = 1
+        for i in range(corr.shape[0]):
+            # corr_features = np.where(abs(corr[i, :]) >= self.corr_thresh)[0]
+            corr_features = np.where(abs(corr[i, :]) >= np.mean(abs(corr[i,:])))[0]
+            corr_[i,corr_features] = 1
 
         ## creating correlation models
         val_point = int(self.corr_model_train_percent * len(self.X_train))
@@ -531,14 +533,9 @@ class CARE():
                     scores.append(score)
                     correlation_models.append({'feature': f, 'inputs': inputs, 'model': model, 'score': score})
 
-        # select models that have prediction score above a threshold/median value
-        if self.corr_model_score_thresh == 'median':
-            median = np.median(scores)
-            selected_models = np.where(scores >= median)[0]
-            correlation_models = [correlation_models[m] for m in selected_models]
-        else:
-            selected_models = np.where(scores >= np.float64(self.corr_model_score_thresh))[0]
-            correlation_models = [correlation_models[m] for m in selected_models]
+        # select models that have prediction score above a threshold value
+        selected_models = np.where(scores >= np.float64(self.corr_model_score_thresh))[0]
+        correlation_models = [correlation_models[m] for m in selected_models]
 
         return correlation_models
 
