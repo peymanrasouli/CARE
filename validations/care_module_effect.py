@@ -28,6 +28,7 @@ def main():
         'credit-card-default': ('credit-card-default.csv', PrepareCreditCardDefault, 'classification'),
         'heloc': ('heloc_dataset_v1.csv', PrepareHELOC, 'classification'),
         'wine': ('wine-sklearn', PrepareWine, 'classification'),
+        'iris': ('iris-sklearn', PrepareIris, 'classification'),
         # 'diabetes': ('diabetes-sklearn', PrepareDiabetes, 'regression'),
         # 'california-housing': ('california-housing-sklearn', PrepareCaliforniaHousing, 'regression')
     }
@@ -47,6 +48,7 @@ def main():
         'credit-card-default': (500, 10),
         'heloc': (500,10),
         'wine': (30, 10),
+        'iris': (30, 10),
         'diabetes': (80, 10),
         'california-housing': (400, 10)
     }
