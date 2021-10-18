@@ -35,7 +35,7 @@ class CARE():
                  K_nbrs=500,
                  corr_thresh=0.2,
                  corr_model_train_percent=0.8,
-                 corr_model_score_thresh=0.8,
+                 corr_model_score_thresh=0.75,
                  n_population='adaptive',
                  n_generation=20,
                  hof_size=100,
