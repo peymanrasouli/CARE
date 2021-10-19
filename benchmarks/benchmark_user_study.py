@@ -67,14 +67,12 @@ def main():
                 os.remove(experiment_path + 'user_study_assessment.csv')
             user_study_csv = open(experiment_path + 'user_study_assessment.csv', 'a')
 
-
             # explaining instances from test set
             N = 50
             explained = 0
             for x_ord in X_test:
 
                 try:
-
                     # setting user preferences
                     print('\n')
                     print('----- user-specified constraints -----')
