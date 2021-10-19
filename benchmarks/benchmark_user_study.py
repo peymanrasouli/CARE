@@ -67,63 +67,36 @@ def main():
                 os.remove(experiment_path + 'user_study_assessment.csv')
             user_study_csv = open(experiment_path + 'user_study_assessment.csv', 'a')
 
-            # CARE with {validity, soundness, coherency, actionability} config
-            care_explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                  SOUNDNESS=True, COHERENCY=True, ACTIONABILITY=False, n_cf=1)
-            care_explainer.fit(X_train, Y_train)
-
-            # CFPrototype
-            cat_vars_ord = {}
-            for i, d in enumerate(dataset['discrete_indices']):
-                cat_vars_ord[d] = dataset['n_cat_discrete'][i]
-            cat_vars_ohe = ord_to_ohe(X_train, cat_vars_ord)[1]
-            ohe = True if dataset['discrete_availability'] else False
-            x_ohe = ord2ohe(X_train[0], dataset)
-            x_ohe = x_ohe.reshape((1,) + x_ohe.shape)
-            shape = x_ohe.shape
-            rng_min = np.min(X_train, axis=0)
-            rng_max = np.max(X_train, axis=0)
-            rng = tuple([rng_min.reshape(1, -1), rng_max.reshape(1, -1)])
-            rng_shape = (1,) + X_train.shape[1:]
-            feature_range = ((np.ones(rng_shape) * rng[0]).astype(np.float32),
-                             (np.ones(rng_shape) * rng[1]).astype(np.float32))
-            cfprototype_explainer = CounterFactualProto(predict=predict_proba_fn, shape=shape,
-                                                        feature_range=feature_range,
-                                                        cat_vars=cat_vars_ohe, ohe=ohe, beta=0.1, theta=10,
-                                                        use_kdtree=True, max_iterations=500, c_init=1.0, c_steps=5)
-            X_train_ohe = ord2ohe(X_train, dataset)
-            cfprototype_explainer.fit(X_train_ohe, d_type='abdm', disc_perc=[25, 50, 75])
-
-            # DiCE
-            feature_names = dataset['feature_names']
-            continuous_features = dataset['continuous_features']
-            discrete_features = dataset['discrete_features']
-            data_frame = pd.DataFrame(data=np.c_[X_train, Y_train], columns=feature_names + ['class'])
-            data_frame[continuous_features] = (data_frame[continuous_features]).astype(float)
-            data_frame[discrete_features] = (data_frame[discrete_features]).astype(int)
-            data = dice_ml.Data(dataframe=data_frame,
-                                continuous_features=continuous_features,
-                                outcome_name='class')
-            backend = 'TF1'
-            model = dice_ml.Model(model=blackbox, backend=backend)
-            dice_explainer = dice_ml.Dice(data, model)
-
-            # CERTIFAI
-            certifai_explainer = CERTIFAI(dataset, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
-                                          ACTIONABILITY=False, n_population=100, n_generation=50, n_cf=1)
-            certifai_explainer.fit(X_train, Y_train)
 
             # explaining instances from test set
-            N = 10
+            N = 50
             explained = 0
             for x_ord in X_test:
 
                 try:
 
+                    print('\n')
+                    print('----- user-specified constraints -----')
+                    constraints = {'age': ('ge', 1),
+                                   'sex': ('fix', 1),
+                                   'native-country': ('fix', 1)}
+
+                    constraint = [None] * len(x_ord)
+                    importance = [None] * len(x_ord)
+                    for p in constraints:
+                        index = dataset['feature_names'].index(p)
+                        constraint[index] = constraints[p][0]
+                        importance[index] = constraints[p][1]
+                        print(p + ':', constraints[p][0], 'with importance', '(' + str(constraints[p][1]) + ')')
+
+                    user_preferences = {'constraint': constraint,
+                                        'importance': importance}
+
                     # explain instance x_ord using CARE
-                    CARE_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
-                                                predict_proba_fn, explainer=care_explainer,
-                                                cf_class='opposite', probability_thresh=0.5, n_cf=1)
+                    CARE_output = CAREExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn, predict_proba_fn,
+                                                explainer=None, SOUNDNESS=True, COHERENCY=True, ACTIONABILITY=True,
+                                                user_preferences=user_preferences, cf_class='opposite',
+                                                probability_thresh=0.5, n_cf=1)
                     care_x_cfs_highlight = CARE_output['x_cfs_highlight']
                     _, care_text_explanation = GenerateTextExplanations(CARE_output, dataset)
                     if int(CARE_output['x_cfs_eval']['Class'].loc['x']) == \
@@ -132,7 +105,7 @@ def main():
 
                     # explain instance x_ord using CFPrototype
                     CFPrototype_output = CFPrototypeExplainer(x_ord, predict_fn, predict_proba_fn, X_train, dataset,
-                                                              task, CARE_output, explainer=cfprototype_explainer,
+                                                              task, CARE_output, explainer=None,
                                                               target_class=None, n_cf=1)
                     cfprototype_x_cfs_highlight = CFPrototype_output['x_cfs_highlight']
                     _, cfprototype_text_explanation = GenerateTextExplanations(CFPrototype_output, dataset)
@@ -142,9 +115,10 @@ def main():
 
                     # explain instance x_ord using DiCE
                     DiCE_output = DiCEExplainer(x_ord, blackbox, predict_fn, predict_proba_fn, X_train, Y_train,
-                                                dataset, task, CARE_output, explainer=dice_explainer,
-                                                ACTIONABILITY=False, desired_class="opposite", n_cf=1,
-                                                probability_thresh=0.5, proximity_weight=1.0, diversity_weight=1.0)
+                                                dataset, task, CARE_output, explainer=None, ACTIONABILITY=True,
+                                                desired_class="opposite", n_cf=1, probability_thresh=0.5,
+                                                user_preferences=user_preferences,
+                                                proximity_weight=1.0, diversity_weight=1.0)
                     dice_x_cfs_highlight = DiCE_output['x_cfs_highlight']
                     _, dice_text_explanation = GenerateTextExplanations(DiCE_output, dataset)
                     if int(DiCE_output['x_cfs_eval']['Class'].loc['x']) == \
@@ -153,8 +127,9 @@ def main():
 
                     # explain instance x_ord using CERTIFAI
                     CERTIFAI_output = CERTIFAIExplainer(x_ord, X_train, Y_train, dataset, task, predict_fn,
-                                                        predict_proba_fn, CARE_output, explainer=certifai_explainer,
-                                                        ACTIONABILITY=False, cf_class='opposite', n_cf=1)
+                                                        predict_proba_fn, CARE_output, explainer=None,
+                                                        ACTIONABILITY=True, user_preferences=user_preferences,
+                                                        cf_class='opposite', n_cf=1)
                     certifai_x_cfs_highlight = CERTIFAI_output['x_cfs_highlight']
                     _, certifai_text_explanation = GenerateTextExplanations(CERTIFAI_output, dataset)
                     if int(CERTIFAI_output['x_cfs_eval']['Class'].loc['x']) == \
