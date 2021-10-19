@@ -75,6 +75,7 @@ def main():
 
                 try:
 
+                    # setting user preferences
                     print('\n')
                     print('----- user-specified constraints -----')
                     constraints = {'age': ('ge', 1),
