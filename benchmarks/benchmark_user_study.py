@@ -68,7 +68,7 @@ def main():
             user_study_csv = open(experiment_path + 'user_study_assessment.csv', 'a')
 
             # explaining instances from test set
-            N = 50
+            N = 10
             explained = 0
             for x_ord in X_test:
 
