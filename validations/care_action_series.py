@@ -73,11 +73,11 @@ def main():
 
             # creating/opening a csv file for storing results
             exists = os.path.isfile(
-                experiment_path + 'care_action_series_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
+                experiment_path + 'care_action_steps_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
             if exists:
-                os.remove(experiment_path + 'care_action_series_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
+                os.remove(experiment_path + 'care_action_steps_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf))
             cfs_results_csv = open(
-                experiment_path + 'care_action_series_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
+                experiment_path + 'care_action_steps_%s_%s_cfs_%s_%s.csv' % (dataset['name'], blackbox_name, N, n_cf), 'a')
 
             # creating an instance of CARE explainer
             explainer = CARE(dataset, task=task, predict_fn=predict_fn, predict_proba_fn=predict_proba_fn,
@@ -116,8 +116,8 @@ def main():
                 x_cfs_org, \
                 x_cfs_highlight = recoverOriginals(x_ord, cfs_ord, dataset, feature_names)
 
-                # action series
-                cfs_action_series = []
+                # temporal action steps
+                cfs_action_steps = []
                 for i in range(n_cf):
                     changed_features = np.where(cfs_ord.to_numpy()[i, :] != x_ord)[0]
                     orders = permutations(list(changed_features), len(changed_features))
@@ -133,19 +133,19 @@ def main():
                                                 explainer.correlationModel)
                             corr_cost.append(corr)
                         order_cost[o] = np.mean(corr_cost)
-                    cfs_action_series.append(order_cost)
+                    cfs_action_steps.append(order_cost)
 
-                best_series = [None] * n_cf
-                worst_series  = [None] * n_cf
-                for i, d in enumerate(cfs_action_series):
+                best_steps = [None] * n_cf
+                worst_steps  = [None] * n_cf
+                for i, d in enumerate(cfs_action_steps):
                     best_val = np.inf
                     worst_val = -np.inf
                     for key, val in d.items():
                         if val < best_val:
-                            best_series[i] = {key: val}
+                            best_steps[i] = {key: val}
                             best_val = val
                         if val > worst_val:
-                            worst_series[i] = {key: val}
+                            worst_steps[i] = {key: val}
                             worst_val = val
 
                 # print counterfactuals and their corresponding objective values
@@ -155,39 +155,39 @@ def main():
                 print(x_cfs_eval)
                 print('\n')
 
-                # finding best and worst action orders for every counterfactual using the coherency model
-                print('Best action series:')
-                best_action_series = []
-                best_action_series.append([None,None])
-                for i, bs in enumerate(best_series):
+                # finding best and worst temporal action steps for every counterfactual using the coherency model
+                print('Best action steps:')
+                best_action_steps = []
+                best_action_steps.append([None,None])
+                for i, bs in enumerate(best_steps):
                     for key, val in bs.items():
                         order = [dataset['feature_names'][f] for f in key]
                         order = ['%s' % (order[i]) for i in range(len(order))]
                         order = ' > '.join(order)
-                        best_action_series.append([order,val])
+                        best_action_steps.append([order,val])
                         s = 'cf_'+ str(i) + ' | order: ' + str(order) + ' | cost: ' + str(val)
                         print(s)
 
                 print('\n')
-                print('Worst action series:')
-                worst_action_series = []
-                worst_action_series.append([None, None])
-                for i, ws in enumerate(worst_series):
+                print('Worst action steps:')
+                worst_action_steps = []
+                worst_action_steps.append([None, None])
+                for i, ws in enumerate(worst_steps):
                     for key, val in ws.items():
                         order = [dataset['feature_names'][f] for f in key]
                         order = ['%s' % (order[i]) for i in range(len(order))]
                         order = ' > '.join(order)
-                        worst_action_series.append([order,val])
+                        worst_action_steps.append([order,val])
                         s = 'cf_'+ str(i) + ' | order: ' + str(order) + ' | cost: ' + str(val)
                         print(s)
 
-                # storing the counterfactuals along with the best and worst orders
-                best_action_series_df = pd.DataFrame(data=best_action_series, columns=['Best Order', 'Best Cost'])
-                best_action_series_df = best_action_series_df.set_index(x_cfs_ord.index)
-                worst_action_series_df = pd.DataFrame(data=worst_action_series, columns=['Worst Order', 'Worst Cost'])
-                worst_action_series_df = worst_action_series_df.set_index(x_cfs_ord.index)
+                # storing the counterfactuals along with the best and worst temporal action steps
+                best_action_steps_df = pd.DataFrame(data=best_action_steps, columns=['Best Order', 'Best Cost'])
+                best_action_steps_df = best_action_steps_df.set_index(x_cfs_ord.index)
+                worst_action_steps_df = pd.DataFrame(data=worst_action_steps, columns=['Worst Order', 'Worst Cost'])
+                worst_action_steps_df = worst_action_steps_df.set_index(x_cfs_ord.index)
 
-                cfs_results = pd.concat([x_cfs_highlight, best_action_series_df, worst_action_series_df], axis=1)
+                cfs_results = pd.concat([x_cfs_highlight, best_action_steps_df, worst_action_steps_df], axis=1)
                 cfs_results.to_csv(cfs_results_csv)
                 cfs_results_csv.write('\n')
                 cfs_results_csv.flush()
