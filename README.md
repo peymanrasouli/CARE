@@ -80,13 +80,13 @@ python care_module_effect.py
 ```
 python care_soundness.py
 ```
-3- To reproduce the results of action series validation, run:
-```
-python care_action_series.py
-```
-4- To reproduce the results of coherency validation, run:
+3- To reproduce the results of coherency validation, run:
 ```
 python care_coherency.py
+```
+4- To reproduce the results of temporal action steps validation, run:
+```
+python care_temporal_action_steps.py
 ```
 
 # Reproducing the benchmark results
