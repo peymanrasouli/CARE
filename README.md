@@ -84,9 +84,9 @@ python care_soundness.py
 ```
 python care_coherency.py
 ```
-4- To reproduce the results of temporal action steps validation, run:
+4- To reproduce the results of temporal action sequence validation, run:
 ```
-python care_temporal_action_steps.py
+python care_temporal_action_sequence.py
 ```
 
 # Reproducing the benchmark results
@@ -105,8 +105,4 @@ python benchmark_validity_soundness_coherency.py
 4- To reproduce the results of CARE<sub>{VALIDITY, SOUNDNESS, COHERENCY, ACTIONABILITY}</sub> config vs. baselines, run:
 ```
 python benchmark_validity_soundness_coherency_actionability.py
-```
-5- To reproduce the the results of user study benchmark of CARE vs. baselines, run:
-```
-python benchmark_user_study.py
 ```
