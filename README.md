@@ -4,7 +4,7 @@ This repository contains the implementation source code of the following paper:
 
 [CARE: Coherent Actionable Recourse based on Sound Counterfactual Explanations](https://arxiv.org/abs/2108.08197)
 
-Bibtex:
+BibTeX:
 
     @misc{rasouli2021care,
           title={CARE: Coherent Actionable Recourse based on Sound Counterfactual Explanations}, 
