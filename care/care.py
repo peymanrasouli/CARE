@@ -33,9 +33,9 @@ class CARE():
                  n_cf=5,
                  response_quantile=4,
                  K_nbrs=500,
-                 corr_thresh=0.2,
+                 corr_thresh=None,
                  corr_model_train_percent=0.8,
-                 corr_model_score_thresh=0.75,
+                 corr_model_score_thresh=0.7,
                  n_population='adaptive',
                  n_generation=20,
                  hof_size=100,
@@ -492,23 +492,61 @@ class CARE():
 
         print('Creating correlation models for coherency-preservation ...')
 
-        ## Feature correlation modeling
+        ## Constructing Correlation Models
+
         # Calculate the correlation/strength-of-association of features in data-set
         # with both categorical and continuous features using:
-        # Pearson's R for continuous-continuous cases
-        # Correlation Ratio for categorical-continuous cases
-        # Cramer's V for categorical-categorical cases
-        corr = nominal.associations(self.X_train, nominal_columns=self.discrete_indices, plot=False)['corr']
+            # Spearman's Rho for continuous-continuous pairs
+            # Correlation Ratio for categorical-continuous pairs
+            # Cramer's V for categorical-categorical pairs
+        corr_con_con = pd.DataFrame(data=self.X_train).corr(method='spearman') # to consider non-linear correlations
+        corr_rest = nominal.associations(self.X_train, nominal_columns=self.discrete_indices, plot=False)['corr']
         plt.close('all')
+        corr = corr_rest.copy()
+        for k in self.continuous_indices:
+            for l in self.continuous_indices:
+                corr.iloc[k,l] = corr_con_con.iloc[k,l]
 
         # only consider the features that have correlation above the correlation threshold / mean correlation
         corr = corr.to_numpy()
+        corr = abs(corr)
         corr[np.diag_indices(corr.shape[0])] = 0.0
+
+        if self.corr_thresh is None:
+            self.corr_thresh = {'spearmans_rho': [],
+                               'correlation_ratio':[],
+                               'cramers_v':[]}
+            for k in range(corr.shape[0]):
+                for l in range(corr.shape[1]):
+                    if k==l:
+                        pass
+                    else:
+                        if k in self.continuous_indices and l in self.continuous_indices:
+                            self.corr_thresh['spearmans_rho'].append(corr[k,l])
+                        elif (k in self.continuous_indices and l in self.discrete_indices) or \
+                                (k in self.discrete_indices and l in self.continuous_indices):
+                            self.corr_thresh['correlation_ratio'].append(corr[k,l])
+                        elif (k in self.discrete_indices and l in self.discrete_indices):
+                            self.corr_thresh['cramers_v'].append(corr[k,l])
+
+            for key,val in self.corr_thresh.items():
+                self.corr_thresh[key] = np.mean(val)
+
         corr_ = np.zeros(corr.shape)
-        for i in range(corr.shape[0]):
-            # corr_features = np.where(abs(corr[i, :]) >= self.corr_thresh)[0]
-            corr_features = np.where(abs(corr[i, :]) >= np.mean(abs(corr[i,:])))[0]
-            corr_[i,corr_features] = 1
+        for k in range(corr.shape[0]):
+            for l in range(corr.shape[1]):
+                if k == l:
+                    pass
+                else:
+                    if k in self.continuous_indices and l in self.continuous_indices:
+                        rho = self.corr_thresh['spearmans_rho']
+                    elif (k in self.continuous_indices and l in self.discrete_indices) or \
+                            (k in self.discrete_indices and l in self.continuous_indices):
+                        rho = self.corr_thresh['correlation_ratio']
+                    elif (k in self.discrete_indices and l in self.discrete_indices):
+                        rho = self.corr_thresh['cramers_v']
+
+                    corr_[k,l] = 1 if corr[k,l] >= rho else 0
 
         ## creating correlation models
         val_point = int(self.corr_model_train_percent * len(self.X_train))
