@@ -2,18 +2,19 @@
 
 This repository contains the implementation source code of the following paper:
 
-[CARE: Coherent Actionable Recourse based on Sound Counterfactual Explanations](https://arxiv.org/abs/2108.08197)
+[CARE: Coherent Actionable Recourse based on Sound Counterfactual Explanations](https://link.springer.com/article/10.1007/s41060-022-00365-6)
 
 BibTeX:
 
-    @misc{rasouli2021care,
-          title={CARE: Coherent Actionable Recourse based on Sound Counterfactual Explanations}, 
-          author={Peyman Rasouli and Ingrid Chieh Yu},
-          year={2021},
-          eprint={2108.08197},
-          archivePrefix={arXiv},
-          primaryClass={cs.LG}
+    @article{rasouli2022care,
+      title={CARE: Coherent Actionable Recourse based on Sound Counterfactual Explanations},
+      author={Rasouli, Peyman and Chieh Yu, Ingrid},
+      journal={International Journal of Data Science and Analytics},
+      pages={1--26},
+      year={2022},
+      publisher={Springer}
     }
+
 
 # Setup
 1- Clone the repository using HTTP/SSH:
